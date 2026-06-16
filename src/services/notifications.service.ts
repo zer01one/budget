@@ -27,7 +27,7 @@ export async function scheduleDailyReminder(timeStr: string): Promise<void> {
 	await ln.cancel({ notifications: [{ id: 1 }] });
 
 	const now = new Date();
-	let next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+	const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
 	if (next <= now) next.setDate(next.getDate() + 1);
 
 	await ln.schedule({

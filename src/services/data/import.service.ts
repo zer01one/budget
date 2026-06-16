@@ -31,7 +31,8 @@ export interface ImportPreviewRow {
 
 export function parseCsv(text: string): { headers: string[]; rows: CsvRow[] } {
 	// Normalize line endings, strip BOM
-	const normalized = text.replace(/^﻿/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+	const normalized = (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
 	const lines = normalized.split("\n").filter((l) => l.trim());
 	if (lines.length < 2) return { headers: [], rows: [] };
 

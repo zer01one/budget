@@ -54,7 +54,10 @@ const donutOption = computed((): EChartsOption => {
   return {
     tooltip: {
       trigger: 'item',
-      formatter: (p: any) => `${p.name}: ${p.value.toLocaleString('ru-RU')} (${p.percent}%)`,
+      formatter: (p: unknown) => {
+        const { name, value, percent } = p as { name: string; value: number; percent: number }
+        return `${name}: ${value.toLocaleString('ru-RU')} (${percent}%)`
+      },
     },
     legend: { show: false },
     series: [{
@@ -96,8 +99,10 @@ const barMonthlyOption = computed((): EChartsOption => {
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) =>
-        params.map((p: any) => `${p.marker}${p.seriesName}: ${p.value.toLocaleString('ru-RU')}`).join('<br/>'),
+      formatter: (params: unknown) =>
+        (params as Array<{ marker: string; seriesName: string; value: number }>)
+          .map(p => `${p.marker}${p.seriesName}: ${p.value.toLocaleString('ru-RU')}`)
+          .join('<br/>'),
     },
     legend: { data: ['Доходы', 'Расходы'], bottom: 0, textStyle: { color: '#8888A0', fontSize: 11 } },
     grid: { top: 12, bottom: 40, left: 8, right: 8, containLabel: true },
@@ -144,9 +149,11 @@ const lineOption = computed((): EChartsOption => {
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) =>
-        `День ${params[0].axisValue}<br/>` +
-        params.map((p: any) => `${p.marker}${p.seriesName}: ${p.value.toLocaleString('ru-RU')}`).join('<br/>'),
+      formatter: (params: unknown) => {
+        const items = params as Array<{ marker: string; seriesName: string; value: number; axisValue: string }>
+        return `День ${items[0].axisValue}<br/>` +
+          items.map(p => `${p.marker}${p.seriesName}: ${p.value.toLocaleString('ru-RU')}`).join('<br/>')
+      },
     },
     legend: { data: ['Расходы', 'Доходы'], bottom: 0, textStyle: { color: '#8888A0', fontSize: 11 } },
     grid: { top: 12, bottom: 40, left: 8, right: 8, containLabel: true },
@@ -187,7 +194,10 @@ const topCatsOption = computed((): EChartsOption => {
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => `${params[0].name}: ${params[0].value.toLocaleString('ru-RU')}`,
+      formatter: (params: unknown) => {
+        const p = (params as Array<{ name: string; value: number }>)[0]
+        return `${p.name}: ${p.value.toLocaleString('ru-RU')}`
+      },
     },
     grid: { top: 4, bottom: 4, left: 8, right: 16, containLabel: true },
     xAxis: { type: 'value', axisLabel: { formatter: (v: number) => v >= 1000 ? `${v / 1000}k` : String(v) } },
@@ -196,7 +206,7 @@ const topCatsOption = computed((): EChartsOption => {
       type: 'bar',
       data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i], borderRadius: [0, 4, 4, 0] } })),
       barMaxWidth: 20,
-      label: { show: true, position: 'right', color: '#8888A0', fontSize: 10, formatter: (p: any) => p.value.toLocaleString('ru-RU') },
+      label: { show: true, position: 'right', color: '#8888A0', fontSize: 10, formatter: (p: unknown) => (p as { value: number }).value.toLocaleString('ru-RU') },
     }],
   }
 })
