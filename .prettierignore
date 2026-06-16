@@ -1,0 +1,12 @@
+## Ignore all files (but still allow sub-folder scanning)
+*
+!*/
+
+dist
+
+## Allow certain file types
+!*.css
+!*.js
+!*.ts
+!*.html
+!*.json
