@@ -58,7 +58,7 @@ watch(
 
 function validate(): boolean {
 	errors.value = {};
-	const parsed = parseFloat(editAmount.value.replace(",", "."));
+	const parsed = parseFloat(String(editAmount.value).replace(",", "."));
 	if (isNaN(parsed) || parsed <= 0) errors.value.amount = "Введите положительную сумму";
 	if (!editAccountId.value) errors.value.account = "Выберите счёт";
 	if (editType.value === "transfer" && !editToAccountId.value) errors.value.toAccount = "Выберите счёт назначения";
@@ -72,7 +72,7 @@ async function saveEdit() {
 	try {
 		await txStore.updateTransaction(tx.value.id, {
 			type: editType.value,
-			amount: parseFloat(editAmount.value.replace(",", ".")),
+			amount: parseFloat(String(editAmount.value).replace(",", ".")),
 			currency: accountsStore.getById(editAccountId.value)?.currency ?? tx.value.currency,
 			date: editDate.value,
 			time: editTime.value,
