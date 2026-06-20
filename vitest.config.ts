@@ -9,6 +9,13 @@ export default defineConfig({
 		environment: "happy-dom",
 		alias: {
 			"@": resolve(__dirname, "src")
+		},
+		coverage: {
+			provider: "v8",
+			reporter: ["text", "json-summary"],
+			reportsDirectory: "./coverage",
+			include: ["src/**/*.{ts,vue}"],
+			exclude: ["src/main.ts", "src/**/*.d.ts", "src/services/filesystem/tauri.adapter.ts", "src/services/filesystem/capacitor.adapter.ts"]
 		}
 	}
 });

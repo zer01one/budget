@@ -18,7 +18,8 @@
 		"front:format:check": "prettier --check .",
 		"eslint": "eslint .",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@capacitor/android": "^8.4.0",
@@ -48,6 +49,7 @@
 		"@tauri-apps/cli": "^2.11.2",
 		"@types/node": "^24.12.3",
 		"@vitejs/plugin-vue": "^6.0.6",
+		"@vitest/coverage-v8": "^4.1.9",
 		"@vue/test-utils": "^2.4.11",
 		"@vue/tsconfig": "^0.9.1",
 		"eslint": "^10.5.0",
