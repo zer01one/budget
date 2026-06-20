@@ -328,7 +328,10 @@ describe("BudgetsView – add budget", () => {
 		const wrapper = await mountView();
 		await wrapper.find(".budgets-view__header button").trigger("click");
 		await flushPromises();
-		await wrapper.findAll("button").find((b) => b.text() === "Создать")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Создать")!
+			.trigger("click");
 		expect(wrapper.text()).toContain("Введите положительную сумму");
 		expect(wrapper.find(".modal-form").exists()).toBe(true);
 	});
@@ -339,7 +342,10 @@ describe("BudgetsView – add budget", () => {
 		await wrapper.find(".budgets-view__header button").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("0");
-		await wrapper.findAll("button").find((b) => b.text() === "Создать")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Создать")!
+			.trigger("click");
 		expect(wrapper.text()).toContain("Введите положительную сумму");
 	});
 
@@ -350,7 +356,10 @@ describe("BudgetsView – add budget", () => {
 		await wrapper.find(".budgets-view__header button").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("10000");
-		await wrapper.findAll("button").find((b) => b.text() === "Создать")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Создать")!
+			.trigger("click");
 		await flushPromises();
 		expect(addSpy).toHaveBeenCalledOnce();
 		expect(addSpy).toHaveBeenCalledWith(
@@ -366,7 +375,10 @@ describe("BudgetsView – add budget", () => {
 		await wrapper.find(".budgets-view__header button").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("5000,50");
-		await wrapper.findAll("button").find((b) => b.text() === "Создать")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Создать")!
+			.trigger("click");
 		await flushPromises();
 		expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ limitAmount: 5000.5 }));
 	});
@@ -421,7 +433,10 @@ describe("BudgetsView – edit budget", () => {
 		await wrapper.find(".budget-card").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("60000");
-		await wrapper.findAll("button").find((b) => b.text() === "Сохранить")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Сохранить")!
+			.trigger("click");
 		await flushPromises();
 		expect(updateSpy).toHaveBeenCalledWith("b-1", expect.objectContaining({ limitAmount: 60_000 }));
 		expect(wrapper.find(".modal-form").exists()).toBe(false);
@@ -439,7 +454,10 @@ describe("BudgetsView – edit budget", () => {
 		await wrapper.find(".budget-card").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("50000");
-		await wrapper.findAll("button").find((b) => b.text() === "Сохранить")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Сохранить")!
+			.trigger("click");
 		await flushPromises();
 		expect(keptSpy).toHaveBeenCalledOnce();
 	});
@@ -453,7 +471,10 @@ describe("BudgetsView – edit budget", () => {
 		await wrapper.find(".budget-card").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("50000");
-		await wrapper.findAll("button").find((b) => b.text() === "Сохранить")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Сохранить")!
+			.trigger("click");
 		await flushPromises();
 		expect(keptSpy).not.toHaveBeenCalled();
 	});
@@ -472,7 +493,10 @@ describe("BudgetsView – edit budget", () => {
 		await wrapper.find(".budget-card").trigger("click");
 		await flushPromises();
 		await wrapper.find('input[type="number"]').setValue("40000"); // spent 60k > limit 40k
-		await wrapper.findAll("button").find((b) => b.text() === "Сохранить")!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text() === "Сохранить")!
+			.trigger("click");
 		await flushPromises();
 		expect(keptSpy).not.toHaveBeenCalled();
 	});
@@ -518,7 +542,7 @@ describe("BudgetsView – delete budget", () => {
 describe("BudgetsView – budget notifications watch", () => {
 	it("fires notifyBudgetWarning when progress reaches 80%", async () => {
 		useCategoriesStore().categories = [makeCategory()];
-		const wrapper = await mountView();
+		await mountView();
 		// Set cache AFTER mount (loadCurrentAndPrevMonth overwrites pre-mount cache)
 		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 40_000 })]);
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
@@ -529,7 +553,7 @@ describe("BudgetsView – budget notifications watch", () => {
 
 	it("fires notifyBudgetWarning at 100% (overspent)", async () => {
 		useCategoriesStore().categories = [makeCategory()];
-		const wrapper = await mountView();
+		await mountView();
 		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 60_000 })]);
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
 		await flushPromises();
@@ -538,7 +562,7 @@ describe("BudgetsView – budget notifications watch", () => {
 
 	it("does NOT fire when notifyEnabled is false", async () => {
 		useCategoriesStore().categories = [makeCategory()];
-		const wrapper = await mountView();
+		await mountView();
 		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 40_000 })]);
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: false })];
 		await flushPromises();
@@ -547,7 +571,7 @@ describe("BudgetsView – budget notifications watch", () => {
 
 	it("does NOT fire when spend is below 80%", async () => {
 		useCategoriesStore().categories = [makeCategory()];
-		const wrapper = await mountView();
+		await mountView();
 		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 30_000 })]);
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
 		await flushPromises();
@@ -556,7 +580,7 @@ describe("BudgetsView – budget notifications watch", () => {
 
 	it("deduplicates: same budget key notified only once per component instance", async () => {
 		useCategoriesStore().categories = [makeCategory()];
-		const wrapper = await mountView();
+		await mountView();
 		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 40_000 })]);
 		// First trigger
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];

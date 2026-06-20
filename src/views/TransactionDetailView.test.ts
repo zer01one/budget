@@ -388,33 +388,51 @@ describe("TransactionDetailView – type tab switching", () => {
 
 	it("income tab activates on click", async () => {
 		const wrapper = await openEdit();
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Доход")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Доход")!
+			.trigger("click");
 		expect(wrapper.find(".type-tab--active").text()).toBe("Доход");
 	});
 
 	it("income tab shows income categories", async () => {
 		const wrapper = await openEdit();
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Доход")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Доход")!
+			.trigger("click");
 		expect(wrapper.find(".cat-grid").text()).toContain("Salary");
 	});
 
 	it("transfer tab hides category grid", async () => {
 		const wrapper = await openEdit();
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Перевод")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Перевод")!
+			.trigger("click");
 		expect(wrapper.find(".cat-grid").exists()).toBe(false);
 	});
 
 	it("transfer tab shows toAccount field", async () => {
 		const wrapper = await openEdit();
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Перевод")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Перевод")!
+			.trigger("click");
 		expect(wrapper.text()).toContain("Счёт назначения");
 	});
 
 	it("switching type clears selected category", async () => {
 		const wrapper = await openEdit();
 		expect(wrapper.find(".cat-item--active").exists()).toBe(true);
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Доход")!.trigger("click");
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Расход")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Доход")!
+			.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Расход")!
+			.trigger("click");
 		expect(wrapper.find(".cat-item--active").exists()).toBe(false);
 	});
 });
@@ -473,7 +491,10 @@ describe("TransactionDetailView – saveEdit validation", () => {
 
 	it("shows toAccount error for transfer without toAccount", async () => {
 		const wrapper = await openEdit();
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Перевод")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Перевод")!
+			.trigger("click");
 		await saveBtn(wrapper).trigger("click");
 		expect(wrapper.text()).toContain("Выберите счёт назначения");
 	});
@@ -481,8 +502,14 @@ describe("TransactionDetailView – saveEdit validation", () => {
 	it("shows category error for expense without category", async () => {
 		const wrapper = await openEdit();
 		// Switch type twice to clear pre-selected category
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Доход")!.trigger("click");
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Расход")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Доход")!
+			.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Расход")!
+			.trigger("click");
 		await saveBtn(wrapper).trigger("click");
 		expect(wrapper.text()).toContain("Выберите категорию");
 	});
@@ -536,7 +563,10 @@ describe("TransactionDetailView – saveEdit success", () => {
 		accountsStore.accounts = [makeAccount(), makeAccount({ id: "acc-2", name: "Bank" })];
 		const { wrapper } = await mountView();
 		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		await wrapper.findAll(".type-tab").find((t) => t.text() === "Перевод")!.trigger("click");
+		await wrapper
+			.findAll(".type-tab")
+			.find((t) => t.text() === "Перевод")!
+			.trigger("click");
 		// toAccount select is the second select
 		const selects = wrapper.findAll("select");
 		await selects[1].setValue("acc-2");
@@ -577,7 +607,10 @@ describe("TransactionDetailView – deleteTx", () => {
 		const txStore = useTransactionsStore();
 		const { wrapper, router } = await mountView();
 		vi.spyOn(router, "back").mockImplementation(() => {});
-		await wrapper.findAll("button").find((b) => b.text().includes("Удалить"))!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text().includes("Удалить"))!
+			.trigger("click");
 		await flushPromises();
 		expect(txStore.allCached.find((t) => t.id === "tx-1")?.isDeleted).toBe(true);
 	});
@@ -586,7 +619,10 @@ describe("TransactionDetailView – deleteTx", () => {
 		confirmMock.mockReturnValue(true);
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back").mockImplementation(() => {});
-		await wrapper.findAll("button").find((b) => b.text().includes("Удалить"))!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text().includes("Удалить"))!
+			.trigger("click");
 		await flushPromises();
 		expect(backSpy).toHaveBeenCalledOnce();
 	});
@@ -595,7 +631,10 @@ describe("TransactionDetailView – deleteTx", () => {
 		confirmMock.mockReturnValue(false);
 		const txStore = useTransactionsStore();
 		const { wrapper } = await mountView();
-		await wrapper.findAll("button").find((b) => b.text().includes("Удалить"))!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text().includes("Удалить"))!
+			.trigger("click");
 		expect(txStore.allCached.find((t) => t.id === "tx-1")?.isDeleted).toBe(false);
 	});
 
@@ -603,7 +642,10 @@ describe("TransactionDetailView – deleteTx", () => {
 		confirmMock.mockReturnValue(false);
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back");
-		await wrapper.findAll("button").find((b) => b.text().includes("Удалить"))!.trigger("click");
+		await wrapper
+			.findAll("button")
+			.find((b) => b.text().includes("Удалить"))!
+			.trigger("click");
 		expect(backSpy).not.toHaveBeenCalled();
 	});
 });
