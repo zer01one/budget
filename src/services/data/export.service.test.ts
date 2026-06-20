@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { transactionsToCSV } from "../export.service";
+import { transactionsToCSV } from "./export.service";
 import type { Transaction, Account, Category } from "@/types";
 
 function makeAccount(overrides: Partial<Account> = {}): Account {

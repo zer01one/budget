@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { parseCsv, autoDetectMapping, applyMapping, previewRowsToTransactions } from "../import.service";
-import type { ColumnMapping } from "../import.service";
+import { parseCsv, autoDetectMapping, applyMapping, previewRowsToTransactions } from "./import.service";
+import type { ColumnMapping } from "./import.service";
 
 // ── parseCsv ──────────────────────────────────────────────────────────────────
 
@@ -372,5 +372,73 @@ describe("previewRowsToTransactions", () => {
 			amount: (i + 1) * 100
 		}));
 		expect(previewRowsToTransactions(rows, baseMapping, "d")).toHaveLength(5);
+	});
+});
+
+// ── gaps: autoDetectMapping extra keywords ────────────────────────────────────
+
+describe("autoDetectMapping – additional keywords", () => {
+	it("detects 'итого' as amount column", () => {
+		const m = autoDetectMapping(["Дата", "Итого", "Описание"]);
+		expect(m.amount).toBe("Итого");
+	});
+
+	it("detects 'приход/расход' as type column", () => {
+		const m = autoDetectMapping(["Дата", "Сумма", "Приход/Расход"]);
+		expect(m.type).toBe("Приход/Расход");
+	});
+
+	it("detects 'direction' as type column", () => {
+		const m = autoDetectMapping(["Date", "Amount", "Direction"]);
+		expect(m.type).toBe("Direction");
+	});
+
+	it("detects 'наименование' as comment column", () => {
+		const m = autoDetectMapping(["Дата", "Сумма", "Наименование"]);
+		expect(m.comment).toBe("Наименование");
+	});
+});
+
+// ── gaps: applyMapping type keywords ─────────────────────────────────────────
+
+describe("applyMapping – remaining type keywords", () => {
+	it("type column containing 'приход' → income", () => {
+		const m = { ...baseMapping, type: "Тип" };
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "100", Описание: "", Тип: "Приход" }], m);
+		expect(rows[0].type).toBe("income");
+	});
+
+	it("type column containing '+' → income", () => {
+		const m = { ...baseMapping, type: "Тип" };
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "100", Описание: "", Тип: "+" }], m);
+		expect(rows[0].type).toBe("income");
+	});
+
+	it("type column is present but value is empty → falls back to sign", () => {
+		const m = { ...baseMapping, type: "Тип" };
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "-200", Описание: "", Тип: "" }], m);
+		expect(rows[0].type).toBe("expense");
+	});
+});
+
+// ── gaps: applyMapping edge cases ─────────────────────────────────────────────
+
+describe("applyMapping – edge cases", () => {
+	it("comment boundary: exactly 200 chars is preserved intact", () => {
+		const exactly200 = "x".repeat(200);
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "100", Описание: exactly200 }], baseMapping);
+		expect(rows[0].comment).toHaveLength(200);
+		expect(rows[0].comment).toBe(exactly200);
+	});
+
+	it("empty amount string returns invalid row with amount 0", () => {
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "", Описание: "" }], baseMapping);
+		expect(rows[0].valid).toBe(false);
+		expect(rows[0].amount).toBe(0);
+	});
+
+	it("multiple spaces in amount are stripped", () => {
+		const rows = applyMapping([{ Дата: "2026-01-01", Сумма: "1 500 000", Описание: "" }], baseMapping);
+		expect(rows[0].amount).toBe(1500000);
 	});
 });

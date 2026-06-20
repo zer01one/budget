@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useGamificationStore } from "../gamification.store";
+import { useGamificationStore } from "./gamification.store";
 import { LEVEL_THRESHOLDS } from "@/types";
 import type { Transaction } from "@/types";
 
@@ -518,5 +518,101 @@ describe("known behavior: streak update inside onTransactionAdded is dead code",
 		expect(store.state.currentStreak).toBe(0);
 
 		vi.useRealTimers();
+	});
+});
+
+// ── levelLabel computed ───────────────────────────────────────────────────────
+
+describe("levelLabel", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("returns Russian label for novice", () => {
+		const store = useGamificationStore();
+		store.state.level = "novice";
+		expect(store.levelLabel).toBe("Новичок");
+	});
+
+	it("returns Russian label for apprentice", () => {
+		const store = useGamificationStore();
+		store.state.level = "apprentice";
+		expect(store.levelLabel).toBe("Ученик");
+	});
+
+	it("returns Russian label for practitioner", () => {
+		const store = useGamificationStore();
+		store.state.level = "practitioner";
+		expect(store.levelLabel).toBe("Практик");
+	});
+
+	it("returns Russian label for expert", () => {
+		const store = useGamificationStore();
+		store.state.level = "expert";
+		expect(store.levelLabel).toBe("Эксперт");
+	});
+
+	it("returns Russian label for master", () => {
+		const store = useGamificationStore();
+		store.state.level = "master";
+		expect(store.levelLabel).toBe("Мастер");
+	});
+});
+
+// ── checkStreakMilestones – negative cases ────────────────────────────────────
+
+describe("checkStreakMilestones – no milestone triggered", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+	afterEach(() => vi.useRealTimers());
+
+	it("streak 6 does not trigger streak_7 milestone", () => {
+		const store = useGamificationStore();
+		seedAchievements(store);
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-20"));
+		store.state.lastLoggedDate = "2026-06-19";
+		store.state.currentStreak = 5;
+		store.checkDailyStreak();
+		const ach = store.state.achievements.find((a) => a.key === "streak_7");
+		expect(ach?.unlockedAt).toBeNull();
+		expect(store.state.xp).toBe(5);
+	});
+
+	it("streak 29 does not trigger streak_30 milestone", () => {
+		const store = useGamificationStore();
+		seedAchievements(store);
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-20"));
+		store.state.lastLoggedDate = "2026-06-19";
+		store.state.currentStreak = 28;
+		store.checkDailyStreak();
+		const ach = store.state.achievements.find((a) => a.key === "streak_30");
+		expect(ach?.unlockedAt).toBeNull();
+	});
+
+	it("streak 8 does not re-trigger streak_7 (already unlocked)", () => {
+		const store = useGamificationStore();
+		seedAchievements(store);
+		store.state.achievements.find((a) => a.key === "streak_7")!.unlockedAt = "2026-06-13T00:00:00Z";
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-20"));
+		store.state.lastLoggedDate = "2026-06-19";
+		store.state.currentStreak = 7;
+		const xpBefore = store.state.xp;
+		store.checkDailyStreak();
+		expect(store.state.xp).toBe(xpBefore + 5);
+	});
+});
+
+// ── unlockAchievement – key not in achievements array ────────────────────────
+
+describe("unlockAchievement – key not in achievements array", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("does nothing silently when achievement key is not found in array", () => {
+		const store = useGamificationStore();
+		store.state.achievements = [];
+		const xpBefore = store.state.xp;
+		for (let i = 0; i < 10; i++) store.onCategoryCreated();
+		expect(store.state.xp).toBe(xpBefore);
+		expect(store.popToast()).toBeNull();
 	});
 });

@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { vaultService } from "../vault.service";
+﻿import { describe, it, expect } from "vitest";
+import { vaultService } from "./vault.service";
 
-// computeLevel is a pure function — no FS needed
+// computeLevel is a pure function вЂ” no FS needed
 describe("vaultService.computeLevel", () => {
 	it("returns novice at xp=0", () => {
 		expect(vaultService.computeLevel(0)).toBe("novice");
@@ -51,3 +51,4 @@ describe("vaultService.computeLevel", () => {
 		expect(vaultService.computeLevel(1)).toBe("novice");
 	});
 });
+

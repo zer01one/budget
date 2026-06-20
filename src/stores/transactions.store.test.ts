@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useTransactionsStore } from "../transactions.store";
+import { useTransactionsStore } from "./transactions.store";
 import type { Transaction } from "@/types";
 
 // Mock all FS-touching modules so pure methods can be tested without platform APIs
@@ -227,5 +227,80 @@ describe("clearConflict", () => {
 		};
 		store.clearConflict();
 		expect(store.lastConflict).toBeNull();
+	});
+});
+
+// ── loadMonth – isLoading flag and conflict propagation ───────────────────────
+
+import { transactionsService } from "@/services/data/transactions.service";
+
+describe("loadMonth – isLoading lifecycle", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("isLoading starts false", () => {
+		const store = useTransactionsStore();
+		expect(store.isLoading).toBe(false);
+	});
+
+	it("isLoading is false after load completes (service returns null)", async () => {
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue(null);
+		const store = useTransactionsStore();
+		await store.loadMonth("2026-06");
+		expect(store.isLoading).toBe(false);
+	});
+
+	it("isLoading is false after load completes (service returns data)", async () => {
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue({ transactions: [], conflict: null });
+		const store = useTransactionsStore();
+		await store.loadMonth("2026-06");
+		expect(store.isLoading).toBe(false);
+	});
+
+	it("sets lastConflict when service reports a conflict", async () => {
+		const conflict = {
+			file: "transactions/2026-06.json",
+			localUpdatedAt: "2026-06-01T10:00:00Z",
+			diskModifiedAt: "2026-06-01T12:00:00Z",
+			resolvedBy: "disk" as const
+		};
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue({ transactions: [], conflict });
+		const store = useTransactionsStore();
+		await store.loadMonth("2026-06");
+		expect(store.lastConflict).toEqual(conflict);
+	});
+
+	it("does not set lastConflict when service returns no conflict", async () => {
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue({ transactions: [], conflict: null });
+		const store = useTransactionsStore();
+		await store.loadMonth("2026-06");
+		expect(store.lastConflict).toBeNull();
+	});
+
+	it("caches empty array when service returns null (file not found)", async () => {
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue(null);
+		const store = useTransactionsStore();
+		await store.loadMonth("2026-06");
+		expect(store.getByMonth("2026-06")).toEqual([]);
+	});
+
+	it("skips re-loading an already loaded month", async () => {
+		vi.mocked(transactionsService.loadMonth).mockClear();
+		const store = useTransactionsStore();
+		store.loadedMonths.add("2026-06");
+		await store.loadMonth("2026-06");
+		expect(transactionsService.loadMonth).not.toHaveBeenCalled();
+	});
+});
+
+// ── computeAccountBalance – self-transfer edge case ───────────────────────────
+
+describe("computeAccountBalance – self-transfer", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("both debit and credit paths apply when accountId === toAccountId (net zero)", () => {
+		const store = useTransactionsStore();
+		store._cache.set("2026-06", [makeTx({ type: "transfer", amount: 300, accountId: "acc-1", toAccountId: "acc-1" })]);
+		store.loadedMonths.add("2026-06");
+		expect(store.computeAccountBalance("acc-1", 500)).toBe(500);
 	});
 });
