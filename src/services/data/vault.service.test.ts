@@ -51,4 +51,3 @@ describe("vaultService.computeLevel", () => {
 		expect(vaultService.computeLevel(1)).toBe("novice");
 	});
 });
-

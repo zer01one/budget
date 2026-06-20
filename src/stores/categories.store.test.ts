@@ -296,4 +296,3 @@ describe("deleteCategory", () => {
 		expect(store.categories.find((c) => c.id === "b")?.isArchived).toBe(false);
 	});
 });
-

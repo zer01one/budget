@@ -117,7 +117,14 @@ describe("daily rule", () => {
 	it("children inherit template fields (amount, accountId, comment, tags)", async () => {
 		vi.setSystemTime(new Date("2026-06-20T12:00:00Z"));
 		const store = useTransactionsStore();
-		const template = makeTemplate({ date: "2026-06-19", recurringRule: "daily", amount: 999, accountId: "acc-42", comment: "gym", tags: ["health"] });
+		const template = makeTemplate({
+			date: "2026-06-19",
+			recurringRule: "daily",
+			amount: 999,
+			accountId: "acc-42",
+			comment: "gym",
+			tags: ["health"]
+		});
 		seedCache(store, "2026-06", [template]);
 		await processRecurringTransactions();
 		const child = store.allCached.find((t) => t.recurringParentId === "tmpl-1");
@@ -529,4 +536,3 @@ describe("monthly rule вЂ“ leap year edge case", () => {
 		expect(children[0].date).toBe("2026-05-01"); // April 31 overflows to May 1
 	});
 });
-

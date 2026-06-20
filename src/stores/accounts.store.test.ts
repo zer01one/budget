@@ -158,7 +158,15 @@ describe("addAccount", () => {
 
 	it("preserves all input fields", async () => {
 		const store = useAccountsStore();
-		const input = makeInput({ name: "Crypto", type: "crypto", currency: "USD", initialBalance: 500, color: "#ff0000", sortOrder: 3, notes: "btc" });
+		const input = makeInput({
+			name: "Crypto",
+			type: "crypto",
+			currency: "USD",
+			initialBalance: 500,
+			color: "#ff0000",
+			sortOrder: 3,
+			notes: "btc"
+		});
 		const result = await store.addAccount(input);
 		expect(result.name).toBe("Crypto");
 		expect(result.type).toBe("crypto");
@@ -280,4 +288,3 @@ describe("deleteAccount", () => {
 		expect(store.accounts[0].isArchived).toBe(false);
 	});
 });
-

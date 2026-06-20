@@ -224,4 +224,3 @@ describe("transactionsService.loadMonth вЂ“ conflict detection", () => {
 		expect(result?.transactions.map((t) => t.id)).toEqual(["a", "c"]);
 	});
 });
-

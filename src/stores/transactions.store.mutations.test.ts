@@ -100,7 +100,16 @@ describe("addTransaction", () => {
 
 	it("preserves all input fields", async () => {
 		const store = useTransactionsStore();
-		const input = makeInput({ type: "income", amount: 500, currency: "USD", date: "2026-03-01", time: "08:00", accountId: "acc-99", comment: "bonus", tags: ["work"] });
+		const input = makeInput({
+			type: "income",
+			amount: 500,
+			currency: "USD",
+			date: "2026-03-01",
+			time: "08:00",
+			accountId: "acc-99",
+			comment: "bonus",
+			tags: ["work"]
+		});
 		const result = await store.addTransaction(input);
 		expect(result.type).toBe("income");
 		expect(result.amount).toBe(500);
@@ -292,4 +301,3 @@ describe("loadCurrentAndPrevMonth", () => {
 		expect(transactionsService.loadMonth).not.toHaveBeenCalled();
 	});
 });
-

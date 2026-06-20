@@ -270,4 +270,3 @@ describe("deleteBudget", () => {
 		expect(store.getForMonth("2026-06")).toHaveLength(0);
 	});
 });
-
