@@ -1,6 +1,7 @@
 ﻿import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useBudgetsStore } from "./budgets.store";
+import { getFileSystemAdapter } from "@/services/filesystem";
 import type { BudgetEntry } from "@/types";
 
 vi.mock("@/services/filesystem", () => ({
@@ -46,7 +47,83 @@ function makeInput(overrides: Partial<AddInput> = {}): AddInput {
 	};
 }
 
-// в”Ђв”Ђ getForMonth в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// --- load ---
+
+describe("load", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("keeps budgets empty when readJson returns null", async () => {
+		const store = useBudgetsStore();
+		await store.load();
+		expect(store.budgets).toEqual([]);
+	});
+
+	it("populates budgets when readJson returns data", async () => {
+		const mockBudget = makeBudget({ id: "loaded-b" });
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { budgets: [mockBudget] }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useBudgetsStore();
+		await store.load();
+		expect(store.budgets).toEqual([mockBudget]);
+	});
+
+	it("replaces existing budgets on second load", async () => {
+		const store = useBudgetsStore();
+		store.budgets = [makeBudget({ id: "old" })];
+		const fresh = makeBudget({ id: "new" });
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { budgets: [fresh] }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		await store.load();
+		expect(store.budgets).toHaveLength(1);
+		expect(store.budgets[0].id).toBe("new");
+	});
+
+	it("falls back to empty array when budgets key is missing in data", async () => {
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: {}, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useBudgetsStore();
+		await store.load();
+		expect(store.budgets).toEqual([]);
+	});
+});
+
+// --- save ---
+
+describe("save", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("calls writeJson with budgets.json and current budgets", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useBudgetsStore();
+		const b = makeBudget({ id: "s1" });
+		store.budgets = [b];
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("budgets.json", { budgets: [b] });
+	});
+
+	it("calls writeJson with empty array when budgets is empty", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useBudgetsStore();
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("budgets.json", { budgets: [] });
+	});
+});
+
+// ──в"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђ
 
 describe("getForMonth", () => {
 	beforeEach(() => setActivePinia(createPinia()));
@@ -78,7 +155,7 @@ describe("getForMonth", () => {
 	});
 });
 
-// в”Ђв”Ђ currentMonth в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// в"Ђв"Ђ currentMonth в"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђ
 
 describe("currentMonth", () => {
 	afterEach(() => vi.useRealTimers());
@@ -103,7 +180,7 @@ describe("currentMonth", () => {
 	});
 });
 
-// в”Ђв”Ђ addBudget в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// в"Ђв"Ђ addBudget в"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђ
 
 describe("addBudget", () => {
 	beforeEach(() => setActivePinia(createPinia()));
@@ -162,9 +239,15 @@ describe("addBudget", () => {
 		const b = await store.addBudget(makeInput());
 		expect(a.id).not.toBe(b.id);
 	});
+
+	it("returned entry is the same object that ends up in the budgets array", async () => {
+		const store = useBudgetsStore();
+		const result = await store.addBudget(makeInput());
+		expect(store.budgets).toContainEqual(result);
+	});
 });
 
-// в”Ђв”Ђ updateBudget в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// в"Ђв"Ђ updateBudget в"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђ
 
 describe("updateBudget", () => {
 	beforeEach(() => setActivePinia(createPinia()));
@@ -233,9 +316,17 @@ describe("updateBudget", () => {
 		await store.updateBudget("a", { limitAmount: 999 });
 		expect(store.budgets[1].limitAmount).toBe(2000);
 	});
+
+	it("preserves fields not in patch", async () => {
+		const store = useBudgetsStore();
+		store.budgets.push(makeBudget({ id: "a", categoryId: "cat-orig", month: "2026-06" }));
+		await store.updateBudget("a", { limitAmount: 999 });
+		expect(store.budgets[0].categoryId).toBe("cat-orig");
+		expect(store.budgets[0].month).toBe("2026-06");
+	});
 });
 
-// в”Ђв”Ђ deleteBudget в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// в"Ђв"Ђ deleteBudget в"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђв"Ђ
 
 describe("deleteBudget", () => {
 	beforeEach(() => setActivePinia(createPinia()));
