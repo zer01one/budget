@@ -1,6 +1,7 @@
 ﻿import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useCategoriesStore } from "./categories.store";
+import { getFileSystemAdapter } from "@/services/filesystem";
 import type { Category } from "@/types";
 
 vi.mock("@/services/filesystem", () => ({
@@ -294,5 +295,89 @@ describe("deleteCategory", () => {
 		store.categories = [makeCat({ id: "a", isSystem: false }), makeCat({ id: "b", isArchived: false })];
 		await store.deleteCategory("a");
 		expect(store.categories.find((c) => c.id === "b")?.isArchived).toBe(false);
+	});
+});
+
+// ── load ──────────────────────────────────────────────────────────────────────
+
+describe("load", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("sets isLoaded to true when readJson returns null", async () => {
+		const store = useCategoriesStore();
+		expect(store.isLoaded).toBe(false);
+		await store.load();
+		expect(store.isLoaded).toBe(true);
+	});
+
+	it("keeps categories empty when readJson returns null", async () => {
+		const store = useCategoriesStore();
+		await store.load();
+		expect(store.categories).toHaveLength(0);
+	});
+
+	it("populates categories when readJson returns data", async () => {
+		const stored = [makeCat({ id: "from-file" })];
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { categories: stored }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useCategoriesStore();
+		await store.load();
+		expect(store.categories).toHaveLength(1);
+		expect(store.categories[0].id).toBe("from-file");
+	});
+
+	it("sets isLoaded to true after loading data", async () => {
+		const stored = [makeCat()];
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { categories: stored }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useCategoriesStore();
+		await store.load();
+		expect(store.isLoaded).toBe(true);
+	});
+
+	it("does not overwrite categories when load called twice and second returns null", async () => {
+		const stored = [makeCat({ id: "first" })];
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { categories: stored }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useCategoriesStore();
+		await store.load();
+		await store.load();
+		expect(store.categories).toHaveLength(1);
+	});
+});
+
+// ── save ──────────────────────────────────────────────────────────────────────
+
+describe("save", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("calls writeJson with current categories", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useCategoriesStore();
+		const cat = makeCat({ id: "x" });
+		store.categories = [cat];
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("categories.json", { categories: [cat] });
+	});
+
+	it("calls writeJson with empty array when no categories", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useCategoriesStore();
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("categories.json", { categories: [] });
 	});
 });
