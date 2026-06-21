@@ -376,10 +376,10 @@ describe("AddTransactionView – category grid", () => {
 		expect(items[1].classes()).toContain("cat-item--active");
 	});
 
-	it("category icon slice is shown (first 2 chars)", async () => {
-		useCategoriesStore().categories = [makeCategory({ icon: "FO_extra", type: "expense" })];
+	it("category icon is shown", async () => {
+		useCategoriesStore().categories = [makeCategory({ icon: "food", type: "expense" })];
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".cat-item__icon").text()).toBe("FO");
+		expect(wrapper.find(".cat-item__icon svg").exists()).toBe(true);
 	});
 
 	it("category with no icon renders empty icon span", async () => {

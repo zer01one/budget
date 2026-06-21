@@ -168,7 +168,7 @@ describe("BudgetsView – render states", () => {
 		useCategoriesStore().categories = [makeCategory()];
 		const wrapper = await mountView();
 		expect(wrapper.find(".budget-card__cat-name").text()).toContain("Еда");
-		expect(wrapper.find(".budget-card__cat-icon").text()).toContain("🍔");
+		expect(wrapper.find(".budget-card__cat-icon svg").exists()).toBe(true);
 	});
 
 	it("falls back to '—' for unknown category", async () => {

@@ -171,9 +171,9 @@ describe("AccountDetailView – account found", () => {
 	});
 
 	it("balance-hero shows account icon", async () => {
-		useAccountsStore().accounts = [makeAccount({ icon: "AB" })];
+		useAccountsStore().accounts = [makeAccount({ icon: "wallet" })];
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".balance-hero__icon").text()).toBe("AB");
+		expect(wrapper.find(".balance-hero__icon svg").exists()).toBe(true);
 	});
 
 	it("balance-hero shows currency", async () => {
@@ -357,11 +357,11 @@ describe("AccountDetailView – category display", () => {
 		useAccountsStore().accounts = [makeAccount()];
 	});
 
-	it("shows ↔ icon when categoryId is null", async () => {
+	it("shows transfer icon when categoryId is null", async () => {
 		const { wrapper } = await mountView();
 		useTransactionsStore()._cache.set("2026-06", [makeTx({ categoryId: null })]);
 		await nextTick();
-		expect(wrapper.find(".tx-row__icon").text()).toBe("↔");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
 	it("shows 'Перевод' name when categoryId is null", async () => {
@@ -379,12 +379,12 @@ describe("AccountDetailView – category display", () => {
 		expect(wrapper.find(".tx-row__name").text()).toBe("Food");
 	});
 
-	it("shows first 2 chars of category icon when categoryId is set", async () => {
+	it("shows category icon when categoryId is set", async () => {
 		const { wrapper } = await mountView();
-		useCategoriesStore().categories = [makeCategory({ id: "cat-1", icon: "AB_more" })];
+		useCategoriesStore().categories = [makeCategory({ id: "cat-1", icon: "food" })];
 		useTransactionsStore()._cache.set("2026-06", [makeTx({ categoryId: "cat-1" })]);
 		await nextTick();
-		expect(wrapper.find(".tx-row__icon").text()).toBe("AB");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 });
 

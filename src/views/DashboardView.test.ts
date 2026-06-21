@@ -478,23 +478,23 @@ describe("DashboardView – recent transactions list", () => {
 		expect(wrapper.findAll(".tx-row")).toHaveLength(5);
 	});
 
-	it("shows category icon (first 2 chars) when category found", async () => {
+	it("shows category icon when category found", async () => {
 		const { wrapper } = await mountView();
-		useCategoriesStore().categories = [makeCat({ id: "cat-1", icon: "AB" })];
+		useCategoriesStore().categories = [makeCat({ id: "cat-1", icon: "food" })];
 		await setCache(MONTH, [makeTx({ categoryId: "cat-1" })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("AB");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
-	it("shows • fallback when categoryId is null", async () => {
+	it("shows fallback icon when categoryId is null", async () => {
 		const { wrapper } = await mountView();
 		await setCache(MONTH, [makeTx({ categoryId: null })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("•");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
-	it("shows • fallback when category not found", async () => {
+	it("shows fallback icon when category not found", async () => {
 		const { wrapper } = await mountView();
 		await setCache(MONTH, [makeTx({ categoryId: "ghost" })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("•");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
 	it("shows category name when category found", async () => {
