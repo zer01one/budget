@@ -51,7 +51,7 @@ import {
 	PhSun,
 	PhTag,
 	PhArrowsLeftRight,
-	PhQuestion,
+	PhQuestion
 } from "@phosphor-icons/vue";
 
 export const ICON_MAP: Record<string, Component> = {
@@ -121,7 +121,7 @@ export const ICON_MAP: Record<string, Component> = {
 	tag: PhTag,
 	// Special
 	transfer: PhArrowsLeftRight,
-	other: PhQuestion,
+	other: PhQuestion
 };
 
 // Fallback for missing icon names

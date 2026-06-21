@@ -49,7 +49,7 @@ const CATEGORY_ICONS = [
 	"heart",
 	"sun",
 	"tag",
-	"other",
+	"other"
 ];
 </script>
 

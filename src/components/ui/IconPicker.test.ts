@@ -44,7 +44,7 @@ const EXPECTED_CATEGORY_ICONS = [
 	"heart",
 	"sun",
 	"tag",
-	"other",
+	"other"
 ];
 
 describe("ICON_MAP", () => {
