@@ -1,93 +1,440 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import { createPinia, setActivePinia } from "pinia";
+import { createRouter, createMemoryHistory } from "vue-router";
+import CategoriesView from "@/views/CategoriesView.vue";
+import { useCategoriesStore } from "@/stores/categories.store";
+import type { Category } from "@/types";
 
-type Category = {
-	id: string;
-	name: string;
-	type: "expense" | "income";
-	isArchived: boolean;
-	isSystem?: boolean;
-	color: string;
-	icon: string;
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+const { mockOnCategoryCreated } = vi.hoisted(() => ({
+	mockOnCategoryCreated: vi.fn()
+}));
+
+vi.mock("@/stores/gamification.store", () => ({
+	useGamificationStore: vi.fn(() => ({ onCategoryCreated: mockOnCategoryCreated }))
+}));
+
+vi.mock("@/stores/settings.store", () => ({
+	useSettingsStore: vi.fn(() => ({
+		settings: { deviceId: "test-device", theme: "dark", vaultPath: null, notificationsEnabled: false, reminderTime: "20:00" }
+	}))
+}));
+
+vi.mock("@/services/filesystem", () => ({
+	getFileSystemAdapter: vi.fn().mockResolvedValue({
+		readJson: vi.fn().mockResolvedValue(null),
+		writeJson: vi.fn().mockResolvedValue(undefined)
+	})
+}));
+
+// ── Globals ───────────────────────────────────────────────────────────────────
+
+beforeAll(() => {
+	vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn().mockResolvedValue({}) });
+});
+
+afterEach(() => {
+	vi.clearAllMocks();
+});
+
+// ── Stubs ─────────────────────────────────────────────────────────────────────
+
+const AppModalStub = {
+	template: '<div class="modal-stub" :data-title="title"><slot /><slot name="footer" /></div>',
+	props: ["title"],
+	emits: ["close"]
 };
 
-// Extracted displayed filter
-function displayed(categories: Category[], activeTab: "expense" | "income"): Category[] {
-	return categories.filter((c) => c.type === activeTab && !c.isArchived);
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+let catIdCounter = 0;
+
+function makeCat(overrides: Partial<Category> = {}): Category {
+	return {
+		id: `cat-${++catIdCounter}`,
+		name: "Продукты",
+		type: "expense",
+		color: "#EF4444",
+		icon: "🛒",
+		parentId: null,
+		isSystem: false,
+		isArchived: false,
+		sortOrder: 0,
+		updatedAt: "2026-01-01T00:00:00Z",
+		deviceId: "test-device",
+		version: 1,
+		...overrides
+	};
 }
 
-// Extracted validate
-function validate(name: string): Record<string, string> {
-	const errors: Record<string, string> = {};
-	if (!name.trim()) errors.name = "Введите название";
-	return errors;
+// ── Mount helper ──────────────────────────────────────────────────────────────
+
+let pinia: ReturnType<typeof createPinia>;
+
+async function mountView() {
+	const router = createRouter({
+		history: createMemoryHistory(),
+		routes: [{ path: "/", component: CategoriesView }]
+	});
+	router.push("/");
+	await router.isReady();
+	const wrapper = mount(CategoriesView, {
+		global: {
+			plugins: [pinia, router],
+			stubs: {
+				AppModal: AppModalStub,
+				ColorPicker: { template: "<div />", props: ["modelValue", "label"], emits: ["update:modelValue"] },
+				IconPicker: { template: "<div />", props: ["modelValue", "label"], emits: ["update:modelValue"] }
+			}
+		}
+	});
+	await flushPromises();
+	return wrapper;
 }
 
-// Extracted openEdit guard
-function canEdit(cat: Category): boolean {
-	return !cat.isSystem;
-}
+// ── List rendering ────────────────────────────────────────────────────────────
 
-const cats: Category[] = [
-	{ id: "e1", name: "Food", type: "expense", isArchived: false, color: "#f00", icon: "food" },
-	{ id: "e2", name: "Transport", type: "expense", isArchived: false, color: "#0f0", icon: "transport" },
-	{ id: "e3", name: "Old", type: "expense", isArchived: true, color: "#00f", icon: "other" },
-	{ id: "i1", name: "Salary", type: "income", isArchived: false, color: "#ff0", icon: "salary" },
-	{ id: "i2", name: "Gift", type: "income", isArchived: true, color: "#0ff", icon: "gift" }
-];
-
-describe("CategoriesView – displayed filter", () => {
-	it("expense tab shows only non-archived expense categories", () => {
-		const result = displayed(cats, "expense");
-		expect(result).toHaveLength(2);
-		expect(result.map((c) => c.id).sort()).toEqual(["e1", "e2"].sort());
+describe("CategoriesView – list rendering", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
 	});
 
-	it("income tab shows only non-archived income categories", () => {
-		const result = displayed(cats, "income");
-		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe("i1");
+	it("renders expense categories by default", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ name: "Еда", type: "expense" })] });
+		const wrapper = await mountView();
+		expect(wrapper.findAll(".cat-row")).toHaveLength(1);
+		expect(wrapper.find(".cat-row__name").text()).toBe("Еда");
 	});
 
-	it("archived categories not shown", () => {
-		expect(displayed(cats, "expense").find((c) => c.id === "e3")).toBeUndefined();
-		expect(displayed(cats, "income").find((c) => c.id === "i2")).toBeUndefined();
+	it("does not render income categories when expense tab is active", async () => {
+		useCategoriesStore().$patch({
+			categories: [makeCat({ name: "Зарплата", type: "income" }), makeCat({ name: "Еда", type: "expense" })]
+		});
+		const wrapper = await mountView();
+		const names = wrapper.findAll(".cat-row__name").map((n) => n.text());
+		expect(names).not.toContain("Зарплата");
+		expect(names).toContain("Еда");
 	});
 
-	it("empty result when no matching categories", () => {
-		expect(displayed([], "expense")).toHaveLength(0);
+	it("does not render archived categories", async () => {
+		useCategoriesStore().$patch({
+			categories: [makeCat({ name: "Старая", isArchived: true }), makeCat({ name: "Активная" })]
+		});
+		const wrapper = await mountView();
+		const names = wrapper.findAll(".cat-row__name").map((n) => n.text());
+		expect(names).not.toContain("Старая");
+		expect(names).toContain("Активная");
+	});
+
+	it("shows empty state when no matching categories", async () => {
+		const wrapper = await mountView();
+		expect(wrapper.find(".cat-list__empty").exists()).toBe(true);
+	});
+
+	it("hides empty state when categories exist", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat()] });
+		const wrapper = await mountView();
+		expect(wrapper.find(".cat-list__empty").exists()).toBe(false);
+	});
+
+	it("shows system badge and no delete button for system categories", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ isSystem: true })] });
+		const wrapper = await mountView();
+		expect(wrapper.find(".cat-row__system").exists()).toBe(true);
+		expect(wrapper.find(".cat-row__delete").exists()).toBe(false);
+	});
+
+	it("shows delete button and no system badge for non-system categories", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ isSystem: false })] });
+		const wrapper = await mountView();
+		expect(wrapper.find(".cat-row__delete").exists()).toBe(true);
+		expect(wrapper.find(".cat-row__system").exists()).toBe(false);
 	});
 });
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – tabs", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("expense tab is active by default", async () => {
+		const wrapper = await mountView();
+		const tabs = wrapper.findAll(".tab");
+		expect(tabs[0].classes()).toContain("tab--active");
+		expect(tabs[1].classes()).not.toContain("tab--active");
+	});
+
+	it("clicking income tab sets it as active", async () => {
+		const wrapper = await mountView();
+		await wrapper.findAll(".tab")[1].trigger("click");
+		const tabs = wrapper.findAll(".tab");
+		expect(tabs[1].classes()).toContain("tab--active");
+		expect(tabs[0].classes()).not.toContain("tab--active");
+	});
+
+	it("switching to income tab shows income categories", async () => {
+		useCategoriesStore().$patch({
+			categories: [makeCat({ name: "Зарплата", type: "income" }), makeCat({ name: "Еда", type: "expense" })]
+		});
+		const wrapper = await mountView();
+		await wrapper.findAll(".tab")[1].trigger("click");
+		const names = wrapper.findAll(".cat-row__name").map((n) => n.text());
+		expect(names).toContain("Зарплата");
+		expect(names).not.toContain("Еда");
+	});
+});
+
+// ── openAdd ───────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – openAdd", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("modal is hidden on initial render", async () => {
+		const wrapper = await mountView();
+		expect(wrapper.find(".modal-stub").exists()).toBe(false);
+	});
+
+	it("clicking '+ Добавить' opens the modal", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		expect(wrapper.find(".modal-stub").exists()).toBe(true);
+	});
+
+	it("modal title is 'Новая категория' for add", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		expect(wrapper.find(".modal-stub").attributes("data-title")).toBe("Новая категория");
+	});
+
+	it("form.type defaults to 'expense' when expense tab is active", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		const typeBtns = wrapper.findAll(".type-btn");
+		expect(typeBtns[0].classes()).toContain("type-btn--active");
+		expect(typeBtns[1].classes()).not.toContain("type-btn--active");
+	});
+
+	it("form.type defaults to 'income' when income tab is active", async () => {
+		const wrapper = await mountView();
+		await wrapper.findAll(".tab")[1].trigger("click");
+		await wrapper.find(".categories-view__header button").trigger("click");
+		const typeBtns = wrapper.findAll(".type-btn");
+		expect(typeBtns[1].classes()).toContain("type-btn--active");
+		expect(typeBtns[0].classes()).not.toContain("type-btn--active");
+	});
+
+	it("type selector is visible in add mode", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		expect(wrapper.find(".type-btns").exists()).toBe(true);
+	});
+});
+
+// ── openEdit ──────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – openEdit", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("clicking a non-system category opens 'Редактировать' modal", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ name: "Еда" })] });
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		expect(wrapper.find(".modal-stub").attributes("data-title")).toBe("Редактировать");
+	});
+
+	it("clicking a system category does not open modal", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ isSystem: true })] });
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		expect(wrapper.find(".modal-stub").exists()).toBe(false);
+	});
+
+	it("form name is pre-filled with category name on edit", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ name: "Кофе" })] });
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		const input = wrapper.find("input");
+		expect((input.element as HTMLInputElement).value).toBe("Кофе");
+	});
+
+	it("type selector is hidden in edit mode", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat()] });
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		expect(wrapper.find(".type-btns").exists()).toBe(false);
+	});
+});
+
+// ── Validation ────────────────────────────────────────────────────────────────
 
 describe("CategoriesView – validate", () => {
-	it("empty name → error", () => {
-		expect(validate("")).toHaveProperty("name");
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
 	});
 
-	it("whitespace-only name → error", () => {
-		expect(validate("   ")).toHaveProperty("name");
+	it("empty name shows validation error", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Создать"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".field__error").text()).toBe("Введите название");
 	});
 
-	it("valid name → no errors", () => {
-		expect(validate("Groceries")).not.toHaveProperty("name");
-	});
-
-	it("name with spaces trimmed → valid", () => {
-		expect(validate("  Groceries  ")).not.toHaveProperty("name");
+	it("save with empty name does not call addCategory", async () => {
+		const addSpy = vi.spyOn(useCategoriesStore(), "addCategory").mockResolvedValue(makeCat());
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Создать"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(addSpy).not.toHaveBeenCalled();
 	});
 });
 
-describe("CategoriesView – openEdit guard", () => {
-	it("system category cannot be edited", () => {
-		const cat: Category = { id: "sys1", name: "System", type: "expense", isArchived: false, isSystem: true, color: "#000", icon: "other" };
-		expect(canEdit(cat)).toBe(false);
+// ── save: add ─────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – save: add", () => {
+	let addSpy: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+		addSpy = vi.spyOn(useCategoriesStore(), "addCategory").mockResolvedValue(makeCat({ id: "new-cat" }));
 	});
 
-	it("non-system category can be edited", () => {
-		expect(canEdit(cats[0])).toBe(true);
+	it("calls addCategory with trimmed name and active type", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		await wrapper.find("input").setValue("  Транспорт  ");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Создать"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(addSpy).toHaveBeenCalledOnce();
+		expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ name: "Транспорт", type: "expense" }));
 	});
 
-	it("non-system without isSystem field → can edit", () => {
-		const cat: Category = { id: "x", name: "X", type: "expense", isArchived: false, color: "#000", icon: "other" };
-		expect(canEdit(cat)).toBe(true);
+	it("calls onCategoryCreated after successful add", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		await wrapper.find("input").setValue("Транспорт");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Создать"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(mockOnCategoryCreated).toHaveBeenCalledOnce();
+	});
+
+	it("closes modal after successful add", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		await wrapper.find("input").setValue("Транспорт");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Создать"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".modal-stub").exists()).toBe(false);
+	});
+});
+
+// ── save: edit ────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – save: edit", () => {
+	let updateSpy: ReturnType<typeof vi.spyOn>;
+	const existingCat = makeCat({ id: "edit-cat-id", name: "Еда", type: "expense" });
+
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+		useCategoriesStore().$patch({ categories: [existingCat] });
+		updateSpy = vi.spyOn(useCategoriesStore(), "updateCategory").mockResolvedValue(undefined);
+	});
+
+	it("calls updateCategory with correct id and patched name", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		await wrapper.find("input").setValue("Еда и напитки");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Сохранить"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(updateSpy).toHaveBeenCalledOnce();
+		expect(updateSpy).toHaveBeenCalledWith("edit-cat-id", expect.objectContaining({ name: "Еда и напитки" }));
+	});
+
+	it("does NOT call onCategoryCreated on edit", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Сохранить"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(mockOnCategoryCreated).not.toHaveBeenCalled();
+	});
+
+	it("closes modal after successful edit", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row").trigger("click");
+		const saveBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Сохранить"));
+		await saveBtn!.trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".modal-stub").exists()).toBe(false);
+	});
+});
+
+// ── delete ────────────────────────────────────────────────────────────────────
+
+describe("CategoriesView – delete", () => {
+	let deleteSpy: ReturnType<typeof vi.spyOn>;
+	const cat = makeCat({ id: "del-cat-id", name: "Спорт" });
+
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+		useCategoriesStore().$patch({ categories: [cat] });
+		deleteSpy = vi.spyOn(useCategoriesStore(), "deleteCategory").mockResolvedValue(undefined);
+	});
+
+	it("confirm → calls deleteCategory with the category id", async () => {
+		vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row__delete").trigger("click");
+		await flushPromises();
+		expect(deleteSpy).toHaveBeenCalledWith("del-cat-id");
+	});
+
+	it("cancel confirm → does NOT call deleteCategory", async () => {
+		vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row__delete").trigger("click");
+		await flushPromises();
+		expect(deleteSpy).not.toHaveBeenCalled();
+	});
+});
+
+// ── cancel button ─────────────────────────────────────────────────────────────
+
+describe("CategoriesView – cancel", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("clicking Отмена closes modal", async () => {
+		const wrapper = await mountView();
+		await wrapper.find(".categories-view__header button").trigger("click");
+		expect(wrapper.find(".modal-stub").exists()).toBe(true);
+		const cancelBtn = wrapper.findAll(".modal-stub button").find((b) => b.text().includes("Отмена"));
+		await cancelBtn!.trigger("click");
+		expect(wrapper.find(".modal-stub").exists()).toBe(false);
 	});
 });

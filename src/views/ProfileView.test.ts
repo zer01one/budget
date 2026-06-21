@@ -1,112 +1,595 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import { createPinia, setActivePinia } from "pinia";
+import { createRouter, createMemoryHistory } from "vue-router";
+import { nextTick } from "vue";
+import ProfileView from "@/views/ProfileView.vue";
+import { useGamificationStore } from "@/stores/gamification.store";
+import { useTransactionsStore } from "@/stores/transactions.store";
+import { useAccountsStore } from "@/stores/accounts.store";
+import { useCategoriesStore } from "@/stores/categories.store";
+import type { Achievement } from "@/types";
 
-// Unit tests for ProfileView logic
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-describe("ProfileView – toggleNotifications logic", () => {
-	async function makeToggle(initialEnabled: boolean) {
-		let notifEnabled = initialEnabled;
-		const mockRequestPermission = vi.fn(async () => true);
-		const mockSchedule = vi.fn(async () => {});
-		const mockCancel = vi.fn(async () => {});
-		const mockSave = vi.fn(async () => {});
-		const settingsState = { notificationsEnabled: initialEnabled };
+const { mockExportCSV, mockExportJSON, mockRequestPermission, mockScheduleReminder, mockCancelReminder, mockSettingsSave, mockSetTheme } = vi.hoisted(
+	() => ({
+		mockExportCSV: vi.fn().mockResolvedValue(undefined),
+		mockExportJSON: vi.fn().mockResolvedValue(undefined),
+		mockRequestPermission: vi.fn().mockResolvedValue(true),
+		mockScheduleReminder: vi.fn().mockResolvedValue(undefined),
+		mockCancelReminder: vi.fn().mockResolvedValue(undefined),
+		mockSettingsSave: vi.fn().mockResolvedValue(undefined),
+		mockSetTheme: vi.fn().mockResolvedValue(undefined)
+	})
+);
 
-		async function toggleNotifications(time: string) {
-			notifEnabled = !notifEnabled;
-			if (notifEnabled) {
-				const granted = await mockRequestPermission();
-				if (!granted) {
-					notifEnabled = false;
-					return;
-				}
-				await mockSchedule(time);
-			} else {
-				await mockCancel();
-			}
-			settingsState.notificationsEnabled = notifEnabled;
-			await mockSave();
-		}
+// Settings data — mutated per test in beforeEach
+let settingsData = {
+	notificationsEnabled: false,
+	reminderTime: "20:00",
+	theme: "dark" as "dark" | "light",
+	vaultPath: null as string | null,
+	deviceId: "test-device"
+};
 
-		return {
-			toggleNotifications,
-			mockRequestPermission,
-			mockSchedule,
-			mockCancel,
-			mockSave,
-			settingsState,
-			get enabled() {
-				return notifEnabled;
-			}
-		};
+vi.mock("@/stores/settings.store", () => ({
+	useSettingsStore: vi.fn(() => ({
+		settings: settingsData,
+		save: mockSettingsSave,
+		setTheme: mockSetTheme
+	}))
+}));
+
+vi.mock("@/services/data/export.service", () => ({
+	exportTransactionsCSV: mockExportCSV,
+	exportVaultJSON: mockExportJSON
+}));
+
+vi.mock("@/services/notifications.service", () => ({
+	requestNotificationPermission: mockRequestPermission,
+	scheduleDailyReminder: mockScheduleReminder,
+	cancelDailyReminder: mockCancelReminder
+}));
+
+vi.mock("@/services/filesystem", () => ({
+	getFileSystemAdapter: vi.fn().mockResolvedValue({
+		readJson: vi.fn().mockResolvedValue(null),
+		writeJson: vi.fn().mockResolvedValue(undefined)
+	})
+}));
+
+vi.mock("@/services/data/transactions.service", () => ({
+	transactionsService: {
+		saveMonth: vi.fn().mockResolvedValue(undefined),
+		loadMonth: vi.fn().mockResolvedValue(null),
+		listMonths: vi.fn().mockResolvedValue([])
 	}
+}));
 
-	it("disabling → calls cancelDailyReminder and saves", async () => {
-		const { toggleNotifications, mockCancel, mockSave } = await makeToggle(true);
-		await toggleNotifications("20:00");
-		expect(mockCancel).toHaveBeenCalledOnce();
-		expect(mockSave).toHaveBeenCalledOnce();
+// ── Globals ───────────────────────────────────────────────────────────────────
+
+beforeAll(() => {
+	vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn().mockResolvedValue({}) });
+});
+
+afterEach(() => {
+	vi.clearAllMocks();
+	mockExportCSV.mockResolvedValue(undefined);
+	mockExportJSON.mockResolvedValue(undefined);
+	mockRequestPermission.mockResolvedValue(true);
+	mockScheduleReminder.mockResolvedValue(undefined);
+	mockCancelReminder.mockResolvedValue(undefined);
+	mockSettingsSave.mockResolvedValue(undefined);
+});
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+function makeAchievement(key: string, overrides: Partial<Achievement> = {}): Achievement {
+	return {
+		key: key as Achievement["key"],
+		unlockedAt: null,
+		progress: 0,
+		notifiedAt: null,
+		...overrides
+	};
+}
+
+// ── Mount helper ──────────────────────────────────────────────────────────────
+
+let pinia: ReturnType<typeof createPinia>;
+
+async function mountView() {
+	const router = createRouter({
+		history: createMemoryHistory(),
+		routes: [
+			{ path: "/", component: ProfileView },
+			{ path: "/import", component: { template: "<div/>" } }
+		]
+	});
+	router.push("/");
+	await router.isReady();
+	const wrapper = mount(ProfileView, {
+		global: { plugins: [pinia, router] }
+	});
+	await flushPromises();
+	return { wrapper, router };
+}
+
+// ── Level card ────────────────────────────────────────────────────────────────
+
+describe("ProfileView – level card", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
 	});
 
-	it("enabling with granted permission → calls scheduleDailyReminder", async () => {
-		const { toggleNotifications, mockSchedule } = await makeToggle(false);
-		await toggleNotifications("09:00");
-		expect(mockSchedule).toHaveBeenCalledWith("09:00");
+	it("renders level label", async () => {
+		useGamificationStore().state.level = "apprentice";
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".level-card__level").text()).toBe("Ученик");
 	});
 
-	it("enabling but permission denied → reverts to false", async () => {
-		const obj = await makeToggle(false);
-		obj.mockRequestPermission.mockResolvedValue(false);
-		await obj.toggleNotifications("09:00");
-		expect(obj.enabled).toBe(false);
+	it("renders xp value", async () => {
+		useGamificationStore().state.xp = 250;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".level-card__xp").text()).toContain("250");
 	});
 
-	it("enabling with denied permission → does not schedule", async () => {
-		const obj = await makeToggle(false);
-		obj.mockRequestPermission.mockResolvedValue(false);
-		await obj.toggleNotifications("09:00");
-		expect(obj.mockSchedule).not.toHaveBeenCalled();
+	it("shows 'До уровня' when nextLevel exists", async () => {
+		useGamificationStore().state.level = "novice";
+		useGamificationStore().state.xp = 0;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".level-card__next").text()).toContain("До уровня");
 	});
 
-	it("disabling → settingsState.notificationsEnabled = false", async () => {
-		const { toggleNotifications, settingsState } = await makeToggle(true);
-		await toggleNotifications("20:00");
-		expect(settingsState.notificationsEnabled).toBe(false);
+	it("shows xpToNextLevel in the next-level text", async () => {
+		useGamificationStore().state.level = "novice";
+		useGamificationStore().state.xp = 100;
+		const { wrapper } = await mountView();
+		// xpToNextLevel = 500 - 100 = 400
+		expect(wrapper.find(".level-card__next").text()).toContain("400");
+	});
+
+	it("shows 'Максимальный уровень' at master level", async () => {
+		useGamificationStore().state.level = "master";
+		useGamificationStore().state.xp = 6000;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".level-card__next").text()).toContain("Максимальный уровень");
+	});
+
+	it("level bar width reflects levelProgress", async () => {
+		// novice: xp=250 → (250-0)/(500-0)*100 = 50%
+		useGamificationStore().state.level = "novice";
+		useGamificationStore().state.xp = 250;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".level-card__bar").attributes("style")).toContain("50");
 	});
 });
 
-describe("ProfileView – saveNotifTime logic", () => {
-	it("does nothing when notifications disabled", async () => {
-		const notifEnabled = false;
-		const mockSchedule = vi.fn(async () => {});
-		const mockSave = vi.fn(async () => {});
-		const settingsState = { reminderTime: "20:00" };
+// ── Stats grid ────────────────────────────────────────────────────────────────
 
-		async function saveNotifTime(time: string) {
-			if (!notifEnabled) return;
-			settingsState.reminderTime = time;
-			await Promise.all([mockSchedule(time), mockSave()]);
-		}
-
-		await saveNotifTime("09:00");
-		expect(mockSchedule).not.toHaveBeenCalled();
-		expect(mockSave).not.toHaveBeenCalled();
+describe("ProfileView – stats grid", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
 	});
 
-	it("updates reminderTime and saves when enabled", async () => {
-		const notifEnabled = true;
-		const mockSchedule = vi.fn(async () => {});
-		const mockSave = vi.fn(async () => {});
-		const settingsState = { reminderTime: "20:00" };
+	it("shows totalTransactions", async () => {
+		useGamificationStore().state.totalTransactions = 42;
+		const { wrapper } = await mountView();
+		expect(wrapper.findAll(".stat__value")[0].text()).toContain("42");
+	});
 
-		async function saveNotifTime(time: string) {
-			if (!notifEnabled) return;
-			settingsState.reminderTime = time;
-			await Promise.all([mockSchedule(time), mockSave()]);
-		}
+	it("shows currentStreak", async () => {
+		useGamificationStore().state.currentStreak = 7;
+		const { wrapper } = await mountView();
+		expect(wrapper.findAll(".stat__value")[1].text()).toContain("7");
+	});
 
-		await saveNotifTime("08:30");
-		expect(settingsState.reminderTime).toBe("08:30");
-		expect(mockSchedule).toHaveBeenCalledWith("08:30");
-		expect(mockSave).toHaveBeenCalled();
+	it("shows longestStreak", async () => {
+		useGamificationStore().state.longestStreak = 30;
+		const { wrapper } = await mountView();
+		expect(wrapper.findAll(".stat__value")[2].text()).toContain("30");
+	});
+});
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+describe("ProfileView – achievements", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("renders one element per achievement", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction"), makeAchievement("streak_7"), makeAchievement("century")];
+		const { wrapper } = await mountView();
+		expect(wrapper.findAll(".achievement")).toHaveLength(3);
+	});
+
+	it("locked achievement has --locked class", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction", { unlockedAt: null })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement").classes()).toContain("achievement--locked");
+	});
+
+	it("unlocked achievement lacks --locked class", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction", { unlockedAt: "2026-06-01T00:00:00Z" })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement").classes()).not.toContain("achievement--locked");
+	});
+
+	it("unlocked achievement shows trophy icon", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction", { unlockedAt: "2026-06-01T00:00:00Z" })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__icon").text()).toContain("🏆");
+	});
+
+	it("locked achievement shows lock icon", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction")];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__icon").text()).toContain("🔒");
+	});
+
+	it("shows progress bar when locked and progress > 0", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("century", { unlockedAt: null, progress: 50 })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__progress-wrap").exists()).toBe(true);
+	});
+
+	it("progress bar width matches progress value", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("century", { unlockedAt: null, progress: 75 })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__progress").attributes("style")).toContain("75%");
+	});
+
+	it("no progress bar when progress = 0", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("century", { progress: 0 })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__progress-wrap").exists()).toBe(false);
+	});
+
+	it("no progress bar when achievement is unlocked (even if progress = 100)", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("century", { unlockedAt: "2026-06-01T00:00:00Z", progress: 100 })];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__progress-wrap").exists()).toBe(false);
+	});
+
+	it("renders achievement name from ACHIEVEMENT_LABELS", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction")];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__name").text()).toBe("Первый шаг");
+	});
+
+	it("renders achievement description from ACHIEVEMENT_LABELS", async () => {
+		useGamificationStore().state.achievements = [makeAchievement("first_transaction")];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".achievement__desc").text()).toContain("первую транзакцию");
+	});
+});
+
+// ── Import / Export ───────────────────────────────────────────────────────────
+
+describe("ProfileView – import section", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("import button navigates to /import", async () => {
+		const { wrapper, router } = await mountView();
+		const spy = vi.spyOn(router, "push");
+		const importRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Импортировать"));
+		await importRow!.find("button").trigger("click");
+		expect(spy).toHaveBeenCalledWith("/import");
+	});
+});
+
+describe("ProfileView – export section", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("no export error shown on initial render", async () => {
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".export-error").exists()).toBe(false);
+	});
+
+	it("CSV export button calls exportTransactionsCSV with store data", async () => {
+		const { wrapper } = await mountView();
+		const csvRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (CSV)"));
+		await csvRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(mockExportCSV).toHaveBeenCalledOnce();
+		expect(mockExportCSV).toHaveBeenCalledWith(useTransactionsStore().allCached, useAccountsStore().accounts, useCategoriesStore().categories);
+	});
+
+	it("JSON export button calls exportVaultJSON", async () => {
+		const { wrapper } = await mountView();
+		const jsonRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (JSON)"));
+		await jsonRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(mockExportJSON).toHaveBeenCalledOnce();
+	});
+
+	it("exportVaultJSON receives allCached", async () => {
+		const { wrapper } = await mountView();
+		const jsonRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (JSON)"));
+		await jsonRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(mockExportJSON).toHaveBeenCalledWith(useTransactionsStore().allCached);
+	});
+
+	it("shows Error.message on CSV failure", async () => {
+		mockExportCSV.mockRejectedValue(new Error("Нет доступа"));
+		const { wrapper } = await mountView();
+		const csvRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (CSV)"));
+		await csvRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".export-error").text()).toBe("Нет доступа");
+	});
+
+	it("shows Error.message on JSON failure", async () => {
+		mockExportJSON.mockRejectedValue(new Error("Ошибка JSON"));
+		const { wrapper } = await mountView();
+		const jsonRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (JSON)"));
+		await jsonRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".export-error").text()).toBe("Ошибка JSON");
+	});
+
+	it("shows fallback message for non-Error throws on CSV", async () => {
+		mockExportCSV.mockRejectedValue("generic");
+		const { wrapper } = await mountView();
+		const csvRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (CSV)"));
+		await csvRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".export-error").text()).toBe("Ошибка экспорта");
+	});
+
+	it("shows fallback message for non-Error throws on JSON", async () => {
+		mockExportJSON.mockRejectedValue("generic");
+		const { wrapper } = await mountView();
+		const jsonRow = wrapper.findAll(".export-row").find((r) => r.text().includes("Транзакции (JSON)"));
+		await jsonRow!.find("button").trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".export-error").text()).toBe("Ошибка экспорта");
+	});
+});
+
+// ── Notifications toggle ──────────────────────────────────────────────────────
+
+describe("ProfileView – notifications toggle", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("toggle has --on class when notifications enabled", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".toggle").classes()).toContain("toggle--on");
+	});
+
+	it("toggle lacks --on class when notifications disabled", async () => {
+		settingsData.notificationsEnabled = false;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".toggle").classes()).not.toContain("toggle--on");
+	});
+
+	it("enabling: calls requestNotificationPermission", async () => {
+		settingsData.notificationsEnabled = false;
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockRequestPermission).toHaveBeenCalledOnce();
+	});
+
+	it("enabling with granted permission: calls scheduleDailyReminder with reminderTime", async () => {
+		settingsData.notificationsEnabled = false;
+		settingsData.reminderTime = "09:00";
+		mockRequestPermission.mockResolvedValue(true);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockScheduleReminder).toHaveBeenCalledWith("09:00");
+	});
+
+	it("enabling with granted permission: saves settings", async () => {
+		settingsData.notificationsEnabled = false;
+		mockRequestPermission.mockResolvedValue(true);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockSettingsSave).toHaveBeenCalledOnce();
+	});
+
+	it("enabling with denied permission: does not call scheduleDailyReminder", async () => {
+		settingsData.notificationsEnabled = false;
+		mockRequestPermission.mockResolvedValue(false);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockScheduleReminder).not.toHaveBeenCalled();
+	});
+
+	it("enabling with denied permission: does not save settings", async () => {
+		settingsData.notificationsEnabled = false;
+		mockRequestPermission.mockResolvedValue(false);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockSettingsSave).not.toHaveBeenCalled();
+	});
+
+	it("enabling with denied permission: reverts toggle (no --on class)", async () => {
+		settingsData.notificationsEnabled = false;
+		mockRequestPermission.mockResolvedValue(false);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".toggle").classes()).not.toContain("toggle--on");
+	});
+
+	it("disabling: calls cancelDailyReminder", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockCancelReminder).toHaveBeenCalledOnce();
+	});
+
+	it("disabling: does not call requestNotificationPermission", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockRequestPermission).not.toHaveBeenCalled();
+	});
+
+	it("disabling: saves settings", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await flushPromises();
+		expect(mockSettingsSave).toHaveBeenCalledOnce();
+	});
+
+	it("toggle is disabled while async save is in flight", async () => {
+		settingsData.notificationsEnabled = false;
+		let resolvePerm!: (v: boolean) => void;
+		mockRequestPermission.mockReturnValue(
+			new Promise((r) => {
+				resolvePerm = r;
+			})
+		);
+		const { wrapper } = await mountView();
+		await wrapper.find(".toggle").trigger("click");
+		await nextTick();
+		expect(wrapper.find(".toggle").element.hasAttribute("disabled")).toBe(true);
+		resolvePerm(true);
+		await flushPromises();
+		expect(wrapper.find(".toggle").element.hasAttribute("disabled")).toBe(false);
+	});
+});
+
+// ── Notification time input ───────────────────────────────────────────────────
+
+describe("ProfileView – notification time input", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("time input hidden when notifications disabled", async () => {
+		settingsData.notificationsEnabled = false;
+		const { wrapper } = await mountView();
+		expect(wrapper.find("input[type='time']").exists()).toBe(false);
+	});
+
+	it("time input shown when notifications enabled", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		expect(wrapper.find("input[type='time']").exists()).toBe(true);
+	});
+
+	it("time input value matches reminderTime from settings", async () => {
+		settingsData.notificationsEnabled = true;
+		settingsData.reminderTime = "08:30";
+		const { wrapper } = await mountView();
+		expect((wrapper.find("input[type='time']").element as HTMLInputElement).value).toBe("08:30");
+	});
+
+	it("saveNotifTime: calls scheduleDailyReminder with new time when enabled", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		const input = wrapper.find("input[type='time']");
+		await input.setValue("09:30");
+		await input.trigger("change");
+		await flushPromises();
+		expect(mockScheduleReminder).toHaveBeenCalledWith("09:30");
+	});
+
+	it("saveNotifTime: calls save when enabled", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		await wrapper.find("input[type='time']").setValue("09:30");
+		await wrapper.find("input[type='time']").trigger("change");
+		await flushPromises();
+		expect(mockSettingsSave).toHaveBeenCalled();
+	});
+
+	it("saveNotifTime: updates reminderTime in settings", async () => {
+		settingsData.notificationsEnabled = true;
+		const { wrapper } = await mountView();
+		await wrapper.find("input[type='time']").setValue("08:00");
+		await wrapper.find("input[type='time']").trigger("change");
+		await flushPromises();
+		expect(settingsData.reminderTime).toBe("08:00");
+	});
+});
+
+// ── Theme & settings ──────────────────────────────────────────────────────────
+
+describe("ProfileView – theme toggle", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("shows '☀ Светлая' button when theme is dark", async () => {
+		settingsData.theme = "dark";
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".theme-toggle").text()).toContain("Светлая");
+	});
+
+	it("shows '🌙 Тёмная' button when theme is light", async () => {
+		settingsData.theme = "light";
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".theme-toggle").text()).toContain("Тёмная");
+	});
+
+	it("clicking theme toggle calls setTheme('light') when currently dark", async () => {
+		settingsData.theme = "dark";
+		const { wrapper } = await mountView();
+		await wrapper.find(".theme-toggle").trigger("click");
+		expect(mockSetTheme).toHaveBeenCalledWith("light");
+	});
+
+	it("clicking theme toggle calls setTheme('dark') when currently light", async () => {
+		settingsData.theme = "light";
+		const { wrapper } = await mountView();
+		await wrapper.find(".theme-toggle").trigger("click");
+		expect(mockSetTheme).toHaveBeenCalledWith("dark");
+	});
+});
+
+describe("ProfileView – settings: vault path", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: null, deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("shows '—' when vaultPath is null", async () => {
+		settingsData.vaultPath = null;
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".truncate").text()).toBe("—");
+	});
+
+	it("shows vault path when set", async () => {
+		settingsData.vaultPath = "/home/user/budget";
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".truncate").text()).toBe("/home/user/budget");
 	});
 });

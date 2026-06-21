@@ -32,7 +32,7 @@ const categories = computed(() => categoriesStore.byType(type.value));
 
 function validate(): boolean {
 	errors.value = {};
-	const parsed = parseFloat(amount.value.replace(",", "."));
+	const parsed = parseFloat(String(amount.value).replace(",", "."));
 	if (isNaN(parsed) || parsed <= 0) errors.value.amount = "Введите положительную сумму";
 	if (!accountId.value) errors.value.account = "Выберите счёт";
 	if (type.value === "transfer" && !toAccountId.value) errors.value.toAccount = "Выберите счёт назначения";
@@ -46,7 +46,7 @@ async function submit() {
 	try {
 		const tx = await txStore.addTransaction({
 			type: type.value,
-			amount: parseFloat(amount.value.replace(",", ".")),
+			amount: parseFloat(String(amount.value).replace(",", ".")),
 			currency: accountsStore.getById(accountId.value)?.currency ?? "KZT",
 			date: date.value,
 			time: time.value,
