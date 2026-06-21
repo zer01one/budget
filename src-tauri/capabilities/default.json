@@ -15,6 +15,7 @@
 		"fs:allow-stat",
 		"fs:allow-mkdir",
 		"fs:allow-remove",
+		"fs:scope-home-recursive",
 		"store:allow-get",
 		"store:allow-set",
 		"store:allow-save",

@@ -22,6 +22,11 @@ export function useBootstrap() {
 		if (_bootstrapped.value) return;
 		_bootstrapped.value = true;
 
+		if (!settingsStore.isLoaded) {
+			await settingsStore.load();
+			settingsStore.applyTheme();
+		}
+
 		const vaultPath = settingsStore.settings.vaultPath;
 		if (!vaultPath) return;
 

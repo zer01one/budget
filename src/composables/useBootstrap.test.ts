@@ -3,7 +3,9 @@ import { setActivePinia, createPinia } from "pinia";
 
 // ── Store mocks ───────────────────────────────────────────────────────────────
 let mockVaultPath: string | null = null;
+let mockIsLoaded = true;
 const mockSettingsLoad = vi.fn(async () => {});
+const mockApplyTheme = vi.fn();
 const mockAccountsLoad = vi.fn(async () => {});
 const mockCategoriesLoad = vi.fn(async () => {});
 const mockGamificationLoad = vi.fn(async () => {});
@@ -14,7 +16,9 @@ const mockTxLoadCurrentAndPrevMonth = vi.fn(async () => {});
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({
 		settings: { vaultPath: mockVaultPath },
-		load: mockSettingsLoad
+		isLoaded: mockIsLoaded,
+		load: mockSettingsLoad,
+		applyTheme: mockApplyTheme
 	}))
 }));
 vi.mock("@/stores/accounts.store", () => ({
@@ -53,6 +57,7 @@ describe("useBootstrap – guard", () => {
 		setActivePinia(createPinia());
 		vi.clearAllMocks();
 		mockVaultPath = "/vault";
+		mockIsLoaded = true;
 	});
 
 	it("bootstrapped starts false", async () => {
@@ -79,6 +84,7 @@ describe("useBootstrap – no vaultPath", () => {
 		setActivePinia(createPinia());
 		vi.clearAllMocks();
 		mockVaultPath = null;
+		mockIsLoaded = true;
 	});
 
 	it("returns early when vaultPath is null", async () => {
@@ -94,11 +100,45 @@ describe("useBootstrap – no vaultPath", () => {
 	});
 });
 
+describe("useBootstrap – settings not loaded", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.clearAllMocks();
+		mockVaultPath = "/path/to/vault";
+		mockIsLoaded = false;
+	});
+
+	it("calls settingsStore.load() when isLoaded is false", async () => {
+		const { bootstrap } = await freshBootstrap();
+		await bootstrap();
+		expect(mockSettingsLoad).toHaveBeenCalledOnce();
+	});
+
+	it("calls settingsStore.applyTheme() after loading settings", async () => {
+		const { bootstrap } = await freshBootstrap();
+		await bootstrap();
+		expect(mockApplyTheme).toHaveBeenCalledOnce();
+	});
+
+	it("still loads vault data after loading settings", async () => {
+		const { bootstrap } = await freshBootstrap();
+		await bootstrap();
+		expect(mockAccountsLoad).toHaveBeenCalled();
+	});
+});
+
 describe("useBootstrap – with vaultPath", () => {
 	beforeEach(() => {
 		setActivePinia(createPinia());
 		vi.clearAllMocks();
 		mockVaultPath = "/path/to/vault";
+		mockIsLoaded = true;
+	});
+
+	it("does not call settingsStore.load() when already loaded", async () => {
+		const { bootstrap } = await freshBootstrap();
+		await bootstrap();
+		expect(mockSettingsLoad).not.toHaveBeenCalled();
 	});
 
 	it("calls accountsStore.load()", async () => {
