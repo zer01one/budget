@@ -3,6 +3,7 @@ import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
+import { iconToEmoji } from "@/components/ui/IconPicker.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -41,7 +42,7 @@ function formatAmount(n: number, currency: string) {
 				class="account-card"
 				:style="{ '--acc-color': acc.color }"
 				@click="router.push(`/accounts/${acc.id}`)">
-				<div class="account-card__icon">{{ acc.icon?.slice(0, 2) }}</div>
+				<div class="account-card__icon">{{ iconToEmoji(acc.icon ?? 'other') }}</div>
 				<div class="account-card__info">
 					<div class="account-card__name">{{ acc.name }}</div>
 					<div class="account-card__type text-muted">{{ acc.type }}</div>
