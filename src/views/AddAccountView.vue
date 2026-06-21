@@ -97,7 +97,11 @@ async function submit() {
 		<div
 			class="preview-card"
 			:style="{ '--acc-color': color }">
-			<div class="preview-card__icon"><AppIcon :name="icon" :size="22" /></div>
+			<div class="preview-card__icon">
+				<AppIcon
+					:name="icon"
+					:size="22" />
+			</div>
 			<div class="preview-card__info">
 				<div class="preview-card__name">{{ name || "Название счёта" }}</div>
 				<div class="preview-card__meta">{{ currency }} · {{ type }}</div>
