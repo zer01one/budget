@@ -1,6 +1,7 @@
 ﻿import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useAccountsStore } from "./accounts.store";
+import { getFileSystemAdapter } from "@/services/filesystem";
 import type { Account } from "@/types";
 
 vi.mock("@/services/filesystem", () => ({
@@ -286,5 +287,92 @@ describe("deleteAccount", () => {
 		store.accounts = [makeAccount({ id: "a" })];
 		await store.deleteAccount("nope");
 		expect(store.accounts[0].isArchived).toBe(false);
+	});
+});
+
+// ── load ──────────────────────────────────────────────────────────────────────
+
+describe("load", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("isLoaded starts as false", () => {
+		const store = useAccountsStore();
+		expect(store.isLoaded).toBe(false);
+	});
+
+	it("sets isLoaded to true when readJson returns null", async () => {
+		const store = useAccountsStore();
+		await store.load();
+		expect(store.isLoaded).toBe(true);
+	});
+
+	it("keeps accounts empty when readJson returns null", async () => {
+		const store = useAccountsStore();
+		await store.load();
+		expect(store.accounts).toEqual([]);
+	});
+
+	it("populates accounts when readJson returns data", async () => {
+		const mockAcc = makeAccount({ id: "loaded-acc" });
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { accounts: [mockAcc] }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useAccountsStore();
+		await store.load();
+		expect(store.accounts).toEqual([mockAcc]);
+	});
+
+	it("sets isLoaded to true when readJson returns data", async () => {
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { accounts: [makeAccount()] }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		const store = useAccountsStore();
+		await store.load();
+		expect(store.isLoaded).toBe(true);
+	});
+
+	it("replaces existing accounts on second load", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "old" })];
+		const fresh = makeAccount({ id: "new" });
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue({ data: { accounts: [fresh] }, modifiedAt: "2026-01-01T00:00:00Z" }),
+			writeJson: vi.fn().mockResolvedValue(undefined)
+		} as any);
+		await store.load();
+		expect(store.accounts).toHaveLength(1);
+		expect(store.accounts[0].id).toBe("new");
+	});
+});
+
+// ── save ──────────────────────────────────────────────────────────────────────
+
+describe("save", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("calls writeJson with accounts.json and current accounts", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useAccountsStore();
+		const acc = makeAccount({ id: "s1" });
+		store.accounts = [acc];
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("accounts.json", { accounts: [acc] });
+	});
+
+	it("calls writeJson with empty array when accounts is empty", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useAccountsStore();
+		await store.save();
+		expect(mockWriteJson).toHaveBeenCalledWith("accounts.json", { accounts: [] });
 	});
 });
