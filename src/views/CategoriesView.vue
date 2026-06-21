@@ -4,7 +4,8 @@ import AppButton from "@/components/ui/AppButton.vue";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
-import IconPicker, { iconToEmoji } from "@/components/ui/IconPicker.vue";
+import IconPicker from "@/components/ui/IconPicker.vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Category, TransactionType } from "@/types";
@@ -114,7 +115,7 @@ async function deleteCategory(cat: Category) {
 				<div
 					class="cat-row__icon"
 					:style="{ background: cat.color + '22', color: cat.color }">
-					{{ iconToEmoji(cat.icon) }}
+					<AppIcon :name="cat.icon" />
 				</div>
 				<div class="cat-row__name">{{ cat.name }}</div>
 				<span
@@ -147,7 +148,7 @@ async function deleteCategory(cat: Category) {
 				<div
 					class="cat-preview"
 					:style="{ background: form.color + '22', borderColor: form.color }">
-					<span>{{ iconToEmoji(form.icon) }}</span>
+					<span><AppIcon :name="form.icon" /></span>
 					<span>{{ form.name || "Название" }}</span>
 				</div>
 

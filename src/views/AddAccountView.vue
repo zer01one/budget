@@ -8,7 +8,7 @@ import IconPicker from "@/components/ui/IconPicker.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import type { AccountType } from "@/types";
 
-const ACCOUNT_ICONS = ["wallet", "bank", "card", "cash", "piggy", "crypto", "savings", "invest", "dollar", "euro", "star", "home"];
+const ACCOUNT_ICONS = ["wallet", "bank", "card", "cash", "piggy", "coins", "savings", "invest", "crypto", "dollar", "euro", "star", "home", "salary", "freelance", "gift"];
 
 const router = useRouter();
 const accountsStore = useAccountsStore();

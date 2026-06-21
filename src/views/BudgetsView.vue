@@ -9,7 +9,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import { notifyBudgetWarning } from "@/services/notifications.service";
 import type { BudgetEntry } from "@/types";
-import { iconToEmoji } from "@/components/ui/IconPicker.vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const budgetsStore = useBudgetsStore();
 const categoriesStore = useCategoriesStore();
@@ -246,7 +246,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 								background: (categoriesStore.getById(budget.categoryId)?.color ?? '#6B7280') + '22',
 								color: categoriesStore.getById(budget.categoryId)?.color ?? '#6B7280'
 							}">
-							{{ iconToEmoji(categoriesStore.getById(budget.categoryId)?.icon ?? 'other') }}
+							<AppIcon :name="categoriesStore.getById(budget.categoryId)?.icon ?? 'other'" />
 						</div>
 						<span class="budget-card__cat-name">
 							{{ categoriesStore.getById(budget.categoryId)?.name ?? "—" }}
@@ -331,7 +331,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 							background: (categoriesStore.getById(editingBudget.categoryId)?.color ?? '#6B7280') + '22',
 							color: categoriesStore.getById(editingBudget.categoryId)?.color ?? '#6B7280'
 						}">
-						{{ iconToEmoji(categoriesStore.getById(editingBudget.categoryId)?.icon ?? 'other') }}
+						<AppIcon :name="categoriesStore.getById(editingBudget.categoryId)?.icon ?? 'other'" />
 					</div>
 					<span class="budget-preview__name">
 						{{ categoriesStore.getById(editingBudget.categoryId)?.name ?? "—" }}

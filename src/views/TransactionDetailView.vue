@@ -7,7 +7,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
-import { iconToEmoji } from "@/components/ui/IconPicker.vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -147,7 +147,7 @@ function formatDateLabel(date: string): string {
 						<span
 							class="detail-row__cat-icon"
 							:style="{ background: category.color + '22', color: category.color }">
-							{{ iconToEmoji(category.icon) }}
+							<AppIcon :name="category.icon" />
 						</span>
 						{{ category.name }}
 					</span>
@@ -273,7 +273,7 @@ function formatDateLabel(date: string): string {
 						:class="['cat-item', { 'cat-item--active': editCategoryId === cat.id }]"
 						:style="{ '--cat-color': cat.color }"
 						@click="editCategoryId = cat.id">
-						<span class="cat-item__icon">{{ iconToEmoji(cat.icon) }}</span>
+						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
 						<span class="cat-item__name">{{ cat.name }}</span>
 					</button>
 				</div>

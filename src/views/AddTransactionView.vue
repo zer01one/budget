@@ -8,7 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { TransactionType } from "@/types";
-import { iconToEmoji } from "@/components/ui/IconPicker.vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const txStore = useTransactionsStore();
@@ -170,7 +170,7 @@ async function submit() {
 						:class="['cat-item', { 'cat-item--active': categoryId === cat.id }]"
 						:style="{ '--cat-color': cat.color }"
 						@click="categoryId = cat.id">
-						<span class="cat-item__icon">{{ iconToEmoji(cat.icon) }}</span>
+						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
 						<span class="cat-item__name">{{ cat.name }}</span>
 					</button>
 				</div>
