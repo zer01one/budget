@@ -97,6 +97,7 @@ const CATEGORY_ICONS = [
 	border-radius: var(--radius-md);
 	background: var(--bg-elevated);
 	border: 2px solid transparent;
+	color: var(--text-primary);
 	cursor: pointer;
 	display: flex;
 	align-items: center;

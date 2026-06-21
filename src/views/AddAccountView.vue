@@ -6,6 +6,7 @@ import AppInput from "@/components/ui/AppInput.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import IconPicker from "@/components/ui/IconPicker.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
+import AppIcon from "@/components/ui/AppIcon.vue";
 import type { AccountType } from "@/types";
 
 const ACCOUNT_ICONS = [
@@ -96,7 +97,7 @@ async function submit() {
 		<div
 			class="preview-card"
 			:style="{ '--acc-color': color }">
-			<div class="preview-card__icon">{{ icon }}</div>
+			<div class="preview-card__icon"><AppIcon :name="icon" :size="22" /></div>
 			<div class="preview-card__info">
 				<div class="preview-card__name">{{ name || "Название счёта" }}</div>
 				<div class="preview-card__meta">{{ currency }} · {{ type }}</div>
@@ -214,7 +215,7 @@ async function submit() {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
+	color: white;
 	opacity: 0.9;
 }
 .preview-card__info {
