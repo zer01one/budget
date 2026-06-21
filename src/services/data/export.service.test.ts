@@ -1,6 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { transactionsToCSV } from "./export.service";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { transactionsToCSV, exportTransactionsCSV, exportVaultJSON } from "./export.service";
 import type { Transaction, Account, Category } from "@/types";
+
+const { mockExportFile, mockGetFs } = vi.hoisted(() => ({
+	mockExportFile: vi.fn(),
+	mockGetFs: vi.fn()
+}));
+
+vi.mock("@/services/filesystem", () => ({
+	getFileSystemAdapter: mockGetFs
+}));
 
 function makeAccount(overrides: Partial<Account> = {}): Account {
 	return {
@@ -232,5 +241,150 @@ describe("transactionsToCSV – line endings", () => {
 		const csv = transactionsToCSV([makeTx()], [makeAccount()], [makeCategory()]);
 		expect(csv).toContain("\r\n");
 		expect(csv.split("\r\n").length).toBeGreaterThan(1);
+	});
+});
+
+// ── exportTransactionsCSV ─────────────────────────────────────────────────────
+
+describe("exportTransactionsCSV", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-21T10:00:00.000Z"));
+		mockExportFile.mockResolvedValue(undefined);
+		mockGetFs.mockResolvedValue({ exportFile: mockExportFile });
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.clearAllMocks();
+	});
+
+	it("calls exportFile with text/csv mime type", async () => {
+		await exportTransactionsCSV([], [], []);
+		expect(mockExportFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), "text/csv;charset=utf-8");
+	});
+
+	it("filename matches budget-export-<date>.csv pattern", async () => {
+		await exportTransactionsCSV([], [], []);
+		const expectedDate = new Date().toLocaleDateString("en-CA");
+		expect(mockExportFile).toHaveBeenCalledWith(`budget-export-${expectedDate}.csv`, expect.any(String), expect.any(String));
+	});
+
+	it("CSV content is passed to exportFile", async () => {
+		await exportTransactionsCSV([makeTx({ comment: "unique-marker" })], [makeAccount()], [makeCategory()]);
+		const csv: string = mockExportFile.mock.calls[0][1];
+		expect(csv).toContain("unique-marker");
+	});
+
+	it("no date filter — all non-deleted transactions are exported", async () => {
+		const txs = [makeTx({ id: "1" }), makeTx({ id: "2", isDeleted: true }), makeTx({ id: "3" })];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()]);
+		const lines: string[] = mockExportFile.mock.calls[0][1].split("\r\n").filter(Boolean);
+		expect(lines).toHaveLength(3); // header + 2 non-deleted
+	});
+
+	it("fromDate filters out earlier transactions", async () => {
+		const txs = [makeTx({ id: "1", date: "2026-01-01" }), makeTx({ id: "2", date: "2026-06-01" })];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], "2026-03-01");
+		const csv: string = mockExportFile.mock.calls[0][1];
+		expect(csv).not.toContain("2026-01-01");
+		expect(csv).toContain("2026-06-01");
+	});
+
+	it("toDate filters out later transactions", async () => {
+		const txs = [makeTx({ id: "1", date: "2026-01-01" }), makeTx({ id: "2", date: "2026-06-01" })];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], undefined, "2026-03-01");
+		const csv: string = mockExportFile.mock.calls[0][1];
+		expect(csv).toContain("2026-01-01");
+		expect(csv).not.toContain("2026-06-01");
+	});
+
+	it("both fromDate and toDate — keeps only transactions in range", async () => {
+		const txs = [
+			makeTx({ id: "1", date: "2026-01-01" }),
+			makeTx({ id: "2", date: "2026-03-15" }),
+			makeTx({ id: "3", date: "2026-06-01" })
+		];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], "2026-03-01", "2026-04-30");
+		const csv: string = mockExportFile.mock.calls[0][1];
+		expect(csv).not.toContain("2026-01-01");
+		expect(csv).toContain("2026-03-15");
+		expect(csv).not.toContain("2026-06-01");
+	});
+
+	it("fromDate === toDate — keeps only that exact date (inclusive both ends)", async () => {
+		const txs = [makeTx({ id: "1", date: "2026-03-15" }), makeTx({ id: "2", date: "2026-03-16" })];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], "2026-03-15", "2026-03-15");
+		const lines: string[] = mockExportFile.mock.calls[0][1].split("\r\n").filter(Boolean);
+		expect(lines).toHaveLength(2); // header + 1
+		expect(lines[1]).toContain("2026-03-15");
+	});
+
+	it("date-filtered result still excludes deleted transactions", async () => {
+		const txs = [makeTx({ id: "1", date: "2026-03-15", isDeleted: true }), makeTx({ id: "2", date: "2026-03-15" })];
+		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], "2026-03-01", "2026-04-30");
+		const lines: string[] = mockExportFile.mock.calls[0][1].split("\r\n").filter(Boolean);
+		expect(lines).toHaveLength(2); // header + 1 non-deleted
+	});
+});
+
+// ── exportVaultJSON ───────────────────────────────────────────────────────────
+
+describe("exportVaultJSON", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-21T10:00:00.000Z"));
+		mockExportFile.mockResolvedValue(undefined);
+		mockGetFs.mockResolvedValue({ exportFile: mockExportFile });
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.clearAllMocks();
+	});
+
+	it("calls exportFile with application/json mime type", async () => {
+		await exportVaultJSON([]);
+		expect(mockExportFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), "application/json");
+	});
+
+	it("filename matches budget-transactions-<date>.json pattern", async () => {
+		await exportVaultJSON([]);
+		const expectedDate = new Date().toLocaleDateString("en-CA");
+		expect(mockExportFile).toHaveBeenCalledWith(`budget-transactions-${expectedDate}.json`, expect.any(String), expect.any(String));
+	});
+
+	it("JSON contains exportedAt as ISO string matching current time", async () => {
+		await exportVaultJSON([]);
+		const json = JSON.parse(mockExportFile.mock.calls[0][1]);
+		expect(json.exportedAt).toBe(new Date().toISOString());
+	});
+
+	it("JSON contains transactions array with all passed transactions", async () => {
+		const txs = [makeTx({ id: "tx-a" }), makeTx({ id: "tx-b" })];
+		await exportVaultJSON(txs);
+		const json = JSON.parse(mockExportFile.mock.calls[0][1]);
+		expect(json.transactions).toHaveLength(2);
+		expect(json.transactions[0].id).toBe("tx-a");
+		expect(json.transactions[1].id).toBe("tx-b");
+	});
+
+	it("empty transactions array produces valid JSON with empty array", async () => {
+		await exportVaultJSON([]);
+		const json = JSON.parse(mockExportFile.mock.calls[0][1]);
+		expect(json.transactions).toEqual([]);
+	});
+
+	it("JSON is pretty-printed with 2-space indent", async () => {
+		await exportVaultJSON([]);
+		const raw: string = mockExportFile.mock.calls[0][1];
+		expect(raw).toContain("\n  ");
+	});
+
+	it("transactions in JSON are not filtered — includes deleted", async () => {
+		const txs = [makeTx({ id: "1", isDeleted: false }), makeTx({ id: "2", isDeleted: true })];
+		await exportVaultJSON(txs);
+		const json = JSON.parse(mockExportFile.mock.calls[0][1]);
+		expect(json.transactions).toHaveLength(2);
 	});
 });
