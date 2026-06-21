@@ -36,7 +36,7 @@ describe("getFileSystemAdapter – Tauri path", () => {
 		mockIsNativePlatform.mockReturnValue(false);
 		const { getFileSystemAdapter } = await freshIndex();
 		const adapter = await getFileSystemAdapter();
-		expect((adapter as { _type: string })._type).toBe("tauri");
+		expect((adapter as unknown as { _type: string })._type).toBe("tauri");
 	});
 
 	it("returns a truthy adapter", async () => {
@@ -52,7 +52,7 @@ describe("getFileSystemAdapter – Capacitor path", () => {
 		mockIsNativePlatform.mockReturnValue(true);
 		const { getFileSystemAdapter } = await freshIndex();
 		const adapter = await getFileSystemAdapter();
-		expect((adapter as { _type: string })._type).toBe("capacitor");
+		expect((adapter as unknown as { _type: string })._type).toBe("capacitor");
 		mockIsNativePlatform.mockReturnValue(false);
 	});
 });

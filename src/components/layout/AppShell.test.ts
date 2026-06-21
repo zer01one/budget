@@ -48,7 +48,7 @@ describe("AppShell – mount", () => {
 		mockUpdateAvailable = ref(null);
 		mockIsInstalling = ref(false);
 
-		vi.mocked(useBootstrap).mockReturnValue({ bootstrap: mockBootstrap });
+		vi.mocked(useBootstrap).mockReturnValue({ bootstrap: mockBootstrap } as unknown as ReturnType<typeof useBootstrap>);
 		vi.mocked(useUpdater).mockReturnValue({
 			updateAvailable: mockUpdateAvailable,
 			isInstalling: mockIsInstalling,
@@ -56,7 +56,7 @@ describe("AppShell – mount", () => {
 			checkForUpdates: mockCheckForUpdates,
 			installUpdate: mockInstallUpdate,
 			dismissUpdate: mockDismissUpdate
-		});
+		} as ReturnType<typeof useUpdater>);
 
 		Object.defineProperty(window, "innerWidth", { value: 1280, configurable: true, writable: true });
 	});
@@ -278,7 +278,7 @@ describe("AppShell – mount", () => {
 			const wrapper = await mountShellFake();
 
 			const gamStore = useGamificationStore();
-			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z" });
+			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z", progress: 0, notifiedAt: null });
 
 			vi.advanceTimersByTime(500);
 			await nextTick();
@@ -290,7 +290,7 @@ describe("AppShell – mount", () => {
 			const wrapper = await mountShellFake();
 
 			const gamStore = useGamificationStore();
-			gamStore.pendingToasts.push({ key: "unknown_key" as never, unlockedAt: "2026-01-01T00:00:00.000Z" });
+			gamStore.pendingToasts.push({ key: "unknown_key" as never, unlockedAt: "2026-01-01T00:00:00.000Z", progress: 0, notifiedAt: null });
 
 			vi.advanceTimersByTime(500);
 			await nextTick();
@@ -302,7 +302,7 @@ describe("AppShell – mount", () => {
 			const wrapper = await mountShellFake();
 
 			const gamStore = useGamificationStore();
-			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z" });
+			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z", progress: 0, notifiedAt: null });
 
 			vi.advanceTimersByTime(500);
 			await nextTick();
@@ -317,12 +317,12 @@ describe("AppShell – mount", () => {
 			const wrapper = await mountShellFake();
 			const gamStore = useGamificationStore();
 
-			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z" });
+			gamStore.pendingToasts.push({ key: "first_transaction", unlockedAt: "2026-01-01T00:00:00.000Z", progress: 0, notifiedAt: null });
 			vi.advanceTimersByTime(500);
 			await nextTick();
 			expect(wrapper.find(".stub-toast").exists()).toBe(true);
 
-			gamStore.pendingToasts.push({ key: "century", unlockedAt: "2026-01-02T00:00:00.000Z" });
+			gamStore.pendingToasts.push({ key: "century", unlockedAt: "2026-01-02T00:00:00.000Z", progress: 0, notifiedAt: null });
 			await wrapper.find(".stub-toast").trigger("click");
 			await nextTick();
 			expect(wrapper.find(".stub-toast").exists()).toBe(false);

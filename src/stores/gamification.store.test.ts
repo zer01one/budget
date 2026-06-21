@@ -73,7 +73,7 @@ describe("gamification store", () => {
 				deviceId: "dev-abc",
 				version: 7
 			};
-			mockReadJson.mockResolvedValueOnce({ data: { gamification: saved } });
+			mockReadJson.mockResolvedValueOnce({ data: { gamification: saved } } as any);
 			const store = useGamificationStore();
 			await store.load();
 			expect(store.state.xp).toBe(1500);
