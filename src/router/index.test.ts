@@ -1,150 +1,147 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/stores/settings.store", () => ({
-  useSettingsStore: vi.fn(),
+	useSettingsStore: vi.fn()
 }));
 
 import { useSettingsStore } from "@/stores/settings.store";
 import router from "@/router";
 
-function makeStore({
-  isLoaded = true,
-  vaultPath = null as string | null,
-} = {}) {
-  return {
-    isLoaded,
-    settings: { vaultPath },
-    load: vi.fn().mockResolvedValue(undefined),
-    applyTheme: vi.fn(),
-  };
+function makeStore({ isLoaded = true, vaultPath = null as string | null } = {}) {
+	return {
+		isLoaded,
+		settings: { vaultPath },
+		load: vi.fn().mockResolvedValue(undefined),
+		applyTheme: vi.fn()
+	};
 }
 
 describe("router", () => {
-  let store: ReturnType<typeof makeStore>;
+	let store: ReturnType<typeof makeStore>;
 
-  beforeEach(async () => {
-    store = makeStore({ isLoaded: true, vaultPath: "/vault" });
-    vi.mocked(useSettingsStore).mockReturnValue(store as any);
-    // Navigate to a neutral route so no test starts from the same target it's about to push.
-    // Without this, pushing /dashboard when already on /dashboard is a duplicate navigation
-    // and Vue Router skips the guard entirely.
-    await router.push("/transactions");
-    await router.isReady();
-    vi.clearAllMocks();
-    store = makeStore({ isLoaded: true, vaultPath: "/vault" });
-    vi.mocked(useSettingsStore).mockReturnValue(store as any);
-  });
+	beforeEach(async () => {
+		store = makeStore({ isLoaded: true, vaultPath: "/vault" });
+		vi.mocked(useSettingsStore).mockReturnValue(store as any);
+		// Navigate to a neutral route so no test starts from the same target it's about to push.
+		// Without this, pushing /dashboard when already on /dashboard is a duplicate navigation
+		// and Vue Router skips the guard entirely.
+		await router.push("/transactions");
+		await router.isReady();
+		vi.clearAllMocks();
+		store = makeStore({ isLoaded: true, vaultPath: "/vault" });
+		vi.mocked(useSettingsStore).mockReturnValue(store as any);
+	});
 
-  describe("route configuration", () => {
-    it.each([
-      "dashboard",
-      "transactions",
-      "add-transaction",
-      "transaction-detail",
-      "accounts",
-      "add-account",
-      "account-detail",
-      "categories",
-      "charts",
-      "budgets",
-      "profile",
-      "import",
-    ])("%s requires vault", (name) => {
-      const route = router.getRoutes().find((r) => r.name === name);
-      expect(route?.meta?.requiresVault).toBe(true);
-    });
+	describe("route configuration", () => {
+		it.each([
+			"dashboard",
+			"transactions",
+			"add-transaction",
+			"transaction-detail",
+			"accounts",
+			"add-account",
+			"account-detail",
+			"categories",
+			"charts",
+			"budgets",
+			"profile",
+			"import"
+		])("%s requires vault", (name) => {
+			const route = router.getRoutes().find((r) => r.name === name);
+			expect(route?.meta?.requiresVault).toBe(true);
+		});
 
-    it("setup does not require vault", () => {
-      const route = router.getRoutes().find((r) => r.name === "setup");
-      expect(route?.meta?.requiresVault).toBe(false);
-    });
-  });
+		it("setup does not require vault", () => {
+			const route = router.getRoutes().find((r) => r.name === "setup");
+			expect(route?.meta?.requiresVault).toBe(false);
+		});
+	});
 
-  describe("beforeEach guard", () => {
-    it("calls load() and applyTheme() when settings not loaded", async () => {
-      store = makeStore({ isLoaded: false, vaultPath: null });
-      vi.mocked(useSettingsStore).mockReturnValue(store as any);
+	describe("beforeEach guard", () => {
+		it("calls load() and applyTheme() when settings not loaded", async () => {
+			store = makeStore({ isLoaded: false, vaultPath: null });
+			vi.mocked(useSettingsStore).mockReturnValue(store as any);
 
-      await router.push("/setup");
-      await router.isReady();
+			await router.push("/setup");
+			await router.isReady();
 
-      expect(store.load).toHaveBeenCalledOnce();
-      expect(store.applyTheme).toHaveBeenCalledOnce();
-    });
+			expect(store.load).toHaveBeenCalledOnce();
+			expect(store.applyTheme).toHaveBeenCalledOnce();
+		});
 
-    it("skips load() when settings already loaded", async () => {
-      await router.push("/dashboard");
-      await router.isReady();
+		it("skips load() when settings already loaded", async () => {
+			await router.push("/dashboard");
+			await router.isReady();
 
-      expect(store.load).not.toHaveBeenCalled();
-      expect(store.applyTheme).not.toHaveBeenCalled();
-    });
+			expect(store.load).not.toHaveBeenCalled();
+			expect(store.applyTheme).not.toHaveBeenCalled();
+		});
 
-    it("redirects to setup when vault required but not configured", async () => {
-      store = makeStore({ isLoaded: true, vaultPath: null });
-      vi.mocked(useSettingsStore).mockReturnValue(store as any);
+		it("redirects to setup when vault required but not configured", async () => {
+			store = makeStore({ isLoaded: true, vaultPath: null });
+			vi.mocked(useSettingsStore).mockReturnValue(store as any);
 
-      await router.push("/dashboard");
-      await router.isReady();
+			await router.push("/dashboard");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("setup");
-    });
+			expect(router.currentRoute.value.name).toBe("setup");
+		});
 
-    it("allows navigation to protected route when vault is configured", async () => {
-      await router.push("/dashboard");
-      await router.isReady();
+		it("allows navigation to protected route when vault is configured", async () => {
+			await router.push("/dashboard");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("dashboard");
-    });
+			expect(router.currentRoute.value.name).toBe("dashboard");
+		});
 
-    it("redirects / to dashboard when vault is configured", async () => {
-      await router.push("/");
-      await router.isReady();
+		it("redirects / to dashboard when vault is configured", async () => {
+			await router.push("/");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("dashboard");
-    });
+			expect(router.currentRoute.value.name).toBe("dashboard");
+		});
 
-    it("redirects / to setup when vault is not configured", async () => {
-      store = makeStore({ isLoaded: true, vaultPath: null });
-      vi.mocked(useSettingsStore).mockReturnValue(store as any);
+		it("redirects / to setup when vault is not configured", async () => {
+			store = makeStore({ isLoaded: true, vaultPath: null });
+			vi.mocked(useSettingsStore).mockReturnValue(store as any);
 
-      await router.push("/");
-      await router.isReady();
+			await router.push("/");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("setup");
-    });
+			expect(router.currentRoute.value.name).toBe("setup");
+		});
 
-    it("redirects from setup to dashboard when vault is configured", async () => {
-      await router.push("/setup");
-      await router.isReady();
+		it("redirects from setup to dashboard when vault is configured", async () => {
+			await router.push("/setup");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("dashboard");
-    });
+			expect(router.currentRoute.value.name).toBe("dashboard");
+		});
 
-    it("allows setup when vault is not configured", async () => {
-      store = makeStore({ isLoaded: true, vaultPath: null });
-      vi.mocked(useSettingsStore).mockReturnValue(store as any);
+		it("allows setup when vault is not configured", async () => {
+			store = makeStore({ isLoaded: true, vaultPath: null });
+			vi.mocked(useSettingsStore).mockReturnValue(store as any);
 
-      await router.push("/setup");
-      await router.isReady();
+			await router.push("/setup");
+			await router.isReady();
 
-      expect(router.currentRoute.value.name).toBe("setup");
-    });
+			expect(router.currentRoute.value.name).toBe("setup");
+		});
 
-    it("vault guard applies to all protected routes", async () => {
-      store = makeStore({ isLoaded: true, vaultPath: null });
-      vi.mocked(useSettingsStore).mockReturnValue(store as any);
+		it("vault guard applies to all protected routes", async () => {
+			store = makeStore({ isLoaded: true, vaultPath: null });
+			vi.mocked(useSettingsStore).mockReturnValue(store as any);
 
-      // Move off /transactions first so the first loop iteration is not a duplicate navigation.
-      await router.push("/setup");
-      await router.isReady();
+			// Move off /transactions first so the first loop iteration is not a duplicate navigation.
+			await router.push("/setup");
+			await router.isReady();
 
-      for (const name of ["transactions", "accounts", "categories", "charts", "budgets", "profile", "import"]) {
-        const route = router.getRoutes().find((r) => r.name === name)!;
-        await router.push(route.path.replace(/:.*/, "test-id"));
-        await router.isReady();
-        expect(router.currentRoute.value.name).toBe("setup");
-      }
-    });
-  });
+			for (const name of ["transactions", "accounts", "categories", "charts", "budgets", "profile", "import"]) {
+				const route = router.getRoutes().find((r) => r.name === name)!;
+				await router.push(route.path.replace(/:.*/, "test-id"));
+				await router.isReady();
+				expect(router.currentRoute.value.name).toBe("setup");
+			}
+		});
+	});
 });

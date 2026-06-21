@@ -10,9 +10,7 @@ const { mockReadJson, mockWriteJson } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/filesystem", () => ({
-	getFileSystemAdapter: vi.fn(() =>
-		Promise.resolve({ readJson: mockReadJson, writeJson: mockWriteJson })
-	)
+	getFileSystemAdapter: vi.fn(() => Promise.resolve({ readJson: mockReadJson, writeJson: mockWriteJson }))
 }));
 
 vi.mock("@/stores/settings.store", () => ({
@@ -24,9 +22,7 @@ function makeAch(key: Achievement["key"]): Achievement {
 }
 
 function allAchievements(): Achievement[] {
-	return (
-		["first_transaction", "streak_7", "streak_30", "budget_keeper", "century", "category_master"] as const
-	).map(makeAch);
+	return (["first_transaction", "streak_7", "streak_30", "budget_keeper", "century", "category_master"] as const).map(makeAch);
 }
 
 function setToday(dateStr: string) {
@@ -93,10 +89,7 @@ describe("gamification store", () => {
 		it("writes to 'gamification.json'", async () => {
 			const store = useGamificationStore();
 			await store.persist();
-			expect(mockWriteJson).toHaveBeenCalledWith(
-				"gamification.json",
-				{ gamification: expect.objectContaining({ xp: 0 }) }
-			);
+			expect(mockWriteJson).toHaveBeenCalledWith("gamification.json", { gamification: expect.objectContaining({ xp: 0 }) });
 		});
 
 		it("stamps deviceId from settings store", async () => {
@@ -588,7 +581,7 @@ describe("gamification store", () => {
 			store.state.achievements = allAchievements();
 			store.state.categoriesCreated = 9;
 			store.onCategoryCreated(); // unlocks category_master first
-			store.onBudgetKept();      // unlocks budget_keeper second
+			store.onBudgetKept(); // unlocks budget_keeper second
 			expect(store.popToast()?.key).toBe("category_master");
 			expect(store.popToast()?.key).toBe("budget_keeper");
 			expect(store.popToast()).toBeNull();
