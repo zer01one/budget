@@ -2,13 +2,18 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
+import AppModal from "@/components/ui/AppModal.vue";
 import { useGamificationStore, ACHIEVEMENT_LABELS } from "@/stores/gamification.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
+import { useBudgetsStore } from "@/stores/budgets.store";
 import { exportTransactionsCSV, exportVaultJSON } from "@/services/data/export.service";
 import { requestNotificationPermission, scheduleDailyReminder, cancelDailyReminder } from "@/services/notifications.service";
+import { getFileSystemAdapter } from "@/services/filesystem";
+import { vaultService } from "@/services/data/vault.service";
+import { transactionsService } from "@/services/data/transactions.service";
 import { LEVEL_LABELS } from "@/types";
 import type { AchievementKey } from "@/types";
 
@@ -18,10 +23,90 @@ const settingsStore = useSettingsStore();
 const txStore = useTransactionsStore();
 const accountsStore = useAccountsStore();
 const categoriesStore = useCategoriesStore();
+const budgetsStore = useBudgetsStore();
 
 const g = gamificationStore.state;
 const isExporting = ref(false);
 const exportError = ref("");
+
+// ── Vault change ───────────────────────────────────────────────────────────────
+const showVaultModal = ref(false);
+const vaultStep = ref<"choose" | "loading">("choose");
+const vaultLoadingMsg = ref("");
+const vaultError = ref("");
+
+function openVaultModal() {
+	showVaultModal.value = true;
+	vaultStep.value = "choose";
+	vaultError.value = "";
+}
+
+function closeVaultModal() {
+	if (vaultStep.value === "loading") return;
+	showVaultModal.value = false;
+}
+
+async function moveVault() {
+	vaultError.value = "";
+	try {
+		const fs = await getFileSystemAdapter();
+		const result = await fs.pickFolder({ title: "Выберите новую папку для хранения данных" });
+		vaultStep.value = "loading";
+		vaultLoadingMsg.value = "Перенос данных";
+
+		const metadata = await vaultService.readMetadata();
+		await settingsStore.setVaultPath(result.uri);
+
+		const fs2 = await getFileSystemAdapter();
+		if (metadata) {
+			await fs2.writeJson("metadata.json", { metadata });
+		} else {
+			await vaultService.initNewVault(settingsStore.settings.deviceId);
+		}
+
+		await Promise.all([accountsStore.save(), categoriesStore.save(), budgetsStore.save()]);
+		await gamificationStore.persist();
+
+		for (const [month, transactions] of txStore._cache) {
+			await transactionsService.saveMonth(month, transactions);
+		}
+
+		showVaultModal.value = false;
+		vaultStep.value = "choose";
+	} catch (e) {
+		vaultError.value = e instanceof Error ? e.message : "Ошибка переноса данных";
+		vaultStep.value = "choose";
+	}
+}
+
+async function switchVault() {
+	vaultError.value = "";
+	try {
+		const fs = await getFileSystemAdapter();
+		const result = await fs.pickFolder({ title: "Выберите папку с хранилищем" });
+		vaultStep.value = "loading";
+		vaultLoadingMsg.value = "Загрузка хранилища";
+
+		await settingsStore.setVaultPath(result.uri);
+
+		const metadata = await vaultService.readMetadata();
+		if (!metadata) {
+			await vaultService.initNewVault(settingsStore.settings.deviceId);
+		}
+
+		txStore._cache.clear();
+		txStore.loadedMonths.clear();
+
+		await Promise.all([accountsStore.load(), categoriesStore.load(), gamificationStore.load(), budgetsStore.load()]);
+		await txStore.loadCurrentAndPrevMonth();
+
+		showVaultModal.value = false;
+		vaultStep.value = "choose";
+	} catch (e) {
+		vaultError.value = e instanceof Error ? e.message : "Ошибка открытия хранилища";
+		vaultStep.value = "choose";
+	}
+}
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 const notifEnabled = ref(settingsStore.settings.notificationsEnabled);
@@ -254,17 +339,64 @@ async function doExportJSON() {
 						{{ settingsStore.settings.theme === "dark" ? "☀ Светлая" : "🌙 Тёмная" }}
 					</button>
 				</div>
-				<div class="setting-row">
+				<div class="setting-row vault-row">
 					<span>Хранилище</span>
-					<span
-						class="text-muted truncate"
-						style="max-width: 200px">
-						{{ settingsStore.settings.vaultPath ?? "—" }}
-					</span>
+					<div class="vault-row__right">
+						<span class="text-muted vault-path">
+							{{ settingsStore.settings.vaultPath ?? "—" }}
+						</span>
+						<button
+							class="vault-change-btn"
+							@click="openVaultModal">
+							Сменить
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+
+	<AppModal
+		v-if="showVaultModal"
+		title="Сменить хранилище"
+		size="sm"
+		@close="closeVaultModal">
+		<div class="vault-modal">
+			<template v-if="vaultStep === 'choose'">
+				<div class="vault-modal__actions">
+					<button
+						class="vault-option"
+						@click="moveVault">
+						<div class="vault-option__icon">📦</div>
+						<div class="vault-option__text">
+							<div class="vault-option__title">Перенести данные</div>
+							<div class="vault-option__desc">Скопировать все данные в новую папку</div>
+						</div>
+					</button>
+					<button
+						class="vault-option"
+						@click="switchVault">
+						<div class="vault-option__icon">📂</div>
+						<div class="vault-option__text">
+							<div class="vault-option__title">Открыть другое хранилище</div>
+							<div class="vault-option__desc">Переключиться на существующую папку</div>
+						</div>
+					</button>
+				</div>
+				<p
+					v-if="vaultError"
+					class="vault-modal__error">
+					{{ vaultError }}
+				</p>
+			</template>
+			<template v-else>
+				<div class="vault-modal__loading">
+					<div class="vault-modal__spinner" />
+					<p>{{ vaultLoadingMsg }}…</p>
+				</div>
+			</template>
+		</div>
+	</AppModal>
 </template>
 
 <style scoped>
@@ -500,5 +632,93 @@ async function doExportJSON() {
 	background: var(--bg-input);
 	color: var(--text-primary);
 	font-size: var(--font-sm);
+}
+
+.vault-row .vault-row__right {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-width: 0;
+}
+.vault-change-btn {
+	background: var(--bg-elevated);
+	border: none;
+	border-radius: var(--radius-sm);
+	padding: var(--space-1) var(--space-3);
+	color: var(--text-primary);
+	cursor: pointer;
+	font-size: var(--font-sm);
+	flex-shrink: 0;
+}
+.vault-path {
+	font-size: var(--font-xs);
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vault-modal {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+}
+.vault-modal__actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+}
+.vault-option {
+	display: flex;
+	align-items: center;
+	gap: var(--space-4);
+	width: 100%;
+	padding: var(--space-4);
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	cursor: pointer;
+	text-align: left;
+	color: var(--text-primary);
+	transition: border-color 0.15s;
+}
+.vault-option:hover {
+	border-color: var(--accent-primary);
+}
+.vault-option__icon {
+	font-size: 28px;
+	flex-shrink: 0;
+}
+.vault-option__title {
+	font-size: var(--font-sm);
+	font-weight: 600;
+}
+.vault-option__desc {
+	font-size: var(--font-xs);
+	color: var(--text-muted);
+	margin-top: 2px;
+}
+.vault-modal__error {
+	font-size: var(--font-xs);
+	color: var(--accent-danger);
+	padding: var(--space-3);
+	background: var(--accent-danger-soft);
+	border-radius: var(--radius-md);
+}
+.vault-modal__loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-4);
+	padding: var(--space-6) 0;
+	color: var(--text-secondary);
+}
+.vault-modal__spinner {
+	width: 36px;
+	height: 36px;
+	border: 3px solid var(--border);
+	border-top-color: var(--accent-primary);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
 }
 </style>
