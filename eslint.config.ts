@@ -23,6 +23,14 @@ export default defineConfig([
 		}
 	},
 
+	// Test files: allow `any` for partial mocks and Vue internal setup state access
+	{
+		files: ["**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/no-explicit-any": "off"
+		}
+	},
+
 	{
 		files: ["**/*.css"],
 		plugins: { css },
