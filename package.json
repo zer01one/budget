@@ -28,6 +28,7 @@
 		"@capacitor/local-notifications": "^8.2.0",
 		"@capacitor/preferences": "^8.0.1",
 		"@capawesome/capacitor-file-picker": "^8.0.2",
+		"@phosphor-icons/vue": "^2.2.1",
 		"@tauri-apps/plugin-dialog": "^2.7.1",
 		"@tauri-apps/plugin-fs": "^2.5.1",
 		"@tauri-apps/plugin-store": "^2.4.3",

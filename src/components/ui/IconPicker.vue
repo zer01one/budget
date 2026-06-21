@@ -1,44 +1,6 @@
-<script lang="ts">
-// Exported for use in parent views
-export const ICON_EMOJI: Record<string, string> = {
-	wallet: "👛",
-	bank: "🏦",
-	card: "💳",
-	cash: "💵",
-	piggy: "🐷",
-	crypto: "₿",
-	savings: "🏧",
-	invest: "📈",
-	dollar: "💲",
-	euro: "€",
-	star: "⭐",
-	home: "🏠",
-	food: "🍽",
-	transport: "🚌",
-	health: "💊",
-	clothes: "👗",
-	entertainment: "🎬",
-	phone: "📱",
-	education: "📚",
-	shopping: "🛍",
-	sport: "⚽",
-	subscription: "📺",
-	salary: "💼",
-	freelance: "💻",
-	investment: "📊",
-	gift: "🎁",
-	travel: "✈",
-	fuel: "⛽",
-	pet: "🐾",
-	other: "⬡"
-};
-
-export function iconToEmoji(icon: string): string {
-	return ICON_EMOJI[icon] ?? "⬡";
-}
-</script>
-
 <script setup lang="ts">
+import AppIcon from "@/components/ui/AppIcon.vue";
+
 defineProps<{
 	modelValue: string;
 	label?: string;
@@ -48,23 +10,45 @@ defineEmits<{ "update:modelValue": [value: string] }>();
 
 const CATEGORY_ICONS = [
 	"food",
+	"coffee",
+	"shopping",
+	"bag",
 	"transport",
+	"bus",
+	"train",
+	"bicycle",
+	"travel",
+	"fuel",
 	"home",
+	"electricity",
+	"water",
+	"wifi",
 	"health",
+	"medicine",
+	"insurance",
 	"clothes",
+	"beauty",
 	"entertainment",
+	"tv",
+	"music",
+	"game",
 	"phone",
 	"education",
-	"shopping",
+	"book",
 	"sport",
 	"subscription",
 	"salary",
 	"freelance",
 	"investment",
 	"gift",
-	"travel",
-	"fuel",
 	"pet",
+	"baby",
+	"tools",
+	"fire",
+	"nature",
+	"heart",
+	"sun",
+	"tag",
 	"other"
 ];
 </script>
@@ -83,7 +67,9 @@ const CATEGORY_ICONS = [
 				:class="['icon-item', { 'icon-item--active': modelValue === icon }]"
 				@click="$emit('update:modelValue', icon)"
 				:title="icon">
-				{{ ICON_EMOJI[icon] ?? "⬡" }}
+				<AppIcon
+					:name="icon"
+					:size="22" />
 			</button>
 		</div>
 	</div>
@@ -111,7 +97,7 @@ const CATEGORY_ICONS = [
 	border-radius: var(--radius-md);
 	background: var(--bg-elevated);
 	border: 2px solid transparent;
-	font-size: 20px;
+	color: var(--text-primary);
 	cursor: pointer;
 	display: flex;
 	align-items: center;

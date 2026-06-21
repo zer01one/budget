@@ -7,6 +7,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -138,7 +139,7 @@ function formatDate(date: string): string {
 					<div
 						class="tx-row__icon"
 						:style="{ background: getCategory(tx.categoryId)?.color + '22', color: getCategory(tx.categoryId)?.color }">
-						{{ getCategory(tx.categoryId)?.icon?.slice(0, 2) ?? "•" }}
+						<AppIcon :name="getCategory(tx.categoryId)?.icon ?? 'other'" />
 					</div>
 					<div class="tx-row__info">
 						<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>

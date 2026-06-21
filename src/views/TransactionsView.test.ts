@@ -605,23 +605,23 @@ describe("TransactionsView – day totals", () => {
 // ── Transaction row rendering ─────────────────────────────────────────────────
 
 describe("TransactionsView – transaction row rendering", () => {
-	it("shows category icon (first 2 chars) when category exists", async () => {
+	it("shows category icon when category exists", async () => {
 		const { wrapper } = await mountView();
-		useCategoriesStore().categories = [makeCategory({ id: "cat-1", icon: "AB_extra" })];
+		useCategoriesStore().categories = [makeCategory({ id: "cat-1", icon: "food" })];
 		await populateCache([makeTx({ categoryId: "cat-1" })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("AB");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
-	it("shows '•' icon when no category and type is not transfer", async () => {
+	it("shows fallback icon when no category and type is not transfer", async () => {
 		const { wrapper } = await mountView();
 		await populateCache([makeTx({ categoryId: null, type: "expense" })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("•");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
-	it("shows '↔' icon when no category and type is transfer", async () => {
+	it("shows transfer icon when no category and type is transfer", async () => {
 		const { wrapper } = await mountView();
 		await populateCache([makeTx({ categoryId: null, type: "transfer" })]);
-		expect(wrapper.find(".tx-row__icon").text()).toBe("↔");
+		expect(wrapper.find(".tx-row__icon svg").exists()).toBe(true);
 	});
 
 	it("shows category name in tx-row__name", async () => {

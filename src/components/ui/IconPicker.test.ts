@@ -1,56 +1,82 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import IconPicker, { ICON_EMOJI, iconToEmoji } from "./IconPicker.vue";
+import IconPicker from "./IconPicker.vue";
+import { ICON_MAP } from "./AppIcon.vue";
 
-// 19 default category icons (matches CATEGORY_ICONS in the component)
-const CATEGORY_ICONS = [
+const EXPECTED_CATEGORY_ICONS = [
 	"food",
+	"coffee",
+	"shopping",
+	"bag",
 	"transport",
+	"bus",
+	"train",
+	"bicycle",
+	"travel",
+	"fuel",
 	"home",
+	"electricity",
+	"water",
+	"wifi",
 	"health",
+	"medicine",
+	"insurance",
 	"clothes",
+	"beauty",
 	"entertainment",
+	"tv",
+	"music",
+	"game",
 	"phone",
 	"education",
-	"shopping",
+	"book",
 	"sport",
 	"subscription",
 	"salary",
 	"freelance",
 	"investment",
 	"gift",
-	"travel",
-	"fuel",
 	"pet",
+	"baby",
+	"tools",
+	"fire",
+	"nature",
+	"heart",
+	"sun",
+	"tag",
 	"other"
 ];
 
-describe("iconToEmoji – pure function", () => {
-	it("wallet → 👛", () => expect(iconToEmoji("wallet")).toBe("👛"));
-	it("food → 🍽", () => expect(iconToEmoji("food")).toBe("🍽"));
-	it("home → 🏠", () => expect(iconToEmoji("home")).toBe("🏠"));
-	it("transport → 🚌", () => expect(iconToEmoji("transport")).toBe("🚌"));
-	it("unknown key → ⬡", () => expect(iconToEmoji("nonexistent")).toBe("⬡"));
-	it("empty string → ⬡", () => expect(iconToEmoji("")).toBe("⬡"));
-});
-
-describe("ICON_EMOJI map", () => {
-	it("has more than 20 entries", () => {
-		expect(Object.keys(ICON_EMOJI).length).toBeGreaterThan(20);
+describe("ICON_MAP", () => {
+	it("has more than 40 entries", () => {
+		expect(Object.keys(ICON_MAP).length).toBeGreaterThan(40);
 	});
 
-	it("all values are non-empty strings", () => {
-		for (const v of Object.values(ICON_EMOJI)) {
-			expect(typeof v).toBe("string");
-			expect(v.length).toBeGreaterThan(0);
+	it("all values are Vue components (objects/functions)", () => {
+		for (const v of Object.values(ICON_MAP)) {
+			expect(v).toBeTruthy();
+			expect(typeof v === "function" || typeof v === "object").toBe(true);
 		}
+	});
+
+	it("required keys are present", () => {
+		const required = ["wallet", "bank", "card", "food", "transport", "home", "other", "transfer"];
+		for (const key of required) {
+			expect(ICON_MAP).toHaveProperty(key);
+		}
+	});
+
+	it("unknown key falls back to PhQuestion in AppIcon", async () => {
+		const AppIcon = (await import("./AppIcon.vue")).default;
+		const w = mount(AppIcon, { props: { name: "nonexistent_key_xyz" } });
+		expect(w.find("svg").exists()).toBe(true);
 	});
 });
 
 describe("IconPicker – default icons", () => {
-	it("renders 19 icon items by default", () => {
+	it("renders expected number of icon items by default", () => {
 		const w = mount(IconPicker, { props: { modelValue: "food" } });
-		expect(w.findAll(".icon-item")).toHaveLength(19);
+		expect(w.findAll(".icon-item")).toHaveLength(EXPECTED_CATEGORY_ICONS.length);
 	});
 
 	it("renders custom icons when icons prop provided", () => {
@@ -102,16 +128,16 @@ describe("IconPicker – emit", () => {
 		expect(w.emitted("update:modelValue")).toBeTruthy();
 	});
 
-	it("emitted value is the icon key (first item = food)", async () => {
+	it("emitted value is the first icon key (food)", async () => {
 		const w = mount(IconPicker, { props: { modelValue: "" } });
 		await w.findAll(".icon-item")[0].trigger("click");
-		expect(w.emitted("update:modelValue")![0][0]).toBe(CATEGORY_ICONS[0]); // 'food'
+		expect(w.emitted("update:modelValue")![0][0]).toBe(EXPECTED_CATEGORY_ICONS[0]); // 'food'
 	});
 
-	it("clicking second item emits 'transport'", async () => {
+	it("clicking second item emits 'coffee'", async () => {
 		const w = mount(IconPicker, { props: { modelValue: "" } });
 		await w.findAll(".icon-item")[1].trigger("click");
-		expect(w.emitted("update:modelValue")![0][0]).toBe("transport");
+		expect(w.emitted("update:modelValue")![0][0]).toBe("coffee");
 	});
 
 	it("clicking custom icon emits that icon's key", async () => {

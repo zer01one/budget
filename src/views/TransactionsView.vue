@@ -7,6 +7,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const txStore = useTransactionsStore();
@@ -290,7 +291,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 								background: (getCategory(tx.categoryId)?.color ?? '#6B7280') + '22',
 								color: getCategory(tx.categoryId)?.color ?? '#6B7280'
 							}">
-							{{ getCategory(tx.categoryId)?.icon?.slice(0, 2) ?? (tx.type === "transfer" ? "↔" : "•") }}
+							<AppIcon :name="getCategory(tx.categoryId)?.icon ?? (tx.type === 'transfer' ? 'transfer' : 'other')" />
 						</div>
 						<div class="tx-row__info">
 							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>

@@ -6,6 +6,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -62,7 +63,7 @@ async function archiveAccount() {
 			<div
 				class="balance-hero"
 				:style="{ '--acc-color': account.color }">
-				<div class="balance-hero__icon">{{ account.icon }}</div>
+				<div class="balance-hero__icon"><AppIcon :name="account.icon" /></div>
 				<div class="balance-hero__amount">{{ balance.toLocaleString("ru-RU") }} {{ account.currency }}</div>
 				<div class="balance-hero__label text-muted">Текущий баланс</div>
 			</div>
@@ -123,7 +124,7 @@ async function archiveAccount() {
 						<div
 							class="tx-row__icon"
 							:style="{ background: getCategory(tx.categoryId)?.color + '22', color: getCategory(tx.categoryId)?.color }">
-							{{ getCategory(tx.categoryId)?.icon?.slice(0, 2) ?? "↔" }}
+							<AppIcon :name="getCategory(tx.categoryId)?.icon ?? 'transfer'" />
 						</div>
 						<div class="tx-row__info">
 							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>

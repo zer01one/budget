@@ -135,10 +135,10 @@ describe("AccountsView", () => {
 			expect(wrapper.find(".account-card__type").text()).toBe("savings");
 		});
 
-		it("displays icon sliced to 2 characters", async () => {
-			useAccountsStore().accounts = [makeAccount({ icon: "AB_extra" })];
+		it("displays icon for account", async () => {
+			useAccountsStore().accounts = [makeAccount({ icon: "wallet" })];
 			const { wrapper } = await mountView();
-			expect(wrapper.find(".account-card__icon").text()).toBe("AB");
+			expect(wrapper.find(".account-card__icon svg").exists()).toBe(true);
 		});
 
 		it("renders empty icon when icon is undefined", async () => {
