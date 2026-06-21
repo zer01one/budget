@@ -37,6 +37,10 @@ vi.mock("@/services/filesystem/capacitor.adapter", () => ({
 }));
 
 import { useSettingsStore } from "./settings.store";
+import { Capacitor } from "@capacitor/core";
+import { Preferences } from "@capacitor/preferences";
+import { setTauriVaultPath } from "@/services/filesystem/tauri.adapter";
+import { setCapacitorVaultUri } from "@/services/filesystem/capacitor.adapter";
 
 // Stub the Tauri bridge so that fire-and-forget save() calls that escape
 // mock teardown (e.g. second call in "toggling twice") don't throw.
@@ -199,5 +203,166 @@ describe("useSettingsStore – load (Tauri path)", () => {
 		expect(store.settings.locale).toBe("en-US");
 		// defaults preserved for unset keys
 		expect(store.settings.defaultCurrency).toBe("KZT");
+	});
+});
+
+describe("useSettingsStore – load (Capacitor path)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+		vi.mocked(Preferences.get).mockClear();
+	});
+
+	afterEach(() => {
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+	});
+
+	it("sets isLoaded=true after load completes", async () => {
+		vi.mocked(Preferences.get).mockResolvedValueOnce({ value: null });
+		const store = useSettingsStore();
+		await store.load();
+		expect(store.isLoaded).toBe(true);
+	});
+
+	it("keeps defaults when Preferences returns null", async () => {
+		vi.mocked(Preferences.get).mockResolvedValueOnce({ value: null });
+		const store = useSettingsStore();
+		await store.load();
+		expect(store.settings.theme).toBe("dark");
+		expect(store.settings.defaultCurrency).toBe("KZT");
+	});
+
+	it("merges saved settings from Preferences", async () => {
+		vi.mocked(Preferences.get).mockResolvedValueOnce({
+			value: JSON.stringify({ theme: "light", locale: "en-US" })
+		});
+		const store = useSettingsStore();
+		await store.load();
+		expect(store.settings.theme).toBe("light");
+		expect(store.settings.locale).toBe("en-US");
+		expect(store.settings.defaultCurrency).toBe("KZT");
+	});
+});
+
+describe("useSettingsStore – save (Tauri path)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+		mocks.pluginStoreLoad.mockClear();
+		mocks.storeInstance.set.mockClear();
+		mocks.storeInstance.save.mockClear();
+	});
+
+	it("opens settings.json store file", async () => {
+		const store = useSettingsStore();
+		await store.save();
+		expect(mocks.pluginStoreLoad).toHaveBeenCalledWith("settings.json");
+	});
+
+	it("calls store.set with app_settings key and current settings", async () => {
+		const store = useSettingsStore();
+		await store.save();
+		expect(mocks.storeInstance.set).toHaveBeenCalledWith("app_settings", store.settings);
+	});
+
+	it("calls store.save to flush to disk", async () => {
+		const store = useSettingsStore();
+		await store.save();
+		expect(mocks.storeInstance.save).toHaveBeenCalled();
+	});
+});
+
+describe("useSettingsStore – save (Capacitor path)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+		vi.mocked(Preferences.set).mockClear();
+	});
+
+	afterEach(() => {
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+	});
+
+	it("calls Preferences.set with JSON-stringified settings", async () => {
+		const store = useSettingsStore();
+		await store.save();
+		expect(vi.mocked(Preferences.set)).toHaveBeenCalledWith({
+			key: "app_settings",
+			value: JSON.stringify(store.settings)
+		});
+	});
+});
+
+describe("useSettingsStore – setVaultPath (Tauri path)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+		vi.mocked(setTauriVaultPath).mockClear();
+		mocks.storeInstance.set.mockClear();
+		mocks.storeInstance.save.mockClear();
+	});
+
+	it("sets vaultPath in settings", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("/home/user/vault");
+		expect(store.settings.vaultPath).toBe("/home/user/vault");
+	});
+
+	it("sets firstLaunch to false", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("/home/user/vault");
+		expect(store.settings.firstLaunch).toBe(false);
+	});
+
+	it("calls setTauriVaultPath with the given path", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("/home/user/vault");
+		expect(setTauriVaultPath).toHaveBeenCalledWith("/home/user/vault");
+	});
+
+	it("persists settings via save()", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("/home/user/vault");
+		expect(mocks.storeInstance.set).toHaveBeenCalledWith("app_settings", store.settings);
+	});
+});
+
+describe("useSettingsStore – setVaultPath (Capacitor path)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+		vi.mocked(setCapacitorVaultUri).mockClear();
+		vi.mocked(Preferences.set).mockClear();
+	});
+
+	afterEach(() => {
+		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+	});
+
+	it("sets vaultPath in settings", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("content://vault");
+		expect(store.settings.vaultPath).toBe("content://vault");
+	});
+
+	it("sets firstLaunch to false", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("content://vault");
+		expect(store.settings.firstLaunch).toBe(false);
+	});
+
+	it("calls setCapacitorVaultUri with the given path", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("content://vault");
+		expect(setCapacitorVaultUri).toHaveBeenCalledWith("content://vault");
+	});
+
+	it("persists settings via Preferences.set", async () => {
+		const store = useSettingsStore();
+		await store.setVaultPath("content://vault");
+		expect(vi.mocked(Preferences.set)).toHaveBeenCalledWith({
+			key: "app_settings",
+			value: JSON.stringify(store.settings)
+		});
 	});
 });
