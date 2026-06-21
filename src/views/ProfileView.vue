@@ -346,7 +346,7 @@ async function doExportJSON() {
 							{{ settingsStore.settings.vaultPath ?? "—" }}
 						</span>
 						<button
-							class="theme-toggle"
+							class="vault-change-btn"
 							@click="openVaultModal">
 							Сменить
 						</button>
@@ -640,9 +640,19 @@ async function doExportJSON() {
 	gap: var(--space-2);
 	min-width: 0;
 }
+.vault-change-btn {
+	background: var(--bg-elevated);
+	border: none;
+	border-radius: var(--radius-sm);
+	padding: var(--space-1) var(--space-3);
+	color: var(--text-primary);
+	cursor: pointer;
+	font-size: var(--font-sm);
+	flex-shrink: 0;
+}
 .vault-path {
 	font-size: var(--font-xs);
-	max-width: 140px;
+	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

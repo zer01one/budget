@@ -12,17 +12,31 @@ import type { Achievement } from "@/types";
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockExportCSV, mockExportJSON, mockRequestPermission, mockScheduleReminder, mockCancelReminder, mockSettingsSave, mockSetTheme } = vi.hoisted(
-	() => ({
-		mockExportCSV: vi.fn().mockResolvedValue(undefined),
-		mockExportJSON: vi.fn().mockResolvedValue(undefined),
-		mockRequestPermission: vi.fn().mockResolvedValue(true),
-		mockScheduleReminder: vi.fn().mockResolvedValue(undefined),
-		mockCancelReminder: vi.fn().mockResolvedValue(undefined),
-		mockSettingsSave: vi.fn().mockResolvedValue(undefined),
-		mockSetTheme: vi.fn().mockResolvedValue(undefined)
-	})
-);
+const {
+	mockExportCSV,
+	mockExportJSON,
+	mockRequestPermission,
+	mockScheduleReminder,
+	mockCancelReminder,
+	mockSettingsSave,
+	mockSetTheme,
+	mockSetVaultPath,
+	mockPickFolder,
+	mockReadMetadata,
+	mockInitNewVault
+} = vi.hoisted(() => ({
+	mockExportCSV: vi.fn().mockResolvedValue(undefined),
+	mockExportJSON: vi.fn().mockResolvedValue(undefined),
+	mockRequestPermission: vi.fn().mockResolvedValue(true),
+	mockScheduleReminder: vi.fn().mockResolvedValue(undefined),
+	mockCancelReminder: vi.fn().mockResolvedValue(undefined),
+	mockSettingsSave: vi.fn().mockResolvedValue(undefined),
+	mockSetTheme: vi.fn().mockResolvedValue(undefined),
+	mockSetVaultPath: vi.fn().mockResolvedValue(undefined),
+	mockPickFolder: vi.fn().mockResolvedValue({ uri: "/new/vault", displayPath: "new/vault" }),
+	mockReadMetadata: vi.fn().mockResolvedValue(null),
+	mockInitNewVault: vi.fn().mockResolvedValue(undefined)
+}));
 
 // Settings data — mutated per test in beforeEach
 let settingsData = {
@@ -37,7 +51,8 @@ vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({
 		settings: settingsData,
 		save: mockSettingsSave,
-		setTheme: mockSetTheme
+		setTheme: mockSetTheme,
+		setVaultPath: mockSetVaultPath
 	}))
 }));
 
@@ -54,6 +69,7 @@ vi.mock("@/services/notifications.service", () => ({
 
 vi.mock("@/services/filesystem", () => ({
 	getFileSystemAdapter: vi.fn().mockResolvedValue({
+		pickFolder: mockPickFolder,
 		readJson: vi.fn().mockResolvedValue(null),
 		writeJson: vi.fn().mockResolvedValue(undefined)
 	})
@@ -64,6 +80,13 @@ vi.mock("@/services/data/transactions.service", () => ({
 		saveMonth: vi.fn().mockResolvedValue(undefined),
 		loadMonth: vi.fn().mockResolvedValue(null),
 		listMonths: vi.fn().mockResolvedValue([])
+	}
+}));
+
+vi.mock("@/services/data/vault.service", () => ({
+	vaultService: {
+		readMetadata: mockReadMetadata,
+		initNewVault: mockInitNewVault
 	}
 }));
 
@@ -81,6 +104,10 @@ afterEach(() => {
 	mockScheduleReminder.mockResolvedValue(undefined);
 	mockCancelReminder.mockResolvedValue(undefined);
 	mockSettingsSave.mockResolvedValue(undefined);
+	mockSetVaultPath.mockResolvedValue(undefined);
+	mockPickFolder.mockResolvedValue({ uri: "/new/vault", displayPath: "new/vault" });
+	mockReadMetadata.mockResolvedValue(null);
+	mockInitNewVault.mockResolvedValue(undefined);
 });
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -584,12 +611,187 @@ describe("ProfileView – settings: vault path", () => {
 	it("shows '—' when vaultPath is null", async () => {
 		settingsData.vaultPath = null;
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".truncate").text()).toBe("—");
+		expect(wrapper.find(".vault-path").text()).toBe("—");
 	});
 
 	it("shows vault path when set", async () => {
 		settingsData.vaultPath = "/home/user/budget";
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".truncate").text()).toBe("/home/user/budget");
+		expect(wrapper.find(".vault-path").text()).toBe("/home/user/budget");
+	});
+});
+
+// ── Vault change ──────────────────────────────────────────────────────────────
+
+async function mountViewWithTeleport() {
+	const router = createRouter({
+		history: createMemoryHistory(),
+		routes: [{ path: "/", component: ProfileView }]
+	});
+	router.push("/");
+	await router.isReady();
+	const wrapper = mount(ProfileView, {
+		global: {
+			plugins: [pinia, router],
+			stubs: { Teleport: true }
+		}
+	});
+	await flushPromises();
+	return { wrapper, router };
+}
+
+describe("ProfileView – vault change", () => {
+	beforeEach(() => {
+		settingsData = { notificationsEnabled: false, reminderTime: "20:00", theme: "dark", vaultPath: "/old/vault", deviceId: "test-device" };
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("'Сменить' button is rendered", async () => {
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".vault-change-btn").exists()).toBe(true);
+	});
+
+	it("clicking 'Сменить' opens vault modal", async () => {
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		expect(wrapper.find(".vault-modal").exists()).toBe(true);
+	});
+
+	it("vault modal shows both option buttons", async () => {
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		const options = wrapper.findAll(".vault-option");
+		expect(options).toHaveLength(2);
+		expect(options[0].text()).toContain("Перенести данные");
+		expect(options[1].text()).toContain("Открыть другое хранилище");
+	});
+
+	it("moveVault: calls pickFolder then setVaultPath with returned URI", async () => {
+		mockPickFolder.mockResolvedValue({ uri: "/new/vault", displayPath: "new/vault" });
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		await flushPromises();
+		expect(mockPickFolder).toHaveBeenCalledOnce();
+		expect(mockSetVaultPath).toHaveBeenCalledWith("/new/vault");
+	});
+
+	it("moveVault: closes modal on success", async () => {
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".vault-modal").exists()).toBe(false);
+	});
+
+	it("moveVault: shows error when pickFolder rejects", async () => {
+		mockPickFolder.mockRejectedValue(new Error("Отменено пользователем"));
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".vault-modal__error").text()).toBe("Отменено пользователем");
+	});
+
+	it("moveVault: shows fallback error for non-Error throws", async () => {
+		mockPickFolder.mockRejectedValue("something");
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".vault-modal__error").text()).toBe("Ошибка переноса данных");
+	});
+
+	it("moveVault: calls initNewVault when no metadata in old vault", async () => {
+		mockReadMetadata.mockResolvedValue(null);
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		await flushPromises();
+		expect(mockInitNewVault).toHaveBeenCalledOnce();
+	});
+
+	it("switchVault: calls pickFolder then setVaultPath with returned URI", async () => {
+		mockPickFolder.mockResolvedValue({ uri: "/other/vault", displayPath: "other/vault" });
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[1].trigger("click");
+		await flushPromises();
+		expect(mockPickFolder).toHaveBeenCalledOnce();
+		expect(mockSetVaultPath).toHaveBeenCalledWith("/other/vault");
+	});
+
+	it("switchVault: closes modal on success", async () => {
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[1].trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".vault-modal").exists()).toBe(false);
+	});
+
+	it("switchVault: calls initNewVault when target folder has no metadata", async () => {
+		mockReadMetadata.mockResolvedValue(null);
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[1].trigger("click");
+		await flushPromises();
+		expect(mockInitNewVault).toHaveBeenCalledOnce();
+	});
+
+	it("switchVault: does not call initNewVault when target folder has metadata", async () => {
+		mockReadMetadata.mockResolvedValue({
+			schemaVersion: 1,
+			deviceId: "x",
+			appVersion: "0.1.0",
+			createdAt: "",
+			vaultName: "",
+			updatedAt: "",
+			version: 1
+		});
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[1].trigger("click");
+		await flushPromises();
+		expect(mockInitNewVault).not.toHaveBeenCalled();
+	});
+
+	it("switchVault: shows error when pickFolder rejects", async () => {
+		mockPickFolder.mockRejectedValue(new Error("Нет прав"));
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[1].trigger("click");
+		await flushPromises();
+		expect(wrapper.find(".vault-modal__error").text()).toBe("Нет прав");
+	});
+
+	it("modal cannot be closed while loading (closeVaultModal is blocked)", async () => {
+		// Block after pickFolder resolves so vaultStep becomes "loading" before we try to close
+		let resolveSetVaultPath!: () => void;
+		mockSetVaultPath.mockReturnValue(new Promise<void>((r) => (resolveSetVaultPath = r)));
+		const { wrapper } = await mountViewWithTeleport();
+		await wrapper.find(".vault-change-btn").trigger("click");
+		await nextTick();
+		await wrapper.findAll(".vault-option")[0].trigger("click");
+		// flush until setVaultPath blocks — vaultStep is now "loading"
+		await flushPromises();
+		const closeBtn = wrapper.find(".modal__close");
+		if (closeBtn.exists()) await closeBtn.trigger("click");
+		await nextTick();
+		expect(wrapper.find(".vault-modal").exists()).toBe(true);
+		resolveSetVaultPath();
+		await flushPromises();
 	});
 });
