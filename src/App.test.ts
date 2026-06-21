@@ -36,9 +36,7 @@ function mountApp(routeName: string) {
 		]
 	});
 	router.push(routeName === "setup" ? "/setup" : "/");
-	return router.isReady().then(() =>
-		mount(App, { global: { plugins: [router] } })
-	);
+	return router.isReady().then(() => mount(App, { global: { plugins: [router] } }));
 }
 
 describe("App.vue", () => {

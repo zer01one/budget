@@ -4,14 +4,14 @@ import { vaultService } from "./vault.service";
 
 const { mockReadJson, mockWriteJson } = vi.hoisted(() => ({
 	mockReadJson: vi.fn(),
-	mockWriteJson: vi.fn().mockResolvedValue(undefined),
+	mockWriteJson: vi.fn().mockResolvedValue(undefined)
 }));
 
 vi.mock("@/services/filesystem", () => ({
 	getFileSystemAdapter: vi.fn().mockResolvedValue({
 		readJson: mockReadJson,
-		writeJson: mockWriteJson,
-	}),
+		writeJson: mockWriteJson
+	})
 }));
 
 // ─── computeLevel ─────────────────────────────────────────────────────────────
@@ -84,9 +84,13 @@ describe("vaultService.readMetadata", () => {
 
 	it("returns the metadata object from the file", async () => {
 		const meta = {
-			appVersion: "0.1.0", schemaVersion: 1, deviceId: "dev-1",
-			createdAt: "2026-01-01T00:00:00.000Z", vaultName: "Мои финансы",
-			updatedAt: "2026-01-01T00:00:00.000Z", version: 1,
+			appVersion: "0.1.0",
+			schemaVersion: 1,
+			deviceId: "dev-1",
+			createdAt: "2026-01-01T00:00:00.000Z",
+			vaultName: "Мои финансы",
+			updatedAt: "2026-01-01T00:00:00.000Z",
+			version: 1
 		};
 		mockReadJson.mockResolvedValue({ data: { metadata: meta }, modifiedAt: "2026-01-01T00:00:00.000Z" });
 		expect(await vaultService.readMetadata()).toEqual(meta);

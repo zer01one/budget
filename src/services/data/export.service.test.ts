@@ -300,11 +300,7 @@ describe("exportTransactionsCSV", () => {
 	});
 
 	it("both fromDate and toDate — keeps only transactions in range", async () => {
-		const txs = [
-			makeTx({ id: "1", date: "2026-01-01" }),
-			makeTx({ id: "2", date: "2026-03-15" }),
-			makeTx({ id: "3", date: "2026-06-01" })
-		];
+		const txs = [makeTx({ id: "1", date: "2026-01-01" }), makeTx({ id: "2", date: "2026-03-15" }), makeTx({ id: "3", date: "2026-06-01" })];
 		await exportTransactionsCSV(txs, [makeAccount()], [makeCategory()], "2026-03-01", "2026-04-30");
 		const csv: string = mockExportFile.mock.calls[0][1];
 		expect(csv).not.toContain("2026-01-01");
