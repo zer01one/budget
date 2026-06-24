@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
@@ -31,9 +31,28 @@ const errors = ref<Record<string, string>>({});
 
 const categories = computed(() => categoriesStore.byType(type.value));
 
+async function onAmountInput(event: Event) {
+	let val = (event.target as HTMLInputElement).value;
+	amount.value = val;
+	await nextTick();
+
+	val = val.replace(/[^\d.,]/g, "");
+	val = val.replace(/^0+(?=[.,]|$)/, "0");
+	val = val.replace(/^0(?=[1-9])/, "");
+	val = val.replace(",", ".");
+	let [main, decimal] = val.split(".");
+
+	if (decimal) {
+		const cents = decimal.replace(/\D/g, "").slice(0, 2);
+		val = `${main}.${cents}`;
+	}
+
+	amount.value = val;
+}
+
 function validate(): boolean {
 	errors.value = {};
-	const parsed = parseFloat(String(amount.value).replace(",", "."));
+	const parsed = parseFloat(amount.value || "0");
 	if (isNaN(parsed) || parsed <= 0) errors.value.amount = "Введите положительную сумму";
 	if (!accountId.value) errors.value.account = "Выберите счёт";
 	if (type.value === "transfer" && !toAccountId.value) errors.value.toAccount = "Выберите счёт назначения";
@@ -47,7 +66,7 @@ async function submit() {
 	try {
 		const tx = await txStore.addTransaction({
 			type: type.value,
-			amount: parseFloat(String(amount.value).replace(",", ".")),
+			amount: parseFloat(amount.value),
 			currency: accountsStore.getById(accountId.value)?.currency ?? "KZT",
 			date: date.value,
 			time: time.value,
@@ -97,13 +116,12 @@ async function submit() {
 			<!-- Amount -->
 			<div class="amount-field">
 				<input
-					v-model="amount"
-					type="number"
+					:value="amount"
+					@input="onAmountInput"
+					type="text"
 					inputmode="decimal"
-					class="amount-field__input"
-					placeholder="0"
-					min="0"
-					step="any" />
+					placeholder="0" 
+					class="amount-field__input"/>
 				<span class="amount-field__currency">
 					{{ accountsStore.getById(accountId)?.currency ?? "KZT" }}
 				</span>
