@@ -2,16 +2,10 @@
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
-import { useTransactionsStore } from "@/stores/transactions.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
-const txStore = useTransactionsStore();
-
-function getBalance(id: string, initial: number) {
-	return txStore.computeAccountBalance(id, initial);
-}
 
 function formatAmount(n: number, currency: string) {
 	return n.toLocaleString("ru-RU") + " " + currency;
@@ -48,7 +42,7 @@ function formatAmount(n: number, currency: string) {
 					<div class="account-card__type text-muted">{{ acc.type }}</div>
 				</div>
 				<div class="account-card__balance">
-					{{ formatAmount(getBalance(acc.id, acc.initialBalance), acc.currency) }}
+					{{ formatAmount(acc.balance ?? acc.initialBalance, acc.currency) }}
 				</div>
 			</div>
 		</div>

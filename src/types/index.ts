@@ -36,6 +36,7 @@ export interface Account extends SyncMeta {
 	type: AccountType;
 	currency: CurrencyCode;
 	initialBalance: number;
+	balance?: number;
 	color: HexColor;
 	icon: string;
 	isArchived: boolean;

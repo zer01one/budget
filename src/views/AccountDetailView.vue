@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
@@ -16,11 +16,27 @@ const categoriesStore = useCategoriesStore();
 
 const account = computed(() => accountsStore.getById(route.params.id as string));
 
-const balance = computed(() => (account.value ? txStore.computeAccountBalance(account.value.id, account.value.initialBalance) : 0));
+const balance = computed(() => account.value?.balance ?? account.value?.initialBalance ?? 0);
 
-const transactions = computed(() =>
-	account.value ? txStore.getByAccount(account.value.id).sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time)) : []
-);
+const transactionsWithBalance = computed(() => {
+	if (!account.value) return [];
+	const accountId = account.value.id;
+	const sorted = txStore
+		.getByAccount(accountId)
+		.slice()
+		.sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
+
+	let running = account.value.balance ?? account.value.initialBalance;
+	return sorted.map((tx) => {
+		const balanceAfter = running;
+		if (tx.accountId === accountId) {
+			running -= tx.type === "income" ? tx.amount : -tx.amount;
+		} else if (tx.toAccountId === accountId && tx.type === "transfer") {
+			running -= tx.amount;
+		}
+		return { ...tx, runningBalance: balanceAfter };
+	});
+});
 
 onMounted(() => txStore.loadCurrentAndPrevMonth());
 
@@ -73,7 +89,7 @@ async function archiveAccount() {
 				<div class="stat-chip">
 					<span class="text-income">
 						+{{
-							transactions
+							transactionsWithBalance
 								.filter((t) => t.type === "income")
 								.reduce((s, t) => s + t.amount, 0)
 								.toLocaleString("ru-RU")
@@ -84,7 +100,7 @@ async function archiveAccount() {
 				<div class="stat-chip">
 					<span class="text-expense">
 						-{{
-							transactions
+							transactionsWithBalance
 								.filter((t) => t.type === "expense")
 								.reduce((s, t) => s + t.amount, 0)
 								.toLocaleString("ru-RU")
@@ -108,7 +124,7 @@ async function archiveAccount() {
 				<div class="section__title">Операции</div>
 
 				<div
-					v-if="transactions.length === 0"
+					v-if="transactionsWithBalance.length === 0"
 					class="empty">
 					Нет операций по этому счёту
 				</div>
@@ -117,7 +133,7 @@ async function archiveAccount() {
 					v-else
 					class="tx-list">
 					<div
-						v-for="tx in transactions"
+						v-for="tx in transactionsWithBalance"
 						:key="tx.id"
 						class="tx-row"
 						@click="router.push(`/transactions/${tx.id}`)">
@@ -130,7 +146,10 @@ async function archiveAccount() {
 							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
 							<div class="tx-row__meta">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
 						</div>
-						<div :class="['tx-row__amount', `text-${tx.type}`]">{{ formatAmount(tx) }}</div>
+						<div class="tx-row__right">
+							<div :class="['tx-row__amount', `text-${tx.type}`]">{{ formatAmount(tx) }}</div>
+							<div class="tx-row__balance">{{ tx.runningBalance.toLocaleString("ru-RU") }}</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -280,9 +299,20 @@ async function archiveAccount() {
 	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
+.tx-row__right {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+}
 .tx-row__amount {
 	font-size: var(--font-sm);
 	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.tx-row__balance {
+	font-size: var(--font-xs);
+	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 }
 

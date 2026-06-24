@@ -23,9 +23,7 @@ onMounted(async () => {
 });
 
 const totalBalance = computed(() => {
-	return accountsStore.activeAccounts.reduce((sum, acc) => {
-		return sum + txStore.computeAccountBalance(acc.id, acc.initialBalance);
-	}, 0);
+	return accountsStore.activeAccounts.reduce((sum, acc) => sum + (acc.balance ?? acc.initialBalance), 0);
 });
 
 const currentMonthTx = computed(() => txStore.getByMonth(currentMonth));
