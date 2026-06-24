@@ -378,6 +378,7 @@ async function submit() {
 }
 .cat-item__icon {
 	font-size: 20px;
+	color: var(--cat-color, var(--text-primary));
 }
 .cat-item__name {
 	font-size: 10px;

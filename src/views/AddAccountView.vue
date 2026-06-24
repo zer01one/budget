@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
@@ -34,7 +34,7 @@ const accountsStore = useAccountsStore();
 const name = ref("");
 const type = ref<AccountType>("card");
 const currency = ref("KZT");
-const initialBalance = ref("0");
+const initialBalance = ref("");
 const color = ref("#3B82F6");
 const icon = ref("card");
 const notes = ref("");
@@ -52,10 +52,25 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 
 const CURRENCIES = ["KZT", "USD", "EUR", "RUB", "GBP", "CNY"];
 
+async function onBalanceInput(val: string) {
+	initialBalance.value = val;
+	await nextTick();
+	val = val.replace(/[^\d.,]/g, "");
+	val = val.replace(/^0+(?=[.,]|$)/, "0");
+	val = val.replace(/^0(?=[1-9])/, "");
+	val = val.replace(",", ".");
+	const [integer, decimal] = val.split(".");
+	if (decimal !== undefined) {
+		const cents = decimal.replace(/\D/g, "").slice(0, 2);
+		val = `${integer}.${cents}`;
+	}
+	initialBalance.value = val;
+}
+
 function validate(): boolean {
 	errors.value = {};
 	if (!name.value.trim()) errors.value.name = "Введите название счёта";
-	const bal = parseFloat(initialBalance.value.replace(",", "."));
+	const bal = parseFloat(initialBalance.value || "0");
 	if (isNaN(bal)) errors.value.balance = "Введите число";
 	return Object.keys(errors.value).length === 0;
 }
@@ -145,9 +160,11 @@ async function submit() {
 					</select>
 				</div>
 				<AppInput
-					v-model="initialBalance"
+					:model-value="initialBalance"
+					@update:model-value="onBalanceInput"
 					label="Начальный баланс"
-					type="number"
+					type="text"
+					inputmode="decimal"
 					placeholder="0"
 					:error="errors.balance" />
 			</div>

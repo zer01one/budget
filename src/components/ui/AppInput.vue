@@ -4,6 +4,7 @@ defineProps<{
 	label?: string;
 	placeholder?: string;
 	type?: string;
+	inputmode?: "text" | "email" | "search" | "tel" | "url" | "none" | "numeric" | "decimal";
 	error?: string;
 	hint?: string;
 	disabled?: boolean;
@@ -23,6 +24,7 @@ defineEmits<{
 		>
 		<input
 			:type="type ?? 'text'"
+			:inputmode="inputmode"
 			:value="modelValue"
 			:placeholder="placeholder"
 			:disabled="disabled"
