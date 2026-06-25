@@ -4,8 +4,7 @@ import { setActivePinia, createPinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import AccountsView from "./AccountsView.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
-import { useTransactionsStore } from "@/stores/transactions.store";
-import type { Account, Transaction } from "@/types";
+import type { Account } from "@/types";
 
 vi.mock("@/services/filesystem", () => ({
 	getFileSystemAdapter: vi.fn().mockResolvedValue({
@@ -43,29 +42,6 @@ function makeAccount(overrides: Partial<Account> = {}): Account {
 		sortOrder: 0,
 		notes: "",
 		updatedAt: "2026-01-01T00:00:00.000Z",
-		deviceId: "test-device",
-		version: 1,
-		...overrides
-	};
-}
-
-function makeTx(overrides: Partial<Transaction> = {}): Transaction {
-	return {
-		id: "tx-1",
-		type: "income",
-		amount: 500,
-		currency: "KZT",
-		date: "2026-06-01",
-		time: "12:00",
-		accountId: "acc-1",
-		toAccountId: null,
-		categoryId: null,
-		comment: "",
-		tags: [],
-		isRecurring: false,
-		recurringParentId: null,
-		isDeleted: false,
-		updatedAt: "2026-06-01T00:00:00.000Z",
 		deviceId: "test-device",
 		version: 1,
 		...overrides

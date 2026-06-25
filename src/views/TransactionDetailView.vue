@@ -5,6 +5,7 @@ import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
+import AppTimePicker from "@/components/ui/AppTimePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -290,10 +291,7 @@ function formatDateLabel(date: string): string {
 				</div>
 				<div class="field">
 					<label class="field__label">Время</label>
-					<input
-						type="time"
-						v-model="editTime"
-						class="field__select" />
+					<AppTimePicker v-model="editTime" />
 				</div>
 			</div>
 

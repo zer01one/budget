@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppModal from "@/components/ui/AppModal.vue";
+import AppTimePicker from "@/components/ui/AppTimePicker.vue";
 import { useGamificationStore, ACHIEVEMENT_LABELS } from "@/stores/gamification.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -139,6 +140,8 @@ async function saveNotifTime() {
 	settingsStore.settings.reminderTime = notifTime.value;
 	await Promise.all([scheduleDailyReminder(notifTime.value), settingsStore.save()]);
 }
+
+watch(notifTime, saveNotifTime);
 
 async function doExportCSV() {
 	isExporting.value = true;
@@ -318,11 +321,7 @@ async function doExportJSON() {
 					v-if="notifEnabled"
 					class="setting-row">
 					<label>Время напоминания</label>
-					<input
-						type="time"
-						v-model="notifTime"
-						class="time-input"
-						@change="saveNotifTime" />
+					<AppTimePicker v-model="notifTime" />
 				</div>
 			</div>
 		</div>
