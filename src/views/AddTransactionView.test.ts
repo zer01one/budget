@@ -305,11 +305,11 @@ describe("AddTransactionView – account select", () => {
 		expect(wrapper.find(".amount-field__currency").text()).toBe("USD");
 	});
 
-	it("selecting empty account shows KZT fallback currency", async () => {
+	it("selecting empty account shows RUB fallback currency", async () => {
 		const { wrapper } = await mountView();
 		const select = wrapper.find("select.field__select");
 		await select.setValue("");
-		expect(wrapper.find(".amount-field__currency").text()).toBe("KZT");
+		expect(wrapper.find(".amount-field__currency").text()).toBe("RUB");
 	});
 
 	it("archived accounts are not listed", async () => {
@@ -831,10 +831,10 @@ describe("AddTransactionView – no active accounts", () => {
 		expect((select.element as HTMLSelectElement).value).toBe("");
 	});
 
-	it("currency shows KZT fallback when no account selected", async () => {
+	it("currency shows RUB fallback when no account selected", async () => {
 		useAccountsStore().accounts = [];
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".amount-field__currency").text()).toBe("KZT");
+		expect(wrapper.find(".amount-field__currency").text()).toBe("RUB");
 	});
 
 	it("submit without account shows account error", async () => {

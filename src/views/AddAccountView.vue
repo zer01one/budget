@@ -33,7 +33,7 @@ const accountsStore = useAccountsStore();
 
 const name = ref("");
 const type = ref<AccountType>("card");
-const currency = ref("KZT");
+const currency = ref("RUB");
 const initialBalance = ref("");
 const color = ref("#3B82F6");
 const icon = ref("card");
@@ -50,7 +50,7 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 	{ value: "crypto", label: "Криптовалюта" }
 ];
 
-const CURRENCIES = ["KZT", "USD", "EUR", "RUB", "GBP", "CNY"];
+const CURRENCIES = ["RUB", "USD"];
 
 async function onBalanceInput(val: string) {
 	initialBalance.value = val;

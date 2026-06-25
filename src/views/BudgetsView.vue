@@ -71,7 +71,7 @@ const showModal = ref(false);
 const editingBudget = ref<BudgetEntry | null>(null);
 const formCategoryId = ref("");
 const formLimit = ref("");
-const formCurrency = ref("KZT");
+const formCurrency = ref("RUB");
 const isSubmitting = ref(false);
 const errors = ref<Record<string, string>>({});
 
@@ -79,7 +79,7 @@ function openAdd() {
 	editingBudget.value = null;
 	formCategoryId.value = availableCategories.value[0]?.id ?? "";
 	formLimit.value = "";
-	formCurrency.value = "KZT";
+	formCurrency.value = "RUB";
 	errors.value = {};
 	showModal.value = true;
 }
@@ -160,7 +160,7 @@ function checkBudgetNotifications() {
 
 watch(monthBudgets, checkBudgetNotifications);
 
-const CURRENCIES = ["KZT", "USD", "EUR", "RUB"];
+const CURRENCIES = ["RUB", "USD"];
 
 const totalBudgeted = computed(() => monthBudgets.value.reduce((s, b) => s + b.limitAmount, 0));
 const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpent(b), 0));

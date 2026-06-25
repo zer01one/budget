@@ -67,7 +67,7 @@ async function submit() {
 		const tx = await txStore.addTransaction({
 			type: type.value,
 			amount: parseFloat(amount.value),
-			currency: accountsStore.getById(accountId.value)?.currency ?? "KZT",
+			currency: accountsStore.getById(accountId.value)?.currency ?? "RUB",
 			date: date.value,
 			time: time.value,
 			accountId: accountId.value,
@@ -123,7 +123,7 @@ async function submit() {
 					placeholder="0" 
 					class="amount-field__input"/>
 				<span class="amount-field__currency">
-					{{ accountsStore.getById(accountId)?.currency ?? "KZT" }}
+					{{ accountsStore.getById(accountId)?.currency ?? "RUB" }}
 				</span>
 			</div>
 			<span

@@ -8,7 +8,7 @@ const SETTINGS_KEY = "app_settings";
 const DEFAULT_SETTINGS: AppSettings = {
 	vaultPath: null,
 	theme: "dark",
-	defaultCurrency: "KZT",
+	defaultCurrency: "RUB",
 	locale: "ru-RU",
 	notificationsEnabled: true,
 	reminderTime: "20:00",

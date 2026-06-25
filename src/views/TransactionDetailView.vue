@@ -209,7 +209,7 @@ function formatDateLabel(date: string): string {
 					min="0"
 					step="any" />
 				<span class="amount-field__currency">
-					{{ accountsStore.getById(editAccountId)?.currency ?? tx?.currency ?? "KZT" }}
+					{{ accountsStore.getById(editAccountId)?.currency ?? tx?.currency ?? "RUB" }}
 				</span>
 			</div>
 			<span

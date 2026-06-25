@@ -364,7 +364,7 @@ describe("BudgetsView – add budget", () => {
 		await flushPromises();
 		expect(addSpy).toHaveBeenCalledOnce();
 		expect(addSpy).toHaveBeenCalledWith(
-			expect.objectContaining({ categoryId: "cat-1", limitAmount: 10_000, currency: "KZT", month: CURRENT_MONTH })
+			expect.objectContaining({ categoryId: "cat-1", limitAmount: 10_000, currency: "RUB", month: CURRENT_MONTH })
 		);
 		expect(wrapper.find(".modal-form").exists()).toBe(false);
 	});
