@@ -21,6 +21,12 @@ vi.mock("@/services/data/transactions.service", () => ({
 	}
 }));
 
+const mockAdjustBalance = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+
+vi.mock("@/stores/accounts.store", () => ({
+	useAccountsStore: vi.fn(() => ({ adjustBalance: mockAdjustBalance }))
+}));
+
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "device-x" } }))
 }));
@@ -65,7 +71,10 @@ function seedCache(store: ReturnType<typeof useTransactionsStore>, month: string
 // в”Ђв”Ђ addTransaction в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 describe("addTransaction", () => {
-	beforeEach(() => setActivePinia(createPinia()));
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		mockAdjustBalance.mockClear();
+	});
 
 	it("returns a transaction with isDeleted=false", async () => {
 		const store = useTransactionsStore();
@@ -164,6 +173,28 @@ describe("addTransaction", () => {
 		seedCache(store, "2026-05", [makeTx({ id: "may-tx" })]);
 		await store.addTransaction(makeInput({ date: "2026-06-10" }));
 		expect(store.getByMonth("2026-05")).toHaveLength(1);
+	});
+
+	it("calls adjustBalance with negative delta for expense", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", []);
+		await store.addTransaction(makeInput({ type: "expense", amount: 200, accountId: "acc-1" }));
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", -200);
+	});
+
+	it("calls adjustBalance with positive delta for income", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", []);
+		await store.addTransaction(makeInput({ type: "income", amount: 500, accountId: "acc-1" }));
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", 500);
+	});
+
+	it("calls adjustBalance for both accounts on transfer", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", []);
+		await store.addTransaction(makeInput({ type: "transfer", amount: 300, accountId: "acc-1", toAccountId: "acc-2" }));
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", -300);
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-2", 300);
 	});
 });
 
@@ -299,5 +330,72 @@ describe("loadCurrentAndPrevMonth", () => {
 		store.loadedMonths.add(prev);
 		await store.loadCurrentAndPrevMonth();
 		expect(transactionsService.loadMonth).not.toHaveBeenCalled();
+	});
+});
+
+// ── updateTransaction – balance adjustments ───────────────────────────────────
+
+describe("updateTransaction – balance adjustments", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		mockAdjustBalance.mockClear();
+	});
+
+	it("adjusts balance when amount increases", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [makeTx({ id: "tx-1", type: "expense", amount: 100, accountId: "acc-1" })]);
+		await store.updateTransaction("tx-1", { amount: 200 });
+		// old delta: -100, new delta: -200, diff: -100
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", -100);
+	});
+
+	it("adjusts balance when type changes from income to expense", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [makeTx({ id: "tx-1", type: "income", amount: 500, accountId: "acc-1" })]);
+		await store.updateTransaction("tx-1", { type: "expense" });
+		// old delta: +500, new delta: -500, diff: -1000
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", -1000);
+	});
+
+	it("does not call adjustBalance when only comment changes", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [makeTx({ id: "tx-1", type: "expense", amount: 100, accountId: "acc-1" })]);
+		await store.updateTransaction("tx-1", { comment: "updated" });
+		expect(mockAdjustBalance).not.toHaveBeenCalled();
+	});
+
+	it("reverses both accounts when transfer is soft-deleted", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [
+			makeTx({ id: "tx-1", type: "transfer", amount: 300, accountId: "acc-1", toAccountId: "acc-2", isDeleted: false })
+		]);
+		await store.updateTransaction("tx-1", { isDeleted: true });
+		// from account: old -300, new 0 → +300
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", 300);
+		// to account: old +300, new 0 → -300
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-2", -300);
+	});
+});
+
+// ── deleteTransaction – balance reversal ──────────────────────────────────────
+
+describe("deleteTransaction – balance reversal", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		mockAdjustBalance.mockClear();
+	});
+
+	it("reverses expense on delete", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [makeTx({ id: "tx-1", type: "expense", amount: 150, accountId: "acc-1" })]);
+		await store.deleteTransaction("tx-1");
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", 150);
+	});
+
+	it("reverses income on delete", async () => {
+		const store = useTransactionsStore();
+		seedCache(store, "2026-06", [makeTx({ id: "tx-1", type: "income", amount: 400, accountId: "acc-1" })]);
+		await store.deleteTransaction("tx-1");
+		expect(mockAdjustBalance).toHaveBeenCalledWith("acc-1", -400);
 	});
 });

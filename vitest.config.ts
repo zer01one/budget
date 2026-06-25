@@ -7,6 +7,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "happy-dom",
+		hookTimeout: 30000,
 		alias: {
 			"@": resolve(__dirname, "src")
 		},

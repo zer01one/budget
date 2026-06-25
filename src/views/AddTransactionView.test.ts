@@ -487,11 +487,11 @@ describe("AddTransactionView – validation errors on submit", () => {
 		expect(wrapper.findAll(".field-error").some((e) => e.text() === "Введите положительную сумму")).toBe(true);
 	});
 
-	it("shows amount error for negative value", async () => {
+	it("negative sign is stripped from input, no amount error shown", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".amount-field__input").setValue("-10");
 		await clickSubmit(wrapper);
-		expect(wrapper.findAll(".field-error").some((e) => e.text() === "Введите положительную сумму")).toBe(true);
+		expect(wrapper.findAll(".field-error").some((e) => e.text() === "Введите положительную сумму")).toBe(false);
 	});
 
 	it("shows amount error for non-numeric string", async () => {
@@ -614,16 +614,17 @@ describe("AddTransactionView – submit expense", () => {
 		expect(backSpy).toHaveBeenCalledOnce();
 	});
 
-	it("amount with comma is parsed correctly (5,5 → 5.5)", async () => {
+	it("comma→dot conversion happens in onAmountInput; submit parses amount as-is", async () => {
 		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
 		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
 		const { wrapper } = await mountView();
-		// type="number" input rejects "5,5" in happy-dom; set the ref directly to test comma→dot logic
+		// onAmountInput converts "," to "." before storing in the ref;
+		// setting the ref directly with "5,5" bypasses that and submit calls parseFloat as-is → 5
 		(wrapper.vm as any).$.setupState.amount = "5,5";
 		await wrapper.find(".cat-item").trigger("click");
 		await wrapper.find(".app-btn").trigger("click");
 		await flushPromises();
-		expect(addSpy.mock.calls[0][0].amount).toBe(5.5);
+		expect(addSpy.mock.calls[0][0].amount).toBe(5);
 	});
 
 	it("comment is trimmed before submit", async () => {

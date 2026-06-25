@@ -35,16 +35,17 @@ vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
 }));
 
+const mockShowConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+vi.mock("@/utils/confirm", () => ({ showConfirm: mockShowConfirm }));
+
 // ── Global stubs ──────────────────────────────────────────────────────────────
 
 beforeAll(() => {
 	vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn().mockResolvedValue({}) });
-	vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
 });
 
 afterEach(() => {
 	vi.clearAllMocks();
-	(window.confirm as ReturnType<typeof vi.fn>).mockReturnValue(true);
 });
 
 // ── Constants & fixtures ──────────────────────────────────────────────────────
@@ -509,7 +510,6 @@ describe("BudgetsView – delete budget", () => {
 		useBudgetsStore().budgets = [makeBudget()];
 		useCategoriesStore().categories = [makeCategory()];
 		const deleteSpy = vi.spyOn(useBudgetsStore(), "deleteBudget").mockResolvedValue();
-		(window.confirm as ReturnType<typeof vi.fn>).mockReturnValue(true);
 		const wrapper = await mountView();
 		await wrapper.find(".budget-card__delete").trigger("click");
 		await flushPromises();
@@ -520,7 +520,7 @@ describe("BudgetsView – delete budget", () => {
 		useBudgetsStore().budgets = [makeBudget()];
 		useCategoriesStore().categories = [makeCategory()];
 		const deleteSpy = vi.spyOn(useBudgetsStore(), "deleteBudget").mockResolvedValue();
-		(window.confirm as ReturnType<typeof vi.fn>).mockReturnValue(false);
+		mockShowConfirm.mockResolvedValueOnce(false);
 		const wrapper = await mountView();
 		await wrapper.find(".budget-card__delete").trigger("click");
 		await flushPromises();

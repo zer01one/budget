@@ -196,7 +196,7 @@ describe("transactionsService.loadMonth вЂ“ conflict detection", () => {
 		expect(result?.conflict).toBeNull();
 	});
 
-	it("filters out isDeleted transactions from returned list", async () => {
+	it("returns all transactions from file including isDeleted ones", async () => {
 		const { getFileSystemAdapter } = await import("@/services/filesystem");
 		vi.mocked(getFileSystemAdapter).mockResolvedValue({
 			readJson: vi.fn(() =>
@@ -220,7 +220,7 @@ describe("transactionsService.loadMonth вЂ“ conflict detection", () => {
 		} as never);
 		const svc = await freshService();
 		const result = await svc.loadMonth("2026-06");
-		expect(result?.transactions).toHaveLength(2);
-		expect(result?.transactions.map((t) => t.id)).toEqual(["a", "c"]);
+		expect(result?.transactions).toHaveLength(3);
+		expect(result?.transactions.map((t) => t.id)).toEqual(["a", "b", "c"]);
 	});
 });

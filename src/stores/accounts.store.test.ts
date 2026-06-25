@@ -24,6 +24,7 @@ function makeAccount(overrides: Partial<Account> = {}): Account {
 		type: "cash",
 		currency: "KZT",
 		initialBalance: 0,
+		balance: 0,
 		color: "#ffffff",
 		icon: "cash",
 		isArchived: false,
@@ -183,6 +184,18 @@ describe("addAccount", () => {
 		const a = await store.addAccount(makeInput());
 		const b = await store.addAccount(makeInput());
 		expect(a.id).not.toBe(b.id);
+	});
+
+	it("sets balance equal to initialBalance", async () => {
+		const store = useAccountsStore();
+		const result = await store.addAccount(makeInput({ initialBalance: 1500 }));
+		expect(result.balance).toBe(1500);
+	});
+
+	it("rounds balance to 2 decimal places", async () => {
+		const store = useAccountsStore();
+		const result = await store.addAccount(makeInput({ initialBalance: 1.456 }));
+		expect(result.balance).toBe(1.46);
 	});
 
 	it("returned account is the same object that ends up in accounts array", async () => {
@@ -374,5 +387,58 @@ describe("save", () => {
 		const store = useAccountsStore();
 		await store.save();
 		expect(mockWriteJson).toHaveBeenCalledWith("accounts.json", { accounts: [] });
+	});
+});
+
+// ── adjustBalance ─────────────────────────────────────────────────────────────
+
+describe("adjustBalance", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("increases balance by positive delta", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", balance: 1000 })];
+		await store.adjustBalance("a", 500);
+		expect(store.accounts[0].balance).toBe(1500);
+	});
+
+	it("decreases balance by negative delta", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", balance: 1000 })];
+		await store.adjustBalance("a", -300);
+		expect(store.accounts[0].balance).toBe(700);
+	});
+
+	it("falls back to initialBalance when balance is undefined", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", initialBalance: 500, balance: undefined })];
+		await store.adjustBalance("a", 200);
+		expect(store.accounts[0].balance).toBe(700);
+	});
+
+	it("rounds result to 2 decimal places", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", balance: 0.1 })];
+		await store.adjustBalance("a", 0.2);
+		expect(store.accounts[0].balance).toBe(0.3);
+	});
+
+	it("does nothing for unknown id", async () => {
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", balance: 1000 })];
+		await store.adjustBalance("unknown", 500);
+		expect(store.accounts[0].balance).toBe(1000);
+	});
+
+	it("saves to disk after adjusting", async () => {
+		const mockWriteJson = vi.fn().mockResolvedValue(undefined);
+		vi.mocked(getFileSystemAdapter).mockResolvedValueOnce({
+			readJson: vi.fn().mockResolvedValue(null),
+			writeJson: mockWriteJson
+		} as any);
+		const store = useAccountsStore();
+		store.accounts = [makeAccount({ id: "a", balance: 0 })];
+		await store.adjustBalance("a", 100);
+		expect(mockWriteJson).toHaveBeenCalled();
 	});
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vitest";
+﻿﻿import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
@@ -28,6 +28,8 @@ vi.mock("@/services/filesystem", () => ({
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
 }));
+const mockShowConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+vi.mock("@/utils/confirm", () => ({ showConfirm: mockShowConfirm }));
 
 // ─── factories ────────────────────────────────────────────────────────────────
 
@@ -97,12 +99,10 @@ let pinia: ReturnType<typeof createPinia>;
 
 beforeAll(() => {
 	vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn().mockResolvedValue({}) });
-	vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
 });
 
 afterEach(() => {
 	vi.clearAllMocks();
-	(window.confirm as ReturnType<typeof vi.fn>).mockReturnValue(true);
 });
 
 async function mountView(accountId = "acc-1") {
@@ -199,32 +199,69 @@ describe("AccountDetailView – balance", () => {
 	beforeEach(() => {
 		pinia = createPinia();
 		setActivePinia(pinia);
-		useAccountsStore().accounts = [makeAccount({ initialBalance: 5000 })];
 	});
 
-	it("shows initialBalance when no transactions", async () => {
+	it("shows account.balance when set", async () => {
+		useAccountsStore().accounts = [makeAccount({ initialBalance: 5000, balance: 7500 })];
+		const { wrapper } = await mountView();
+		const text = wrapper.find(".balance-hero__amount").text();
+		expect(text).toContain("7");
+		expect(text).toContain("500");
+	});
+
+	it("falls back to initialBalance when balance is undefined", async () => {
+		useAccountsStore().accounts = [makeAccount({ initialBalance: 5000, balance: undefined })];
 		const { wrapper } = await mountView();
 		const text = wrapper.find(".balance-hero__amount").text();
 		expect(text).toContain("5");
 		expect(text).toContain("000");
 	});
 
-	it("adds income transactions to balance", async () => {
+	it("shows currency next to balance", async () => {
+		useAccountsStore().accounts = [makeAccount({ balance: 1000, currency: "KZT" })];
 		const { wrapper } = await mountView();
-		useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "income", amount: 1000 })]);
-		await nextTick();
-		expect(wrapper.find(".balance-hero__amount").text()).toContain("6");
-	});
-
-	it("subtracts expense transactions from balance", async () => {
-		const { wrapper } = await mountView();
-		useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "expense", amount: 1000 })]);
-		await nextTick();
-		expect(wrapper.find(".balance-hero__amount").text()).toContain("4");
+		expect(wrapper.find(".balance-hero__amount").text()).toContain("KZT");
 	});
 });
 
-// ─── no transactions ──────────────────────────────────────────────────────────
+// ─── running balance ──────────────────────────────────────────────────────────
+
+describe("AccountDetailView – running balance", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+	});
+
+	it("shows tx-row__balance element for each transaction", async () => {
+		useAccountsStore().accounts = [makeAccount({ balance: 10000 })];
+		const { wrapper } = await mountView();
+		useTransactionsStore()._cache.set("2026-06", [makeTx()]);
+		await nextTick();
+		expect(wrapper.find(".tx-row__balance").exists()).toBe(true);
+	});
+
+	it("newest transaction shows account.balance as running balance", async () => {
+		useAccountsStore().accounts = [makeAccount({ balance: 10000 })];
+		const { wrapper } = await mountView();
+		useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "expense", amount: 500 })]);
+		await nextTick();
+		expect(wrapper.find(".tx-row__balance").text()).toContain("10");
+	});
+
+	it("running balance peels back older transactions", async () => {
+		useAccountsStore().accounts = [makeAccount({ balance: 10500 })];
+		const { wrapper } = await mountView();
+		const newer = makeTx({ id: "t1", date: "2026-06-10", time: "10:00", type: "expense", amount: 500 });
+		const older = makeTx({ id: "t2", date: "2026-06-01", time: "10:00", type: "expense", amount: 200 });
+		useTransactionsStore()._cache.set("2026-06", [newer, older]);
+		await nextTick();
+		const balances = wrapper.findAll(".tx-row__balance");
+		// newer row (first displayed): balance after = 10500
+		expect(balances[0].text()).toContain("10");
+		// older row: balance after = 10500 + 500 = 11000 (peeled back newer expense)
+		expect(balances[1].text()).toContain("11");
+	});
+});
 
 describe("AccountDetailView – no transactions", () => {
 	beforeEach(() => {
@@ -442,7 +479,7 @@ describe("AccountDetailView – archiveAccount", () => {
 	});
 
 	it("does not call deleteAccount when user cancels confirm", async () => {
-		(window.confirm as ReturnType<typeof vi.fn>).mockReturnValue(false);
+		mockShowConfirm.mockResolvedValueOnce(false);
 		const deleteSpy = vi.spyOn(useAccountsStore(), "deleteAccount").mockImplementation(async () => {});
 		const { wrapper } = await mountView();
 		const archiveBtn = wrapper.findAll("button").find((b) => b.text().includes("Архивировать"));
