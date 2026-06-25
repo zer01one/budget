@@ -9,6 +9,7 @@ import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
@@ -218,18 +219,18 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				<!-- Date from -->
 				<div class="filter-field">
 					<label class="filter-field__label">С даты</label>
-					<input
-						type="date"
+					<AppDatePicker
 						v-model="filterFrom"
-						class="filter-field__select" />
+						clearable
+						placeholder="С даты" />
 				</div>
 				<!-- Date to -->
 				<div class="filter-field">
 					<label class="filter-field__label">По дату</label>
-					<input
-						type="date"
+					<AppDatePicker
 						v-model="filterTo"
-						class="filter-field__select" />
+						clearable
+						placeholder="По дату" />
 				</div>
 			</div>
 

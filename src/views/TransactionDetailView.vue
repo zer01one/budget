@@ -4,6 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -285,10 +286,7 @@ function formatDateLabel(date: string): string {
 			<div class="row-2">
 				<div class="field">
 					<label class="field__label">Дата</label>
-					<input
-						type="date"
-						v-model="editDate"
-						class="field__select" />
+					<AppDatePicker v-model="editDate" />
 				</div>
 				<div class="field">
 					<label class="field__label">Время</label>
