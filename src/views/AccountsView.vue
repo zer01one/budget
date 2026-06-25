@@ -4,6 +4,7 @@ import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
+import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -49,6 +50,7 @@ function formatAmount(n: number, currency: string) {
 			</div>
 		</div>
 	</div>
+	<ScrollToTopButton />
 </template>
 
 <style scoped>

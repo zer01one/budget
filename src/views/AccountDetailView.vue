@@ -9,6 +9,7 @@ import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { showConfirm } from "@/utils/confirm";
 import { useScrollRestore } from "@/composables/useScrollRestore";
+import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -168,6 +169,7 @@ async function archiveAccount() {
 			</div>
 		</template>
 	</div>
+	<ScrollToTopButton />
 </template>
 
 <style scoped>

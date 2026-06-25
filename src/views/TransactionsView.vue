@@ -9,6 +9,7 @@ import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
+import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
 const txStore = useTransactionsStore();
@@ -326,6 +327,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			</div>
 		</div>
 	</div>
+	<ScrollToTopButton :scroll-el="txGroupsRef" />
 </template>
 
 <style scoped>
