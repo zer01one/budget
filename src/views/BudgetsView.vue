@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useBudgetsStore } from "@/stores/budgets.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -161,6 +162,10 @@ function checkBudgetNotifications() {
 watch(monthBudgets, checkBudgetNotifications);
 
 const CURRENCIES = ["RUB", "USD"];
+const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+const categoryOptions = computed(() =>
+	availableCategories.value.map((cat) => ({ value: cat.id, label: cat.name }))
+);
 
 const totalBudgeted = computed(() => monthBudgets.value.reduce((s, b) => s + b.limitAmount, 0));
 const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpent(b), 0));
@@ -305,16 +310,9 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 					v-if="!editingBudget"
 					class="field">
 					<label class="field__label">Категория</label>
-					<select
+					<AppSelect
 						v-model="formCategoryId"
-						class="field__select">
-						<option
-							v-for="cat in availableCategories"
-							:key="cat.id"
-							:value="cat.id">
-							{{ cat.name }}
-						</option>
-					</select>
+						:options="categoryOptions" />
 					<span
 						v-if="errors.category"
 						class="field-error"
@@ -350,16 +348,9 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 				<!-- Currency -->
 				<div class="field">
 					<label class="field__label">Валюта</label>
-					<select
+					<AppSelect
 						v-model="formCurrency"
-						class="field__select">
-						<option
-							v-for="c in CURRENCIES"
-							:key="c"
-							:value="c">
-							{{ c }}
-						</option>
-					</select>
+						:options="currencyOptions" />
 				</div>
 			</div>
 

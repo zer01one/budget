@@ -8,6 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
@@ -31,6 +32,23 @@ const filterAccountId = ref("");
 const filterCategoryId = ref("");
 const filterFrom = ref("");
 const filterTo = ref("");
+
+const filterTypeOptions = [
+	{ value: "", label: "Все" },
+	{ value: "expense", label: "Расход" },
+	{ value: "income", label: "Доход" },
+	{ value: "transfer", label: "Перевод" },
+];
+const filterAccountOptions = computed(() => [
+	{ value: "", label: "Все счета" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+]);
+const filterCategoryOptions = computed(() => [
+	{ value: "", label: "Все категории" },
+	...categoriesStore.categories
+		.filter((c) => !c.isArchived)
+		.map((c) => ({ value: c.id, label: c.name })),
+]);
 
 const activeFilterCount = computed(
 	() => [filterType.value, filterAccountId.value, filterCategoryId.value, filterFrom.value, filterTo.value].filter(Boolean).length
@@ -173,29 +191,16 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				<!-- Type -->
 				<div class="filter-field">
 					<label class="filter-field__label">Тип</label>
-					<select
+					<AppSelect
 						v-model="filterType"
-						class="filter-field__select">
-						<option value="">Все</option>
-						<option value="expense">Расход</option>
-						<option value="income">Доход</option>
-						<option value="transfer">Перевод</option>
-					</select>
+						:options="filterTypeOptions" />
 				</div>
 				<!-- Account -->
 				<div class="filter-field">
 					<label class="filter-field__label">Счёт</label>
-					<select
+					<AppSelect
 						v-model="filterAccountId"
-						class="filter-field__select">
-						<option value="">Все счета</option>
-						<option
-							v-for="acc in accountsStore.activeAccounts"
-							:key="acc.id"
-							:value="acc.id">
-							{{ acc.name }}
-						</option>
-					</select>
+						:options="filterAccountOptions" />
 				</div>
 			</div>
 
@@ -203,17 +208,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				<!-- Category -->
 				<div class="filter-field">
 					<label class="filter-field__label">Категория</label>
-					<select
+					<AppSelect
 						v-model="filterCategoryId"
-						class="filter-field__select">
-						<option value="">Все категории</option>
-						<option
-							v-for="cat in categoriesStore.categories.filter((c) => !c.isArchived)"
-							:key="cat.id"
-							:value="cat.id">
-							{{ cat.name }}
-						</option>
-					</select>
+						:options="filterCategoryOptions" />
 				</div>
 			</div>
 

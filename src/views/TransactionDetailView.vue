@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -31,6 +32,17 @@ const editAmount = ref("");
 const editDate = ref("");
 const editTime = ref("");
 const editAccountId = ref("");
+
+const editAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+]);
+const editToAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts
+		.filter((a) => a.id !== editAccountId.value)
+		.map((a) => ({ value: a.id, label: a.name })),
+]);
 const editToAccountId = ref("");
 const editCategoryId = ref("");
 const editComment = ref("");
@@ -221,17 +233,9 @@ function formatDateLabel(date: string): string {
 			<!-- Account -->
 			<div class="field">
 				<label class="field__label">Счёт</label>
-				<select
+				<AppSelect
 					v-model="editAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="editAccountOptions" />
 				<span
 					v-if="errors.account"
 					class="field-error"
@@ -244,17 +248,9 @@ function formatDateLabel(date: string): string {
 				v-if="editType === 'transfer'"
 				class="field">
 				<label class="field__label">Счёт назначения</label>
-				<select
+				<AppSelect
 					v-model="editToAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts.filter((a) => a.id !== editAccountId)"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="editToAccountOptions" />
 				<span
 					v-if="errors.toAccount"
 					class="field-error"

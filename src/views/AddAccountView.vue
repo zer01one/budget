@@ -3,6 +3,7 @@ import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import IconPicker from "@/components/ui/IconPicker.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -51,6 +52,7 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 ];
 
 const CURRENCIES = ["RUB", "USD"];
+const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
 
 async function onBalanceInput(val: string) {
 	initialBalance.value = val;
@@ -133,31 +135,17 @@ async function submit() {
 
 			<div class="field">
 				<label class="field__label">Тип счёта</label>
-				<select
+				<AppSelect
 					v-model="type"
-					class="field__select">
-					<option
-						v-for="t in ACCOUNT_TYPES"
-						:key="t.value"
-						:value="t.value">
-						{{ t.label }}
-					</option>
-				</select>
+					:options="ACCOUNT_TYPES" />
 			</div>
 
 			<div class="row-2">
 				<div class="field">
 					<label class="field__label">Валюта</label>
-					<select
+					<AppSelect
 						v-model="currency"
-						class="field__select">
-						<option
-							v-for="c in CURRENCIES"
-							:key="c"
-							:value="c">
-							{{ c }}
-						</option>
-					</select>
+						:options="currencyOptions" />
 				</div>
 				<AppInput
 					:model-value="initialBalance"

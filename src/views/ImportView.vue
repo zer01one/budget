@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -108,6 +109,20 @@ async function doImport() {
 
 const EMPTY_COL = "— не использовать —";
 const colOptions = computed(() => [EMPTY_COL, ...headers.value]);
+
+const headerOptions = computed(() => headers.value.map((h) => ({ value: h, label: h })));
+const colMappingOptions = computed(() =>
+	colOptions.value.map((o) => ({ value: o === EMPTY_COL ? "" : o, label: o }))
+);
+const importAccountOptions = computed(() =>
+	accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
+);
+const importCategoryOptions = computed(() => [
+	{ value: "", label: "— без категории —" },
+	...categoriesStore.categories
+		.filter((c) => !c.isArchived)
+		.map((c) => ({ value: c.id, label: c.name })),
+]);
 </script>
 
 <template>
@@ -165,82 +180,39 @@ const colOptions = computed(() => [EMPTY_COL, ...headers.value]);
 			<div class="map-grid">
 				<div class="map-field">
 					<label class="map-field__label">Дата *</label>
-					<select
+					<AppSelect
 						v-model="mapping.date"
-						class="map-field__select">
-						<option
-							v-for="h in headers"
-							:key="h"
-							:value="h">
-							{{ h }}
-						</option>
-					</select>
+						:options="headerOptions" />
 				</div>
 				<div class="map-field">
 					<label class="map-field__label">Сумма *</label>
-					<select
+					<AppSelect
 						v-model="mapping.amount"
-						class="map-field__select">
-						<option
-							v-for="h in headers"
-							:key="h"
-							:value="h">
-							{{ h }}
-						</option>
-					</select>
+						:options="headerOptions" />
 				</div>
 				<div class="map-field">
 					<label class="map-field__label">Тип (доход/расход)</label>
-					<select
+					<AppSelect
 						v-model="mapping.type"
-						class="map-field__select">
-						<option
-							v-for="o in colOptions"
-							:key="o"
-							:value="o === EMPTY_COL ? '' : o">
-							{{ o }}
-						</option>
-					</select>
+						:options="colMappingOptions" />
 				</div>
 				<div class="map-field">
 					<label class="map-field__label">Комментарий</label>
-					<select
+					<AppSelect
 						v-model="mapping.comment"
-						class="map-field__select">
-						<option
-							v-for="o in colOptions"
-							:key="o"
-							:value="o === EMPTY_COL ? '' : o">
-							{{ o }}
-						</option>
-					</select>
+						:options="colMappingOptions" />
 				</div>
 				<div class="map-field map-field--full">
 					<label class="map-field__label">Счёт *</label>
-					<select
+					<AppSelect
 						v-model="mapping.accountId"
-						class="map-field__select">
-						<option
-							v-for="acc in accountsStore.activeAccounts"
-							:key="acc.id"
-							:value="acc.id">
-							{{ acc.name }}
-						</option>
-					</select>
+						:options="importAccountOptions" />
 				</div>
 				<div class="map-field map-field--full">
 					<label class="map-field__label">Категория по умолчанию</label>
-					<select
+					<AppSelect
 						v-model="mapping.categoryId"
-						class="map-field__select">
-						<option value="">— без категории —</option>
-						<option
-							v-for="cat in categoriesStore.categories.filter((c) => !c.isArchived)"
-							:key="cat.id"
-							:value="cat.id">
-							{{ cat.name }}
-						</option>
-					</select>
+						:options="importCategoryOptions" />
 				</div>
 			</div>
 

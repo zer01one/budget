@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -18,6 +19,17 @@ const gamificationStore = useGamificationStore();
 
 const type = ref<TransactionType>("expense");
 const amount = ref("");
+
+const accountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+]);
+const toAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts
+		.filter((a) => a.id !== accountId.value)
+		.map((a) => ({ value: a.id, label: a.name })),
+]);
 const date = ref(new Date().toLocaleDateString("en-CA"));
 const time = ref(new Date().toTimeString().slice(0, 5));
 const accountId = ref(accountsStore.activeAccounts[0]?.id ?? "");
@@ -135,17 +147,9 @@ async function submit() {
 			<!-- Account -->
 			<div class="field">
 				<label class="field__label">Счёт</label>
-				<select
+				<AppSelect
 					v-model="accountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="accountOptions" />
 				<span
 					v-if="errors.account"
 					class="field-error"
@@ -158,17 +162,9 @@ async function submit() {
 				v-if="type === 'transfer'"
 				class="field">
 				<label class="field__label">Счёт назначения</label>
-				<select
+				<AppSelect
 					v-model="toAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts.filter((a) => a.id !== accountId)"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="toAccountOptions" />
 				<span
 					v-if="errors.toAccount"
 					class="field-error"
