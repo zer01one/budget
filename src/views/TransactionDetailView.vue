@@ -8,6 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
 const route = useRoute();
@@ -90,7 +91,7 @@ async function saveEdit() {
 
 async function deleteTx() {
 	if (!tx.value) return;
-	if (!confirm("Удалить операцию?")) return;
+	if (!await showConfirm("Удалить операцию?")) return;
 	await txStore.deleteTransaction(tx.value.id);
 	router.back();
 }

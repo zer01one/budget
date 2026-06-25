@@ -10,6 +10,7 @@ import { useGamificationStore } from "@/stores/gamification.store";
 import { notifyBudgetWarning } from "@/services/notifications.service";
 import type { BudgetEntry } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { showConfirm } from "@/utils/confirm";
 
 const budgetsStore = useBudgetsStore();
 const categoriesStore = useCategoriesStore();
@@ -132,7 +133,7 @@ async function save() {
 }
 
 async function deleteBudget(id: string) {
-	if (!confirm("Удалить бюджет?")) return;
+	if (!await showConfirm("Удалить бюджет?")) return;
 	await budgetsStore.deleteBudget(id);
 }
 

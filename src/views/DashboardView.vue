@@ -26,7 +26,7 @@ const totalBalance = computed(() => {
 	return accountsStore.activeAccounts.reduce((sum, acc) => sum + (acc.balance ?? acc.initialBalance), 0);
 });
 
-const currentMonthTx = computed(() => txStore.getByMonth(currentMonth));
+const currentMonthTx = computed(() => txStore.getByMonth(currentMonth).filter((t) => !t.isDeleted));
 
 const monthIncome = computed(() => currentMonthTx.value.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0));
 

@@ -18,7 +18,7 @@ export const useTransactionsStore = defineStore("transactions", () => {
 	}
 
 	function getByAccount(accountId: string): Transaction[] {
-		return allCached.value.filter((t) => t.accountId === accountId || t.toAccountId === accountId);
+		return allCached.value.filter((t) => !t.isDeleted && (t.accountId === accountId || t.toAccountId === accountId));
 	}
 
 	async function loadMonth(month: string): Promise<void> {
@@ -115,6 +115,7 @@ export const useTransactionsStore = defineStore("transactions", () => {
 	function computeAccountBalance(accountId: string, initialBalance: number): number {
 		let balance = initialBalance;
 		for (const tx of allCached.value) {
+			if (tx.isDeleted) continue;
 			if (tx.accountId === accountId) {
 				balance += tx.type === "income" ? tx.amount : -tx.amount;
 			}

@@ -6,6 +6,7 @@ import AppInput from "@/components/ui/AppInput.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import IconPicker from "@/components/ui/IconPicker.vue";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { showConfirm } from "@/utils/confirm";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Category, TransactionType } from "@/types";
@@ -75,7 +76,7 @@ async function save() {
 
 async function deleteCategory(cat: Category) {
 	if (cat.isSystem) return;
-	if (!confirm(`Удалить категорию «${cat.name}»?`)) return;
+	if (!await showConfirm(`Удалить категорию «${cat.name}»?`)) return;
 	await categoriesStore.deleteCategory(cat.id);
 }
 </script>

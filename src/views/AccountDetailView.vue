@@ -7,6 +7,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
 const route = useRoute();
@@ -51,7 +52,7 @@ function getCategory(id: string | null) {
 
 async function archiveAccount() {
 	if (!account.value) return;
-	if (!confirm("Архивировать счёт? Транзакции сохранятся.")) return;
+	if (!await showConfirm("Архивировать счёт? Транзакции сохранятся.")) return;
 	await accountsStore.deleteAccount(account.value.id);
 	router.back();
 }
