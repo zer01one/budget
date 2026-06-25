@@ -8,11 +8,15 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { useScrollRestore } from "@/composables/useScrollRestore";
 
 const router = useRouter();
 const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 const accountsStore = useAccountsStore();
+
+const txGroupsRef = ref<HTMLElement | null>(null);
+useScrollRestore(txGroupsRef);
 
 const search = ref("");
 const isLoadingMore = ref(false);
@@ -256,6 +260,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		<!-- Grouped list -->
 		<div
 			v-else
+			ref="txGroupsRef"
 			class="tx-groups">
 			<div
 				v-for="group in grouped"

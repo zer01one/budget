@@ -8,10 +8,12 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { showConfirm } from "@/utils/confirm";
+import { useScrollRestore } from "@/composables/useScrollRestore";
 
 const router = useRouter();
 const route = useRoute();
 const accountsStore = useAccountsStore();
+useScrollRestore();
 const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 

@@ -3,9 +3,11 @@ import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { useScrollRestore } from "@/composables/useScrollRestore";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
+useScrollRestore();
 
 function formatAmount(n: number, currency: string) {
 	return n.toLocaleString("ru-RU") + " " + currency;
