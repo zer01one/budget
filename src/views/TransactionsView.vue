@@ -8,6 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
@@ -306,7 +307,10 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 							</div>
 						</div>
 						<div :class="['tx-row__amount', `text-${tx.type}`]">
-							{{ formatAmount(tx) }}
+							<template v-if="tx.type === 'transfer'">
+								<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+							</template>
+							<template v-else>{{ formatAmount(tx) }}</template>
 						</div>
 					</div>
 				</div>
@@ -577,6 +581,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	white-space: nowrap;
 }
 .tx-row__amount {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
 	font-size: var(--font-sm);
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;

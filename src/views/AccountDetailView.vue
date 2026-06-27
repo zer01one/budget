@@ -7,6 +7,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
@@ -151,7 +152,12 @@ async function archiveAccount() {
 							<div class="tx-row__meta">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
 						</div>
 						<div class="tx-row__right">
-							<div :class="['tx-row__amount', `text-${tx.type}`]">{{ formatAmount(tx) }}</div>
+							<div :class="['tx-row__amount', `text-${tx.type}`]">
+								<template v-if="tx.type === 'transfer'">
+									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+								</template>
+								<template v-else>{{ formatAmount(tx) }}</template>
+							</div>
 							<div class="tx-row__balance">{{ tx.runningBalance.toLocaleString("ru-RU") }}</div>
 						</div>
 					</div>
@@ -311,6 +317,9 @@ async function archiveAccount() {
 	gap: 2px;
 }
 .tx-row__amount {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
 	font-size: var(--font-sm);
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;

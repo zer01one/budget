@@ -8,6 +8,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -75,7 +76,7 @@ function formatDate(date: string): string {
 				<AppButton
 					size="sm"
 					@click="router.push('/transactions/add')">
-					+ Добавить
+					+ Добавить операцию
 				</AppButton>
 			</div>
 		</div>
@@ -146,7 +147,10 @@ function formatDate(date: string): string {
 						<div class="tx-row__meta">{{ tx.comment || formatDate(tx.date) }}</div>
 					</div>
 					<div :class="['tx-row__amount', `text-${tx.type}`]">
-						{{ formatAmount(tx) }}
+						<template v-if="tx.type === 'transfer'">
+							<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+						</template>
+						<template v-else>{{ formatAmount(tx) }}</template>
 					</div>
 				</div>
 			</div>
@@ -157,7 +161,7 @@ function formatDate(date: string): string {
 		class="fab-add"
 		size="sm"
 		@click="router.push('/transactions/add')">
-		Добавить
+		Добавить операцию
 	</AppButton>
 </template>
 
@@ -342,6 +346,9 @@ function formatDate(date: string): string {
 }
 
 .tx-row__amount {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
 	font-size: var(--font-md);
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;

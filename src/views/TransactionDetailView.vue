@@ -11,6 +11,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
@@ -145,8 +146,9 @@ function formatDateLabel(date: string): string {
 			<div
 				class="detail-amount"
 				:class="`text-${tx.type}`">
-				{{ tx.type === "income" ? "+" : tx.type === "expense" ? "-" : "↔" }}{{ tx.amount.toLocaleString("ru-RU") }}
-				{{ tx.currency }}
+				<template v-if="tx.type === 'transfer'"><PhArrowsLeftRight :size="20" /></template>
+				<template v-else>{{ tx.type === "income" ? "+" : "-" }}</template>
+				{{ tx.amount.toLocaleString("ru-RU") }} {{ tx.currency }}
 			</div>
 
 			<div class="detail-rows">
