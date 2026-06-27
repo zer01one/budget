@@ -1,19 +1,30 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 import { useSettingsStore } from "@/stores/settings.store";
+import {
+	PhHouseLine,
+	PhArrowsDownUp,
+	PhWallet,
+	PhTag,
+	PhChartBar,
+	PhPiggyBank,
+	PhUserCircle,
+	PhCaretLeft,
+	PhCaretRight
+} from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
 
 const items = [
-	{ to: "/dashboard", label: "Главная", icon: "⊞" },
-	{ to: "/transactions", label: "Операции", icon: "↕" },
-	{ to: "/accounts", label: "Счета", icon: "◈" },
-	{ to: "/categories", label: "Категории", icon: "⊙" },
-	{ to: "/charts", label: "Графики", icon: "◉" },
-	{ to: "/budgets", label: "Бюджеты", icon: "◳" },
-	{ to: "/profile", label: "Профиль", icon: "◎" }
+	{ to: "/dashboard", label: "Главная", icon: PhHouseLine },
+	{ to: "/transactions", label: "Операции", icon: PhArrowsDownUp },
+	{ to: "/accounts", label: "Счета", icon: PhWallet },
+	{ to: "/categories", label: "Категории", icon: PhTag },
+	{ to: "/charts", label: "Графики", icon: PhChartBar },
+	{ to: "/budgets", label: "Бюджеты", icon: PhPiggyBank },
+	{ to: "/profile", label: "Профиль", icon: PhUserCircle }
 ];
 
 function isActive(path: string): boolean {
@@ -26,14 +37,20 @@ function isActive(path: string): boolean {
 		<button
 			class="side-nav__toggle"
 			@click="settingsStore.toggleSidebar">
-			<span>{{ settingsStore.settings.sidebarExpanded ? "◀" : "▶" }}</span>
+			<component
+				:is="settingsStore.settings.sidebarExpanded ? PhCaretLeft : PhCaretRight"
+				:size="16" />
 		</button>
 		<button
 			v-for="item in items"
 			:key="item.to"
 			:class="['side-nav__item', { 'side-nav__item--active': isActive(item.to) }]"
 			@click="router.push(item.to)">
-			<span class="side-nav__icon">{{ item.icon }}</span>
+			<component
+				:is="item.icon"
+				class="side-nav__icon"
+				:size="22"
+				:weight="isActive(item.to) ? 'fill' : 'regular'" />
 			<span
 				v-if="settingsStore.settings.sidebarExpanded"
 				class="side-nav__label">
@@ -106,10 +123,8 @@ function isActive(path: string): boolean {
 }
 
 .side-nav__icon {
-	font-size: 20px;
 	flex-shrink: 0;
 	width: 24px;
-	text-align: center;
 }
 .side-nav__label {
 	font-size: var(--font-sm);

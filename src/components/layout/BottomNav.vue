@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
+import { PhHouseLine, PhArrowsDownUp, PhWallet, PhChartBar, PhUserCircle } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
 
 const items = [
-	{ to: "/dashboard", label: "Главная", icon: "⊞" },
-	{ to: "/transactions", label: "Операции", icon: "↕" },
-	{ to: "/accounts", label: "Счета", icon: "◈" },
-	{ to: "/charts", label: "Графики", icon: "◉" },
-	{ to: "/profile", label: "Профиль", icon: "◎" }
+	{ to: "/dashboard", label: "Главная", icon: PhHouseLine },
+	{ to: "/transactions", label: "Операции", icon: PhArrowsDownUp },
+	{ to: "/accounts", label: "Счета", icon: PhWallet },
+	{ to: "/charts", label: "Графики", icon: PhChartBar },
+	{ to: "/profile", label: "Профиль", icon: PhUserCircle }
 ];
 
 function isActive(path: string): boolean {
@@ -24,7 +25,11 @@ function isActive(path: string): boolean {
 			:key="item.to"
 			:class="['bottom-nav__item', { 'bottom-nav__item--active': isActive(item.to) }]"
 			@click="router.push(item.to)">
-			<span class="bottom-nav__icon">{{ item.icon }}</span>
+			<component
+				:is="item.icon"
+				class="bottom-nav__icon"
+				:size="22"
+				:weight="isActive(item.to) ? 'fill' : 'regular'" />
 			<span class="bottom-nav__label">{{ item.label }}</span>
 		</button>
 	</nav>
@@ -36,7 +41,6 @@ function isActive(path: string): boolean {
 	height: var(--nav-height);
 	background: var(--bg-secondary);
 	border-top: 1px solid var(--border);
-	padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .bottom-nav__item {
@@ -61,8 +65,7 @@ function isActive(path: string): boolean {
 }
 
 .bottom-nav__icon {
-	font-size: 20px;
-	line-height: 1;
+	flex-shrink: 0;
 }
 .bottom-nav__label {
 	font-size: 10px;
