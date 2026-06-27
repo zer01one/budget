@@ -10,6 +10,15 @@ const router = useRouter();
 const accountsStore = useAccountsStore();
 useScrollRestore();
 
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+	card: "Банковская карта",
+	cash: "Наличные",
+	bank: "Банковский счёт",
+	savings: "Накопления",
+	investment: "Инвестиции",
+	crypto: "Криптовалюта",
+};
+
 function formatAmount(n: number, currency: string) {
 	return n.toLocaleString("ru-RU") + " " + currency;
 }
@@ -42,7 +51,7 @@ function formatAmount(n: number, currency: string) {
 				<div class="account-card__icon"><AppIcon :name="acc.icon ?? 'other'" /></div>
 				<div class="account-card__info">
 					<div class="account-card__name">{{ acc.name }}</div>
-					<div class="account-card__type text-muted">{{ acc.type }}</div>
+					<div class="account-card__type text-muted">{{ ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type }}</div>
 				</div>
 				<div class="account-card__balance">
 					{{ formatAmount(acc.balance ?? acc.initialBalance, acc.currency) }}
