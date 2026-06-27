@@ -8,6 +8,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhPlus } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -157,7 +158,7 @@ function formatDate(date: string): string {
 		class="fab-add"
 		size="sm"
 		@click="router.push('/transactions/add')">
-		+ Добавить
+		<PhPlus :size="14" weight="bold" /> Добавить
 	</AppButton>
 </template>
 

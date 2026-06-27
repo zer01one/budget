@@ -12,6 +12,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { showConfirm } from "@/utils/confirm";
+import { PhTrash } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -189,13 +190,25 @@ function formatDateLabel(date: string): string {
 				</div>
 			</div>
 
-			<AppButton
-				variant="danger"
-				full-width
-				@click="deleteTx"
-				>Удалить операцию</AppButton
-			>
+			<div class="delete-btn-inline">
+				<AppButton
+					variant="danger"
+					full-width
+					@click="deleteTx"
+					>Удалить операцию</AppButton
+				>
+			</div>
 		</div>
+
+	<AppButton
+		v-if="!isEditing && tx"
+		class="fab-delete"
+		variant="danger"
+		size="sm"
+		@click="deleteTx">
+		<PhTrash :size="14" weight="bold" />
+		Удалить
+	</AppButton>
 
 		<!-- EDIT MODE -->
 		<div
@@ -527,5 +540,25 @@ function formatDateLabel(date: string): string {
 .field-error {
 	font-size: var(--font-xs);
 	color: var(--accent-danger);
+}
+
+.fab-delete {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.delete-btn-inline {
+		display: none;
+	}
+
+	.fab-delete {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		right: var(--space-5);
+		z-index: 10;
+	}
 }
 </style>
