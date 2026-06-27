@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { Capacitor } from "@capacitor/core";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppTimePicker from "@/components/ui/AppTimePicker.vue";
@@ -110,9 +111,16 @@ async function switchVault() {
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────
+const isNativePlatform = Capacitor.isNativePlatform();
 const notifEnabled = ref(settingsStore.settings.notificationsEnabled);
 const notifTime = ref(settingsStore.settings.reminderTime ?? "20:00");
 const notifSaving = ref(false);
+
+async function disableNotifications() {
+	notifEnabled.value = false;
+	settingsStore.settings.notificationsEnabled = false;
+	await settingsStore.save();
+}
 
 async function toggleNotifications() {
 	notifEnabled.value = !notifEnabled.value;
@@ -130,6 +138,8 @@ async function toggleNotifications() {
 		}
 		settingsStore.settings.notificationsEnabled = notifEnabled.value;
 		await settingsStore.save();
+	} catch {
+		await disableNotifications();
 	} finally {
 		notifSaving.value = false;
 	}
@@ -138,7 +148,11 @@ async function toggleNotifications() {
 async function saveNotifTime() {
 	if (!notifEnabled.value) return;
 	settingsStore.settings.reminderTime = notifTime.value;
-	await Promise.all([scheduleDailyReminder(notifTime.value), settingsStore.save()]);
+	try {
+		await Promise.all([scheduleDailyReminder(notifTime.value), settingsStore.save()]);
+	} catch {
+		await disableNotifications();
+	}
 }
 
 watch(notifTime, saveNotifTime);
@@ -297,8 +311,10 @@ async function doExportJSON() {
 			</div>
 		</div>
 
-		<!-- Notifications -->
-		<div class="section">
+		<!-- Notifications (mobile only) -->
+		<div
+			v-if="isNativePlatform"
+			class="section">
 			<h3 class="section__title">Уведомления</h3>
 			<div class="settings-list">
 				<div class="setting-row">

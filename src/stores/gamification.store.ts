@@ -23,6 +23,8 @@ const ACHIEVEMENT_LABELS: Record<AchievementKey, { name: string; description: st
 
 export { ACHIEVEMENT_LABELS };
 
+let _persistChain: Promise<void> = Promise.resolve();
+
 export const useGamificationStore = defineStore("gamification", () => {
 	const state = ref<GamificationState>({
 		xp: 0,
@@ -69,12 +71,15 @@ export const useGamificationStore = defineStore("gamification", () => {
 	}
 
 	async function persist(): Promise<void> {
-		const settingsStore = useSettingsStore();
-		const fs = await getFileSystemAdapter();
-		state.value.updatedAt = new Date().toISOString();
-		state.value.deviceId = settingsStore.settings.deviceId;
-		state.value.version += 1;
-		await fs.writeJson<GamificationFile>("gamification.json", { gamification: state.value });
+		_persistChain = _persistChain.catch(() => {}).then(async () => {
+			const settingsStore = useSettingsStore();
+			const fs = await getFileSystemAdapter();
+			state.value.updatedAt = new Date().toISOString();
+			state.value.deviceId = settingsStore.settings.deviceId;
+			state.value.version += 1;
+			await fs.writeJson<GamificationFile>("gamification.json", { gamification: state.value });
+		});
+		return _persistChain;
 	}
 
 	function addXp(amount: number): void {

@@ -147,9 +147,18 @@ function formatAmount(n: number, currency: string) {
 }
 .account-card__info {
 	flex: 1;
+	min-width: 0;
 }
 .account-card__name {
 	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.account-card__type {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .account-card__balance {
 	font-weight: 700;

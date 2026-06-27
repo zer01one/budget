@@ -314,7 +314,7 @@ onUnmounted(() => close());
 <style scoped>
 .app-time {
 	position: relative;
-	width: 100%;
+	width: fit-content;
 }
 
 .app-time__native {

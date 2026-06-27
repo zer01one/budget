@@ -20,7 +20,6 @@ const currentMonth = new Date().toISOString().slice(0, 7);
 
 onMounted(async () => {
 	await txStore.loadCurrentAndPrevMonth();
-	gamificationStore.checkDailyStreak();
 });
 
 const totalBalance = computed(() => {
