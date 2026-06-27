@@ -12,7 +12,7 @@ const config: CapacitorConfig = {
 	// },
 	plugins: {
 		StatusBar: {
-			style: "LIGHT"
+			style: "DARK"
 		},
 		LocalNotifications: {
 			smallIcon: "ic_stat_icon_config_sample",
