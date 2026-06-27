@@ -58,7 +58,7 @@ onUnmounted(() => {
 .scroll-top-btn {
 	position: fixed;
 	right: var(--space-5);
-	bottom: calc(var(--nav-height) + var(--space-5));
+	bottom: calc(var(--nav-height) + var(--space-4) + 32px + var(--space-3) + env(safe-area-inset-bottom, 0px));
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;

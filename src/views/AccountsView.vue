@@ -28,11 +28,13 @@ function formatAmount(n: number, currency: string) {
 	<div class="accounts-view">
 		<div class="accounts-view__header">
 			<h2 class="accounts-view__title">Счета</h2>
-			<AppButton
-				size="sm"
-				@click="router.push('/accounts/new')"
-				>+ Добавить</AppButton
-			>
+			<div class="header-add-btn">
+				<AppButton
+					size="sm"
+					@click="router.push('/accounts/new')"
+					>+ Добавить</AppButton
+				>
+			</div>
 		</div>
 
 		<div
@@ -60,9 +62,37 @@ function formatAmount(n: number, currency: string) {
 		</div>
 	</div>
 	<ScrollToTopButton />
+	<AppButton
+		class="fab-add"
+		size="sm"
+		@click="router.push('/accounts/new')">
+		+ Добавить
+	</AppButton>
 </template>
 
 <style scoped>
+.fab-add {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.header-add-btn {
+		display: none;
+	}
+
+	.fab-add {
+		display: block;
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		right: var(--space-5);
+		z-index: 10;
+	}
+
+	.accounts-list {
+		padding-bottom: calc(32px + 44px + var(--space-4) + var(--space-3) * 2);
+	}
+}
+
 .accounts-view {
 	display: flex;
 	flex-direction: column;

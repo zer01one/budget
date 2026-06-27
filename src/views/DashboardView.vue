@@ -71,11 +71,13 @@ function formatDate(date: string): string {
 		<div class="dashboard__header">
 			<div class="dashboard__balance-label">Общий баланс</div>
 			<div class="dashboard__balance">{{ formatCurrency(totalBalance) }}</div>
-			<AppButton
-				size="sm"
-				@click="router.push('/transactions/add')">
-				+ Добавить
-			</AppButton>
+			<div class="header-add-btn">
+				<AppButton
+					size="sm"
+					@click="router.push('/transactions/add')">
+					+ Добавить
+				</AppButton>
+			</div>
 		</div>
 
 		<!-- Summary cards -->
@@ -150,6 +152,13 @@ function formatDate(date: string): string {
 			</div>
 		</div>
 	</div>
+
+	<AppButton
+		class="fab-add"
+		size="sm"
+		@click="router.push('/transactions/add')">
+		+ Добавить
+	</AppButton>
 </template>
 
 <style scoped>
@@ -310,6 +319,28 @@ function formatDate(date: string): string {
 	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
+.fab-add {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.header-add-btn {
+		display: none;
+	}
+
+	.fab-add {
+		display: block;
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		right: var(--space-5);
+		z-index: 10;
+	}
+
+	.dashboard {
+		padding-bottom: calc(32px + 44px + var(--space-4) + var(--space-3) * 2);
+	}
+}
+
 .tx-row__amount {
 	font-size: var(--font-md);
 	font-weight: 600;

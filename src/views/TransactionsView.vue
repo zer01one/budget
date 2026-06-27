@@ -159,11 +159,13 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		<!-- Header -->
 		<div class="tx-view__header">
 			<h2 class="tx-view__title">Операции</h2>
-			<AppButton
-				size="sm"
-				@click="router.push('/transactions/add')"
-				>+ Добавить</AppButton
-			>
+			<div class="header-add-btn">
+				<AppButton
+					size="sm"
+					@click="router.push('/transactions/add')"
+					>+ Добавить</AppButton
+				>
+			</div>
 		</div>
 
 		<!-- Search + filter toggle -->
@@ -326,6 +328,12 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		</div>
 	</div>
 	<ScrollToTopButton :scroll-el="txGroupsRef" />
+	<AppButton
+		class="fab-add"
+		size="sm"
+		@click="router.push('/transactions/add')">
+		+ Добавить
+	</AppButton>
 </template>
 
 <style scoped>
@@ -334,6 +342,25 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	flex-direction: column;
 	height: 100%;
 }
+.fab-add {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.header-add-btn {
+		display: none;
+	}
+
+	.fab-add {
+		display: block;
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		right: var(--space-5);
+		z-index: 10;
+	}
+
+}
+
 .tx-view__header {
 	display: flex;
 	align-items: center;
@@ -563,5 +590,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	display: flex;
 	justify-content: center;
 	padding: var(--space-4) 0;
+}
+
+@media (max-width: 899px) {
+	.tx-groups {
+		padding-bottom: calc(32px + 44px + var(--space-4) + var(--space-3) * 2);
+	}
 }
 </style>

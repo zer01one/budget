@@ -196,7 +196,7 @@ onMounted(async () => {
 
 .toast-container {
 	position: fixed;
-	bottom: calc(var(--nav-height) + var(--space-4));
+	bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 	left: 50%;
 	transform: translateX(-50%);
 	z-index: 2000;
