@@ -12,7 +12,6 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { showConfirm } from "@/utils/confirm";
-import { PhTrash } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -206,7 +205,6 @@ function formatDateLabel(date: string): string {
 		variant="danger"
 		size="sm"
 		@click="deleteTx">
-		<PhTrash :size="14" weight="bold" />
 		Удалить
 	</AppButton>
 

@@ -3,7 +3,6 @@ import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhPlus } from "@phosphor-icons/vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
@@ -67,9 +66,6 @@ function formatAmount(n: number, currency: string) {
 		class="fab-add"
 		size="sm"
 		@click="router.push('/accounts/new')">
-		<PhPlus
-			:size="14"
-			weight="bold" />
 		Добавить
 	</AppButton>
 </template>

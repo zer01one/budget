@@ -8,7 +8,6 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhPlus } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
@@ -331,9 +330,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		class="fab-add"
 		size="sm"
 		@click="router.push('/transactions/add')">
-		<PhPlus
-			:size="14"
-			weight="bold" />
 		Добавить
 	</AppButton>
 </template>
