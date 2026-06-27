@@ -1,5 +1,6 @@
 package com.budget.app
 
+import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
@@ -93,9 +94,9 @@ class VaultFilePlugin : Plugin() {
 
     @PluginMethod
     fun writeJson(call: PluginCall) {
-        val treeUri = Uri.parse(call.getString("treeUri") ?: run {
+        val treeUriStr = call.getString("treeUri") ?: run {
             call.reject("treeUri required"); return
-        })
+        }
         val relativePath = call.getString("relativePath") ?: run {
             call.reject("relativePath required"); return
         }
@@ -103,16 +104,35 @@ class VaultFilePlugin : Plugin() {
             call.reject("json required"); return
         }
         try {
-            // Atomic write: write to .tmp then rename
-            val tmpPath = "$relativePath.tmp"
-            val tmpFile = resolveOrCreateDocumentFile(treeUri, tmpPath, "application/json")
-                ?: run { call.reject("Cannot create tmp file"); return }
-            context.contentResolver.openOutputStream(tmpFile.uri, "wt")?.use { stream ->
-                OutputStreamWriter(stream).use { it.write(json) }
+            val treeUri = Uri.parse(treeUriStr)
+
+            // Re-take persistable permission on every write as a safety measure —
+            // some Android versions drop the grant between sessions if not re-affirmed.
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    treeUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { /* not currently grantable, proceed */ }
+
+            val root = DocumentFile.fromTreeUri(context, treeUri)
+                ?: run { call.reject("fromTreeUri=null uri=$treeUriStr"); return }
+
+            if (!root.canWrite()) {
+                call.reject("vault not writable (canWrite=false) uri=$treeUriStr"); return
             }
-            // Delete existing target, then rename tmp → target
-            resolveDocumentFile(treeUri, relativePath)?.delete()
-            tmpFile.renameTo(relativePath.split('/').last())
+
+            val file = resolveOrCreateDocumentFile(treeUri, relativePath, "application/json")
+                ?: run {
+                    val existing = root.findFile(relativePath.split('/').last())
+                    call.reject("createFile=null path=$relativePath existingByName=${existing?.uri}")
+                    return
+                }
+
+            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+                OutputStreamWriter(stream).use { it.write(json) }
+            } ?: run { call.reject("openOutputStream=null fileUri=${file.uri}"); return }
+
             call.resolve(JSObject())
         } catch (e: Exception) {
             call.reject("writeJson failed: ${e.message}")
@@ -158,6 +178,22 @@ class VaultFilePlugin : Plugin() {
             call.resolve(JSObject().apply { put("exists", file != null && file.exists()) })
         } catch (e: Exception) {
             call.reject("exists failed: ${e.message}")
+        }
+    }
+
+    @PluginMethod
+    fun persistPermission(call: PluginCall) {
+        val treeUri = Uri.parse(call.getString("treeUri") ?: run {
+            call.reject("treeUri required"); return
+        })
+        try {
+            context.contentResolver.takePersistableUriPermission(
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            call.resolve(JSObject())
+        } catch (e: SecurityException) {
+            call.reject("persistPermission failed: ${e.message}")
         }
     }
 

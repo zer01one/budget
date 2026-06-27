@@ -12,6 +12,7 @@
 		"build:android": "npm run build && npx cap sync android",
 		"cap:sync": "npx cap sync",
 		"cap:open": "npx cap open android",
+		"cap:run": "npm run build:android && npx cap run android",
 		"typecheck": "vue-tsc --noEmit -p tsconfig.app.json",
 		"preview": "vite preview",
 		"front:format": "prettier --write .",
