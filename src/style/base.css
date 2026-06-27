@@ -6,6 +6,7 @@
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
+	-webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -22,6 +23,8 @@ body {
 	background: var(--bg-primary);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
 }
 
 #app {

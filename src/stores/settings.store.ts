@@ -67,11 +67,16 @@ export const useSettingsStore = defineStore("settings", () => {
 	async function setTheme(theme: "dark" | "light"): Promise<void> {
 		settings.value.theme = theme;
 		document.documentElement.dataset.theme = theme;
+		const { applyStatusBarTheme } = await import("@/composables/useStatusBar");
+		await applyStatusBarTheme(theme);
 		await save();
 	}
 
 	function applyTheme(): void {
 		document.documentElement.dataset.theme = settings.value.theme;
+		import("@/composables/useStatusBar").then(({ applyStatusBarTheme }) => {
+			applyStatusBarTheme(settings.value.theme);
+		});
 	}
 
 	function toggleSidebar(): void {

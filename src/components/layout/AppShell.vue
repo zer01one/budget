@@ -114,7 +114,7 @@ onMounted(async () => {
 .shell {
 	display: flex;
 	flex-direction: row;
-	height: 100dvh;
+	height: 100%;
 	overflow: hidden;
 }
 .shell__main {
