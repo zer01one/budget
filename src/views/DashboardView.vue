@@ -88,7 +88,7 @@ function formatDate(date: string): string {
 				<div class="summary-card__label">Расходы</div>
 				<div class="summary-card__value text-expense">-{{ formatCurrency(monthExpenses) }}</div>
 			</div>
-			<div class="summary-card">
+			<div class="summary-card summary-card--wide">
 				<div class="summary-card__label">Норма сбережений</div>
 				<div
 					class="summary-card__value"
@@ -202,6 +202,19 @@ function formatDate(date: string): string {
 .summary-card__value {
 	font-size: var(--font-md);
 	font-weight: 600;
+}
+
+@media (max-width: 480px) {
+	.dashboard__summary {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.summary-card--wide {
+		grid-column: 1 / -1;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
 }
 
 .streak-banner {
