@@ -39,17 +39,15 @@ const filterTypeOptions = [
 	{ value: "", label: "Все" },
 	{ value: "expense", label: "Расход" },
 	{ value: "income", label: "Доход" },
-	{ value: "transfer", label: "Перевод" },
+	{ value: "transfer", label: "Перевод" }
 ];
 const filterAccountOptions = computed(() => [
 	{ value: "", label: "Все счета" },
-	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
 ]);
 const filterCategoryOptions = computed(() => [
 	{ value: "", label: "Все категории" },
-	...categoriesStore.categories
-		.filter((c) => !c.isArchived)
-		.map((c) => ({ value: c.id, label: c.name })),
+	...categoriesStore.categories.filter((c) => !c.isArchived).map((c) => ({ value: c.id, label: c.name }))
 ]);
 
 const activeFilterCount = computed(
@@ -333,7 +331,10 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		class="fab-add"
 		size="sm"
 		@click="router.push('/transactions/add')">
-		<PhPlus :size="14" weight="bold" /> Добавить
+		<PhPlus
+			:size="14"
+			weight="bold" />
+		Добавить
 	</AppButton>
 </template>
 
@@ -353,13 +354,12 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	}
 
 	.fab-add {
-		display: block;
+		display: flex;
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 		right: var(--space-5);
 		z-index: 10;
 	}
-
 }
 
 .tx-view__header {

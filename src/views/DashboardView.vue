@@ -158,7 +158,10 @@ function formatDate(date: string): string {
 		class="fab-add"
 		size="sm"
 		@click="router.push('/transactions/add')">
-		<PhPlus :size="14" weight="bold" /> Добавить
+		<PhPlus
+			:size="14"
+			weight="bold" />
+		Добавить
 	</AppButton>
 </template>
 
@@ -330,7 +333,7 @@ function formatDate(date: string): string {
 	}
 
 	.fab-add {
-		display: block;
+		display: flex;
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 		right: var(--space-5);

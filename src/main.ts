@@ -8,6 +8,7 @@ import VChart from "vue-echarts";
 import App from "./App.vue";
 import router from "./router";
 import { registerEChartsTheme } from "./style/echarts-theme";
+import "@fontsource-variable/inter";
 import "./style/base.css";
 
 use([CanvasRenderer, PieChart, BarChart, LineChart, TooltipComponent, LegendComponent, GridComponent, TitleComponent]);

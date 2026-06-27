@@ -17,7 +17,7 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
 	bank: "Банковский счёт",
 	savings: "Накопления",
 	investment: "Инвестиции",
-	crypto: "Криптовалюта",
+	crypto: "Криптовалюта"
 };
 
 function formatAmount(n: number, currency: string) {
@@ -67,7 +67,10 @@ function formatAmount(n: number, currency: string) {
 		class="fab-add"
 		size="sm"
 		@click="router.push('/accounts/new')">
-		<PhPlus :size="14" weight="bold" /> Добавить
+		<PhPlus
+			:size="14"
+			weight="bold" />
+		Добавить
 	</AppButton>
 </template>
 
@@ -82,7 +85,7 @@ function formatAmount(n: number, currency: string) {
 	}
 
 	.fab-add {
-		display: block;
+		display: flex;
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 		right: var(--space-5);

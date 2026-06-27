@@ -32,6 +32,7 @@ defineProps<{
 	gap: var(--space-2);
 	border-radius: var(--radius-md);
 	font-weight: 500;
+	line-height: 1;
 	transition:
 		background var(--transition),
 		opacity var(--transition);
