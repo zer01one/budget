@@ -9,12 +9,14 @@ import { ACHIEVEMENT_LABELS } from "@/stores/gamification.store";
 import { useBootstrap } from "@/composables/useBootstrap";
 import { useHotkeys } from "@/composables/useHotkeys";
 import { useUpdater } from "@/composables/useUpdater";
+import { useBackButton } from "@/composables/useBackButton";
 
 const txStore = useTransactionsStore();
 const gamificationStore = useGamificationStore();
 const { bootstrap } = useBootstrap();
 const { updateAvailable, isInstalling, checkForUpdates, installUpdate, dismissUpdate } = useUpdater();
 useHotkeys();
+useBackButton();
 
 const windowWidth = ref(window.innerWidth);
 const isDesktop = computed(() => windowWidth.value >= 900);
