@@ -1,41 +1,63 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { EChartsOption } from "echarts";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 
 const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 
-const selectedMonth = ref(new Date().toLocaleDateString("en-CA").slice(0, 7));
+const today = new Date().toLocaleDateString("en-CA");
 
-onMounted(() => txStore.loadCurrentAndPrevMonth());
+const dateFrom = ref(today.slice(0, 7) + "-01");
+const dateTo = ref(today);
 
-function prevMonth() {
-	const [y, m] = selectedMonth.value.split("-").map(Number);
-	const d = new Date(y, m - 2);
-	selectedMonth.value = d.toLocaleDateString("en-CA").slice(0, 7);
-}
-function nextMonth() {
-	const [y, m] = selectedMonth.value.split("-").map(Number);
-	const d = new Date(y, m);
-	const now = new Date().toLocaleDateString("en-CA").slice(0, 7);
-	const next = d.toLocaleDateString("en-CA").slice(0, 7);
-	if (next <= now) selectedMonth.value = next;
-}
-const isCurrentMonth = computed(() => selectedMonth.value === new Date().toLocaleDateString("en-CA").slice(0, 7));
-function formatMonthLabel(ym: string): string {
-	const [y, m] = ym.split("-").map(Number);
-	return new Date(y, m - 1).toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
-}
+// ── Range months & data loading ───────────────────────────────────────────────
+const rangeMonths = computed((): string[] => {
+	if (!dateFrom.value || !dateTo.value) return [];
+	const result: string[] = [];
+	const [fy, fm] = dateFrom.value.split("-").map(Number);
+	const [ty, tm] = dateTo.value.split("-").map(Number);
+	let y = fy,
+		m = fm;
+	while (y < ty || (y === ty && m <= tm)) {
+		result.push(`${y}-${String(m).padStart(2, "0")}`);
+		if (m === 12) {
+			y++;
+			m = 1;
+		} else m++;
+	}
+	return result;
+});
 
-// Transactions for selected month
-const monthTxs = computed(() => txStore.allCached.filter((t) => t.date.startsWith(selectedMonth.value) && !t.isDeleted));
+const barMonths = computed((): string[] => {
+	if (rangeMonths.value.length > 1) return rangeMonths.value;
+	const ref = rangeMonths.value[0] ?? today.slice(0, 7);
+	const [y, m] = ref.split("-").map(Number);
+	const result: string[] = [];
+	for (let i = 5; i >= 0; i--) {
+		const d = new Date(y, m - 1 - i);
+		result.push(d.toLocaleDateString("en-CA").slice(0, 7));
+	}
+	return result;
+});
+
+watch(
+	barMonths,
+	async (months) => {
+		await Promise.all(months.map((ym) => txStore.loadMonth(ym)));
+	},
+	{ immediate: true }
+);
+
+// ── Filtered transactions ─────────────────────────────────────────────────────
+const rangeTxs = computed(() => txStore.allCached.filter((t) => t.date >= dateFrom.value && t.date <= dateTo.value && !t.isDeleted));
 
 // ── Donut: расходы по категориям ─────────────────────────────────────────────
 const donutOption = computed((): EChartsOption => {
 	const map = new Map<string, number>();
-	for (const tx of monthTxs.value) {
+	for (const tx of rangeTxs.value) {
 		if (tx.type !== "expense" || !tx.categoryId) continue;
 		map.set(tx.categoryId, (map.get(tx.categoryId) ?? 0) + tx.amount);
 	}
@@ -69,25 +91,15 @@ const donutOption = computed((): EChartsOption => {
 	};
 });
 
-// ── Bar: доходы vs расходы за 6 месяцев ──────────────────────────────────────
-const last6Months = computed((): string[] => {
-	const result: string[] = [];
-	const [y, m] = selectedMonth.value.split("-").map(Number);
-	for (let i = 5; i >= 0; i--) {
-		const d = new Date(y, m - 1 - i);
-		result.push(d.toLocaleDateString("en-CA").slice(0, 7));
-	}
-	return result;
-});
-
+// ── Bar: доходы vs расходы по месяцам ────────────────────────────────────────
 const barMonthlyOption = computed((): EChartsOption => {
-	const incomes = last6Months.value.map((mo) =>
+	const incomes = barMonths.value.map((mo) =>
 		txStore.allCached.filter((t) => t.date.startsWith(mo) && t.type === "income" && !t.isDeleted).reduce((s, t) => s + t.amount, 0)
 	);
-	const expenses = last6Months.value.map((mo) =>
+	const expenses = barMonths.value.map((mo) =>
 		txStore.allCached.filter((t) => t.date.startsWith(mo) && t.type === "expense" && !t.isDeleted).reduce((s, t) => s + t.amount, 0)
 	);
-	const labels = last6Months.value.map((mo) => {
+	const labels = barMonths.value.map((mo) => {
 		const [y, m] = mo.split("-").map(Number);
 		return new Date(y, m - 1).toLocaleDateString("ru-RU", { month: "short" });
 	});
@@ -123,27 +135,28 @@ const barMonthlyOption = computed((): EChartsOption => {
 	};
 });
 
-// ── Line: накопленный расход по дням текущего месяца ─────────────────────────
+// ── Line: накопленный расход по дням за период ────────────────────────────────
 const lineOption = computed((): EChartsOption => {
-	const [y, m] = selectedMonth.value.split("-").map(Number);
-	const daysInMonth = new Date(y, m, 0).getDate();
-	const today = new Date().toLocaleDateString("en-CA");
-	const maxDay = selectedMonth.value < today.slice(0, 7) ? daysInMonth : parseInt(today.slice(8, 10));
+	if (!dateFrom.value || !dateTo.value) return {};
 
-	const days: string[] = [];
+	const multiMonth = rangeMonths.value.length > 1;
+	const labels: string[] = [];
 	const cumExpense: number[] = [];
 	const cumIncome: number[] = [];
 	let totalExp = 0;
 	let totalInc = 0;
 
-	for (let d = 1; d <= maxDay; d++) {
-		const dateStr = `${selectedMonth.value}-${String(d).padStart(2, "0")}`;
-		days.push(String(d));
+	const cur = new Date(dateFrom.value);
+	const end = new Date(dateTo.value);
+	while (cur <= end) {
+		const dateStr = cur.toLocaleDateString("en-CA");
+		labels.push(multiMonth ? cur.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : String(cur.getDate()));
 		const dayTxs = txStore.allCached.filter((t) => t.date === dateStr && !t.isDeleted);
 		totalExp += dayTxs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 		totalInc += dayTxs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
 		cumExpense.push(Math.round(totalExp));
 		cumIncome.push(Math.round(totalInc));
+		cur.setDate(cur.getDate() + 1);
 	}
 
 	return {
@@ -152,14 +165,13 @@ const lineOption = computed((): EChartsOption => {
 			formatter: (params: unknown) => {
 				const items = params as Array<{ marker: string; seriesName: string; value: number; axisValue: string }>;
 				return (
-					`День ${items[0].axisValue}<br/>` +
-					items.map((p) => `${p.marker}${p.seriesName}: ${p.value.toLocaleString("ru-RU")}`).join("<br/>")
+					`${items[0].axisValue}<br/>` + items.map((p) => `${p.marker}${p.seriesName}: ${p.value.toLocaleString("ru-RU")}`).join("<br/>")
 				);
 			}
 		},
 		legend: { data: ["Расходы", "Доходы"], bottom: 0, textStyle: { color: "#8888A0", fontSize: 11 } },
 		grid: { top: 12, bottom: 40, left: 8, right: 8, containLabel: true },
-		xAxis: { type: "category", data: days, boundaryGap: false },
+		xAxis: { type: "category", data: labels, boundaryGap: false },
 		yAxis: { type: "value", axisLabel: { formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : String(v)) } },
 		series: [
 			{
@@ -211,7 +223,7 @@ const lineOption = computed((): EChartsOption => {
 // ── Horizontal bar: топ-5 категорий расходов ─────────────────────────────────
 const topCatsOption = computed((): EChartsOption => {
 	const map = new Map<string, number>();
-	for (const tx of monthTxs.value) {
+	for (const tx of rangeTxs.value) {
 		if (tx.type !== "expense" || !tx.categoryId) continue;
 		map.set(tx.categoryId, (map.get(tx.categoryId) ?? 0) + tx.amount);
 	}
@@ -249,33 +261,24 @@ const topCatsOption = computed((): EChartsOption => {
 	};
 });
 
-// Сводка месяца
+// ── Summary ───────────────────────────────────────────────────────────────────
 const summary = computed(() => {
-	const income = monthTxs.value.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-	const expense = monthTxs.value.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+	const income = rangeTxs.value.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+	const expense = rangeTxs.value.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 	return { income, expense, net: income - expense };
 });
 </script>
 
 <template>
 	<div class="charts-view">
-		<!-- Header with month nav -->
+		<!-- Header -->
 		<div class="charts-view__header">
 			<h2 class="charts-view__title">Графики</h2>
-			<div class="month-nav">
-				<button
-					class="month-nav__btn"
-					@click="prevMonth">
-					‹
-				</button>
-				<span class="month-nav__label">{{ formatMonthLabel(selectedMonth) }}</span>
-				<button
-					class="month-nav__btn"
-					:disabled="isCurrentMonth"
-					@click="nextMonth">
-					›
-				</button>
-			</div>
+			<AppDatePicker
+				:range="true"
+				v-model:dateFrom="dateFrom"
+				v-model:dateTo="dateTo"
+				class="period-picker" />
 		</div>
 
 		<!-- Summary pills -->
@@ -297,7 +300,7 @@ const summary = computed(() => {
 		</div>
 
 		<div class="charts-grid">
-			<!-- Donut: расходы по категориям -->
+			<!-- Donut -->
 			<div class="chart-card chart-card--half">
 				<div class="chart-card__title">Расходы по категориям</div>
 				<VChart
@@ -307,7 +310,7 @@ const summary = computed(() => {
 					autoresize />
 			</div>
 
-			<!-- Top-5 categories -->
+			<!-- Top-5 -->
 			<div class="chart-card chart-card--half">
 				<div class="chart-card__title">Топ-5 категорий</div>
 				<VChart
@@ -317,9 +320,9 @@ const summary = computed(() => {
 					autoresize />
 			</div>
 
-			<!-- Monthly income vs expense -->
+			<!-- Monthly bar -->
 			<div class="chart-card chart-card--full">
-				<div class="chart-card__title">Доходы и расходы за 6 месяцев</div>
+				<div class="chart-card__title">Доходы и расходы по месяцам</div>
 				<VChart
 					class="chart chart--tall"
 					:option="barMonthlyOption"
@@ -329,7 +332,7 @@ const summary = computed(() => {
 
 			<!-- Cumulative line -->
 			<div class="chart-card chart-card--full">
-				<div class="chart-card__title">Динамика за месяц</div>
+				<div class="chart-card__title">Динамика за период</div>
 				<VChart
 					class="chart chart--tall"
 					:option="lineOption"
@@ -354,43 +357,17 @@ const summary = computed(() => {
 	justify-content: space-between;
 	padding: var(--space-5) var(--space-5) var(--space-3);
 	flex-shrink: 0;
+	gap: var(--space-3);
 }
 .charts-view__title {
 	font-size: var(--font-xl);
 	font-weight: 700;
+	flex-shrink: 0;
 }
 
-.month-nav {
-	display: flex;
-	align-items: center;
-	gap: var(--space-2);
-}
-.month-nav__btn {
-	width: 28px;
-	height: 28px;
-	border-radius: var(--radius-sm);
-	background: var(--bg-elevated);
-	border: none;
-	color: var(--text-primary);
-	cursor: pointer;
-	font-size: 16px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: background var(--transition);
-}
-.month-nav__btn:hover:not(:disabled) {
-	background: var(--border);
-}
-.month-nav__btn:disabled {
-	opacity: 0.3;
-	cursor: default;
-}
-.month-nav__label {
-	font-size: var(--font-sm);
-	font-weight: 600;
-	min-width: 120px;
-	text-align: center;
+/* constrain the date picker to not stretch full-width in the header */
+.period-picker {
+	width: fit-content;
 }
 
 .summary-row {
@@ -440,7 +417,6 @@ const summary = computed(() => {
 	gap: var(--space-3);
 	padding: 0 var(--space-5) var(--space-8);
 }
-
 .chart-card {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
@@ -456,13 +432,11 @@ const summary = computed(() => {
 .chart-card--full {
 	grid-column: span 2;
 }
-
 .chart-card__title {
 	font-size: var(--font-sm);
 	font-weight: 600;
 	color: var(--text-secondary);
 }
-
 .chart {
 	width: 100%;
 	height: 200px;
@@ -472,12 +446,16 @@ const summary = computed(() => {
 }
 
 @media (max-width: 600px) {
+	.charts-view__header {
+		flex-wrap: wrap;
+	}
+	.period-picker {
+		width: 100%;
+	}
 	.charts-grid {
 		grid-template-columns: 1fr;
 	}
-	.chart-card--half {
-		grid-column: span 1;
-	}
+	.chart-card--half,
 	.chart-card--full {
 		grid-column: span 1;
 	}

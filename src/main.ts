@@ -10,6 +10,8 @@ import router from "./router";
 import { registerEChartsTheme } from "./style/echarts-theme";
 import "@fontsource-variable/inter";
 import "./style/base.css";
+import "@vuepic/vue-datepicker/dist/main.css";
+import "./style/datepicker.css";
 
 use([CanvasRenderer, PieChart, BarChart, LineChart, TooltipComponent, LegendComponent, GridComponent, TitleComponent]);
 registerEChartsTheme();
