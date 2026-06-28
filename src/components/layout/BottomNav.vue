@@ -68,7 +68,7 @@ function isActive(path: string): boolean {
 	flex-shrink: 0;
 }
 .bottom-nav__label {
-	font-size: 10px;
+	font-size: var(--font-xs);
 	font-weight: 500;
 	letter-spacing: 0.3px;
 }

@@ -453,7 +453,7 @@ onUnmounted(() => close());
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
+	font-size: var(--font-lg);
 	font-weight: 500;
 	color: var(--text-primary);
 	cursor: pointer;
@@ -465,7 +465,7 @@ onUnmounted(() => close());
 
 /* Colon separator */
 .tp__sep {
-	font-size: 20px;
+	font-size: var(--font-xl);
 	font-weight: 700;
 	color: var(--text-primary);
 	padding: 0 4px;

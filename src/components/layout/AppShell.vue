@@ -184,7 +184,7 @@ onMounted(async () => {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: 14px;
+	font-size: var(--font-sm);
 }
 
 .conflict-banner button {
@@ -192,7 +192,7 @@ onMounted(async () => {
 	border: none;
 	color: var(--accent-warning);
 	cursor: pointer;
-	font-size: 16px;
+	font-size: var(--font-md);
 	flex-shrink: 0;
 }
 

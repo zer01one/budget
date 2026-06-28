@@ -600,7 +600,7 @@ onUnmounted(() => close());
 }
 .cal__weekday {
 	text-align: center;
-	font-size: 11px;
+	font-size: var(--font-xs);
 	color: var(--text-muted);
 	font-weight: 500;
 	padding: var(--space-1) 0;
@@ -620,7 +620,7 @@ onUnmounted(() => close());
 	border: none;
 	background: transparent;
 	color: var(--text-primary);
-	font-size: 13px;
+	font-size: var(--font-sm);
 	cursor: pointer;
 	padding: 0;
 	transition: background var(--transition), color var(--transition);

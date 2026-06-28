@@ -88,7 +88,7 @@ function isActive(path: string): boolean {
 	align-items: center;
 	justify-content: center;
 	margin-bottom: var(--space-3);
-	font-size: 12px;
+	font-size: var(--font-sm);
 	transition: color var(--transition);
 }
 .side-nav__toggle:hover {

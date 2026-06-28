@@ -103,7 +103,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 	border-radius: var(--radius-full);
 	background: var(--bg-elevated);
 	color: var(--text-secondary);
-	font-size: 14px;
+	font-size: var(--font-sm);
 	display: flex;
 	align-items: center;
 	justify-content: center;
