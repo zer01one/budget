@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
@@ -332,7 +332,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	<ScrollToTopButton :scroll-el="txGroupsRef" />
 	<AppButton
 		class="fab-add"
-		size="sm"
+		size="lg"
 		@click="router.push('/transactions/add')">
 		Добавить
 	</AppButton>
@@ -357,7 +357,8 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		display: flex;
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		right: var(--space-5);
+		left: var(--space-4);
+		right: var(--space-4);
 		z-index: 10;
 	}
 }

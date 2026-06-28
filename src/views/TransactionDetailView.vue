@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
@@ -205,7 +205,7 @@ function formatDateLabel(date: string): string {
 		v-if="!isEditing && tx"
 		class="fab-delete"
 		variant="danger"
-		size="sm"
+		size="lg"
 		@click="deleteTx">
 		Удалить
 	</AppButton>
@@ -557,7 +557,8 @@ function formatDateLabel(date: string): string {
 		gap: var(--space-1);
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		right: var(--space-5);
+		left: var(--space-4);
+		right: var(--space-4);
 		z-index: 10;
 	}
 }

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
@@ -158,7 +158,7 @@ function formatDate(date: string): string {
 
 	<AppButton
 		class="fab-add"
-		size="sm"
+		size="lg"
 		@click="router.push('/transactions/add')">
 		Добавить операцию
 	</AppButton>
@@ -335,12 +335,13 @@ function formatDate(date: string): string {
 		display: flex;
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		right: var(--space-5);
+		left: var(--space-4);
+		right: var(--space-4);
 		z-index: 10;
 	}
 
 	.dashboard {
-		padding-bottom: calc(32px + 44px + var(--space-4) + var(--space-3) * 2);
+		padding-bottom: calc(52px + 44px + var(--space-4) + var(--space-3) * 2);
 	}
 }
 
