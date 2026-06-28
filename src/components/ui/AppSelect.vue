@@ -140,7 +140,7 @@ onUnmounted(() => close());
 		<!-- Visual trigger -->
 		<button
 			type="button"
-			class="app-select__trigger"
+			class="app-select__trigger tp-body-md-regular"
 			:disabled="disabled"
 			@click="toggle"
 			@keydown="onKeydown">
@@ -166,7 +166,7 @@ onUnmounted(() => close());
 					<div
 						v-for="(opt, i) in options"
 						:key="opt.value"
-						class="app-select__option"
+						class="app-select__option tp-body-md-regular"
 						:class="{
 							'app-select__option--selected': opt.value === modelValue,
 							'app-select__option--focused': i === focusedIndex,
@@ -214,7 +214,6 @@ onUnmounted(() => close());
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 	cursor: pointer;
 	text-align: left;
 	transition: border-color var(--transition), background var(--transition);
@@ -273,7 +272,6 @@ onUnmounted(() => close());
 	justify-content: space-between;
 	gap: var(--space-2);
 	padding: var(--space-2) var(--space-3);
-	font-size: var(--font-sm);
 	color: var(--text-primary);
 	cursor: pointer;
 	user-select: none;

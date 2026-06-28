@@ -66,11 +66,11 @@ async function archiveAccount() {
 	<div class="account-detail">
 		<div class="account-detail__header">
 			<button
-				class="back-btn"
+				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
 				← Назад
 			</button>
-			<h2 class="account-detail__title">{{ account?.name ?? "Счёт" }}</h2>
+			<h2 class="account-detail__title tp-heading-md-bold">{{ account?.name ?? "Счёт" }}</h2>
 		</div>
 
 		<div
@@ -85,13 +85,13 @@ async function archiveAccount() {
 				class="balance-hero"
 				:style="{ '--acc-color': account.color }">
 				<div class="balance-hero__icon"><AppIcon :name="account.icon" /></div>
-				<div class="balance-hero__amount">{{ balance.toLocaleString("ru-RU") }} {{ account.currency }}</div>
+				<div class="balance-hero__amount tp-display-md-bold">{{ balance.toLocaleString("ru-RU") }} {{ account.currency }}</div>
 				<div class="balance-hero__label text-muted">Текущий баланс</div>
 			</div>
 
 			<!-- Stats row -->
 			<div class="stats-row">
-				<div class="stat-chip">
+				<div class="stat-chip tp-label-md-semibold">
 					<span class="text-income">
 						+{{
 							transactionsWithBalance
@@ -100,9 +100,9 @@ async function archiveAccount() {
 								.toLocaleString("ru-RU")
 						}}
 					</span>
-					<span class="text-muted">Доходы</span>
+					<span class="text-muted tp-caption-md-regular">Доходы</span>
 				</div>
-				<div class="stat-chip">
+				<div class="stat-chip tp-label-md-semibold">
 					<span class="text-expense">
 						-{{
 							transactionsWithBalance
@@ -111,7 +111,7 @@ async function archiveAccount() {
 								.toLocaleString("ru-RU")
 						}}
 					</span>
-					<span class="text-muted">Расходы</span>
+					<span class="text-muted tp-caption-md-regular">Расходы</span>
 				</div>
 			</div>
 
@@ -126,7 +126,7 @@ async function archiveAccount() {
 
 			<!-- Transactions -->
 			<div class="section">
-				<div class="section__title">Операции</div>
+				<div class="section__title tp-title-lg-semibold">Операции</div>
 
 				<div
 					v-if="transactionsWithBalance.length === 0"
@@ -148,17 +148,17 @@ async function archiveAccount() {
 							<AppIcon :name="getCategory(tx.categoryId)?.icon ?? 'transfer'" />
 						</div>
 						<div class="tx-row__info">
-							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
-							<div class="tx-row__meta">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
+							<div class="tx-row__name tp-body-md-medium">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
+							<div class="tx-row__meta tp-caption-md-regular">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
 						</div>
 						<div class="tx-row__right">
-							<div :class="['tx-row__amount', `text-${tx.type}`]">
+							<div class="tp-body-md-semibold" :class="['tx-row__amount', `text-${tx.type}`]">
 								<template v-if="tx.type === 'transfer'">
 									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
 								</template>
 								<template v-else>{{ formatAmount(tx) }}</template>
 							</div>
-							<div class="tx-row__balance">{{ tx.runningBalance.toLocaleString("ru-RU") }}</div>
+							<div class="tx-row__balance tp-caption-md-regular">{{ tx.runningBalance.toLocaleString("ru-RU") }}</div>
 						</div>
 					</div>
 				</div>
@@ -191,16 +191,11 @@ async function archiveAccount() {
 	gap: var(--space-3);
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
-.account-detail__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .back-btn {
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
 }
 .account-detail__not-found {
 	text-align: center;
@@ -220,8 +215,6 @@ async function archiveAccount() {
 	font-size: 48px;
 }
 .balance-hero__amount {
-	font-size: var(--font-3xl);
-	font-weight: 700;
 	letter-spacing: -1px;
 }
 
@@ -240,12 +233,6 @@ async function archiveAccount() {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
-	font-size: var(--font-sm);
-	font-weight: 600;
-}
-.stat-chip .text-muted {
-	font-weight: 400;
-	font-size: var(--font-xs);
 }
 
 .account-detail__actions {
@@ -257,10 +244,6 @@ async function archiveAccount() {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-3);
-}
-.section__title {
-	font-size: var(--font-lg);
-	font-weight: 600;
 }
 .empty {
 	text-align: center;
@@ -302,12 +285,7 @@ async function archiveAccount() {
 	flex: 1;
 	min-width: 0;
 }
-.tx-row__name {
-	font-size: var(--font-sm);
-	font-weight: 500;
-}
 .tx-row__meta {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 .tx-row__right {
@@ -320,12 +298,9 @@ async function archiveAccount() {
 	display: flex;
 	align-items: center;
 	gap: var(--space-1);
-	font-size: var(--font-sm);
-	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 }
 .tx-row__balance {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 }

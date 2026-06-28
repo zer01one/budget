@@ -26,9 +26,9 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 				<div
 					v-if="title"
 					class="modal__header">
-					<span class="modal__title">{{ title }}</span>
+					<span class="modal__title tp-title-lg-semibold">{{ title }}</span>
 					<button
-						class="modal__close"
+						class="modal__close tp-body-md-regular"
 						@click="emit('close')">
 						✕
 					</button>
@@ -93,17 +93,12 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 	padding: var(--space-5) var(--space-5) var(--space-4);
 	border-bottom: 1px solid var(--border);
 }
-.modal__title {
-	font-size: var(--font-lg);
-	font-weight: 600;
-}
 .modal__close {
 	width: 32px;
 	height: 32px;
 	border-radius: var(--radius-full);
 	background: var(--bg-elevated);
 	color: var(--text-secondary);
-	font-size: var(--font-sm);
 	display: flex;
 	align-items: center;
 	justify-content: center;

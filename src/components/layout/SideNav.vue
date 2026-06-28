@@ -35,7 +35,7 @@ function isActive(path: string): boolean {
 <template>
 	<nav :class="['side-nav', { 'side-nav--expanded': settingsStore.settings.sidebarExpanded }]">
 		<button
-			class="side-nav__toggle"
+			class="side-nav__toggle tp-body-md-regular"
 			@click="settingsStore.toggleSidebar">
 			<component
 				:is="settingsStore.settings.sidebarExpanded ? PhCaretLeft : PhCaretRight"
@@ -44,7 +44,7 @@ function isActive(path: string): boolean {
 		<button
 			v-for="item in items"
 			:key="item.to"
-			:class="['side-nav__item', { 'side-nav__item--active': isActive(item.to) }]"
+			:class="['side-nav__item tp-body-lg-regular', { 'side-nav__item--active': isActive(item.to) }]"
 			@click="router.push(item.to)">
 			<component
 				:is="item.icon"
@@ -53,7 +53,7 @@ function isActive(path: string): boolean {
 				:weight="isActive(item.to) ? 'fill' : 'regular'" />
 			<span
 				v-if="settingsStore.settings.sidebarExpanded"
-				class="side-nav__label">
+				class="side-nav__label tp-label-md-medium">
 				{{ item.label }}
 			</span>
 		</button>
@@ -88,7 +88,6 @@ function isActive(path: string): boolean {
 	align-items: center;
 	justify-content: center;
 	margin-bottom: var(--space-3);
-	font-size: var(--font-sm);
 	transition: color var(--transition);
 }
 .side-nav__toggle:hover {
@@ -111,7 +110,6 @@ function isActive(path: string): boolean {
 	transition:
 		color var(--transition),
 		background var(--transition);
-	font-size: var(--font-md);
 }
 .side-nav__item:hover {
 	background: var(--bg-elevated);
@@ -125,9 +123,5 @@ function isActive(path: string): boolean {
 .side-nav__icon {
 	flex-shrink: 0;
 	width: 24px;
-}
-.side-nav__label {
-	font-size: var(--font-sm);
-	font-weight: 500;
 }
 </style>

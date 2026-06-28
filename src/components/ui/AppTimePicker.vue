@@ -207,7 +207,7 @@ onUnmounted(() => close());
 
 		<button
 			type="button"
-			class="app-time__trigger"
+			class="app-time__trigger tp-body-md-regular"
 			:disabled="disabled"
 			@click="toggle">
 			<PhClock
@@ -248,14 +248,14 @@ onUnmounted(() => close());
 							<div
 								v-for="i in PAD"
 								:key="`hp${i}`"
-								class="tp__item tp__item--pad" />
+								class="tp__item tp__item--pad tp-title-lg-medium" />
 							<template
 								v-for="c in HOUR_COPIES"
 								:key="`hc${c}`">
 								<div
 									v-for="h in HOURS"
 									:key="`${c}-${h}`"
-									class="tp__item"
+									class="tp__item tp-title-lg-medium"
 									:data-value="h">
 									{{ pad2(h) }}
 								</div>
@@ -263,10 +263,10 @@ onUnmounted(() => close());
 							<div
 								v-for="i in PAD"
 								:key="`hpe${i}`"
-								class="tp__item tp__item--pad" />
+								class="tp__item tp__item--pad tp-title-lg-medium" />
 						</div>
 
-						<span class="tp__sep">:</span>
+						<span class="tp__sep tp-heading-md-bold">:</span>
 
 						<!-- Minutes column -->
 						<div
@@ -277,14 +277,14 @@ onUnmounted(() => close());
 							<div
 								v-for="i in PAD"
 								:key="`mp${i}`"
-								class="tp__item tp__item--pad" />
+								class="tp__item tp__item--pad tp-title-lg-medium" />
 							<template
 								v-for="c in MIN_COPIES"
 								:key="`mc${c}`">
 								<div
 									v-for="m in MINUTES"
 									:key="`${c}-${m}`"
-									class="tp__item"
+									class="tp__item tp-title-lg-medium"
 									:data-value="m">
 									{{ pad2(m) }}
 								</div>
@@ -292,14 +292,14 @@ onUnmounted(() => close());
 							<div
 								v-for="i in PAD"
 								:key="`mpe${i}`"
-								class="tp__item tp__item--pad" />
+								class="tp__item tp__item--pad tp-title-lg-medium" />
 						</div>
 					</div>
 
 					<div class="tp__footer">
 						<button
 							type="button"
-							class="tp__now-btn"
+							class="tp__now-btn tp-body-md-regular"
 							@mousedown.prevent
 							@click="selectNow">
 							Сейчас
@@ -338,7 +338,6 @@ onUnmounted(() => close());
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 	cursor: pointer;
 	text-align: left;
 	transition: border-color var(--transition);
@@ -453,8 +452,6 @@ onUnmounted(() => close());
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: var(--font-lg);
-	font-weight: 500;
 	color: var(--text-primary);
 	cursor: pointer;
 	user-select: none;
@@ -465,8 +462,6 @@ onUnmounted(() => close());
 
 /* Colon separator */
 .tp__sep {
-	font-size: var(--font-xl);
-	font-weight: 700;
 	color: var(--text-primary);
 	padding: 0 4px;
 	flex-shrink: 0;
@@ -487,7 +482,6 @@ onUnmounted(() => close());
 	background: none;
 	border: none;
 	color: var(--accent-primary);
-	font-size: var(--font-sm);
 	cursor: pointer;
 	padding: var(--space-1) var(--space-3);
 	border-radius: var(--radius-md);

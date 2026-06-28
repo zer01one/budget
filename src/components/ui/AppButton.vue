@@ -14,6 +14,7 @@ defineProps<{
 			'app-btn',
 			`app-btn--${variant ?? 'primary'}`,
 			`app-btn--${size ?? 'md'}`,
+			size === 'sm' ? 'tp-label-sm-medium' : size === 'lg' ? 'tp-title-lg-medium' : 'tp-label-md-medium',
 			{ 'app-btn--full': fullWidth, 'app-btn--loading': loading }
 		]"
 		:disabled="disabled || loading">
@@ -31,8 +32,6 @@ defineProps<{
 	justify-content: center;
 	gap: var(--space-2);
 	border-radius: var(--radius-md);
-	font-weight: 500;
-	line-height: 1;
 	transition:
 		background var(--transition),
 		opacity var(--transition);
@@ -51,17 +50,14 @@ defineProps<{
 .app-btn--sm {
 	height: 32px;
 	padding: 0 var(--space-3);
-	font-size: var(--font-sm);
 }
 .app-btn--md {
 	height: 44px;
 	padding: 0 var(--space-5);
-	font-size: var(--font-md);
 }
 .app-btn--lg {
 	height: 52px;
 	padding: 0 var(--space-6);
-	font-size: var(--font-lg);
 }
 
 .app-btn--primary {

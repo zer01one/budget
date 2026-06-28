@@ -273,7 +273,7 @@ const summary = computed(() => {
 	<div class="charts-view">
 		<!-- Header -->
 		<div class="charts-view__header">
-			<h2 class="charts-view__title">Графики</h2>
+			<h2 class="charts-view__title tp-heading-md-bold">Графики</h2>
 			<AppDatePicker
 				:range="true"
 				v-model:dateFrom="dateFrom"
@@ -285,24 +285,24 @@ const summary = computed(() => {
 		<div class="summary-row">
 			<div class="summary-pill summary-pill--income">
 				<span class="summary-pill__label">Доходы</span>
-				<span class="summary-pill__value">+{{ summary.income.toLocaleString("ru-RU") }}</span>
+				<span class="summary-pill__value tp-body-md-semibold">+{{ summary.income.toLocaleString("ru-RU") }}</span>
 			</div>
 			<div class="summary-pill summary-pill--expense">
 				<span class="summary-pill__label">Расходы</span>
-				<span class="summary-pill__value">-{{ summary.expense.toLocaleString("ru-RU") }}</span>
+				<span class="summary-pill__value tp-body-md-semibold">-{{ summary.expense.toLocaleString("ru-RU") }}</span>
 			</div>
 			<div
 				class="summary-pill"
 				:class="summary.net >= 0 ? 'summary-pill--income' : 'summary-pill--expense'">
 				<span class="summary-pill__label">Итог</span>
-				<span class="summary-pill__value">{{ summary.net >= 0 ? "+" : "" }}{{ summary.net.toLocaleString("ru-RU") }}</span>
+				<span class="summary-pill__value tp-body-md-semibold">{{ summary.net >= 0 ? "+" : "" }}{{ summary.net.toLocaleString("ru-RU") }}</span>
 			</div>
 		</div>
 
 		<div class="charts-grid">
 			<!-- Donut -->
 			<div class="chart-card chart-card--half">
-				<div class="chart-card__title">Расходы по категориям</div>
+				<div class="chart-card__title tp-label-md-semibold">Расходы по категориям</div>
 				<VChart
 					class="chart"
 					:option="donutOption"
@@ -312,7 +312,7 @@ const summary = computed(() => {
 
 			<!-- Top-5 -->
 			<div class="chart-card chart-card--half">
-				<div class="chart-card__title">Топ-5 категорий</div>
+				<div class="chart-card__title tp-label-md-semibold">Топ-5 категорий</div>
 				<VChart
 					class="chart"
 					:option="topCatsOption"
@@ -322,7 +322,7 @@ const summary = computed(() => {
 
 			<!-- Monthly bar -->
 			<div class="chart-card chart-card--full">
-				<div class="chart-card__title">Доходы и расходы по месяцам</div>
+				<div class="chart-card__title tp-label-md-semibold">Доходы и расходы по месяцам</div>
 				<VChart
 					class="chart chart--tall"
 					:option="barMonthlyOption"
@@ -332,7 +332,7 @@ const summary = computed(() => {
 
 			<!-- Cumulative line -->
 			<div class="chart-card chart-card--full">
-				<div class="chart-card__title">Динамика за период</div>
+				<div class="chart-card__title tp-label-md-semibold">Динамика за период</div>
 				<VChart
 					class="chart chart--tall"
 					:option="lineOption"
@@ -360,8 +360,6 @@ const summary = computed(() => {
 	gap: var(--space-3);
 }
 .charts-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
 	flex-shrink: 0;
 }
 
@@ -399,8 +397,6 @@ const summary = computed(() => {
 	letter-spacing: 0.5px;
 }
 .summary-pill__value {
-	font-size: var(--font-sm);
-	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 	margin-top: 2px;
 }
@@ -433,8 +429,6 @@ const summary = computed(() => {
 	grid-column: span 2;
 }
 .chart-card__title {
-	font-size: var(--font-sm);
-	font-weight: 600;
 	color: var(--text-secondary);
 }
 .chart {

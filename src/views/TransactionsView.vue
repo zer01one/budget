@@ -157,7 +157,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	<div class="tx-view">
 		<!-- Header -->
 		<div class="tx-view__header">
-			<h2 class="tx-view__title">Операции</h2>
+			<h2 class="tx-view__title tp-heading-md-bold">Операции</h2>
 			<div class="header-add-btn">
 				<AppButton
 					size="sm"
@@ -171,7 +171,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		<div class="tx-view__search-wrap">
 			<input
 				v-model="search"
-				class="tx-view__search"
+				class="tx-view__search tp-body-md-regular"
 				placeholder="Поиск по операциям…" />
 			<button
 				:class="['tx-view__filter-btn', { 'tx-view__filter-btn--active': activeFilterCount > 0 }]"
@@ -192,14 +192,14 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			<div class="filter-row">
 				<!-- Type -->
 				<div class="filter-field">
-					<label class="filter-field__label">Тип</label>
+					<label class="filter-field__label tp-label-sm-medium">Тип</label>
 					<AppSelect
 						v-model="filterType"
 						:options="filterTypeOptions" />
 				</div>
 				<!-- Account -->
 				<div class="filter-field">
-					<label class="filter-field__label">Счёт</label>
+					<label class="filter-field__label tp-label-sm-medium">Счёт</label>
 					<AppSelect
 						v-model="filterAccountId"
 						:options="filterAccountOptions" />
@@ -209,7 +209,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			<div class="filter-row">
 				<!-- Category -->
 				<div class="filter-field">
-					<label class="filter-field__label">Категория</label>
+					<label class="filter-field__label tp-label-sm-medium">Категория</label>
 					<AppSelect
 						v-model="filterCategoryId"
 						:options="filterCategoryOptions" />
@@ -219,7 +219,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			<div class="filter-row">
 				<!-- Date from -->
 				<div class="filter-field">
-					<label class="filter-field__label">С даты</label>
+					<label class="filter-field__label tp-label-sm-medium">С даты</label>
 					<AppDatePicker
 						v-model="filterFrom"
 						clearable
@@ -227,7 +227,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				</div>
 				<!-- Date to -->
 				<div class="filter-field">
-					<label class="filter-field__label">По дату</label>
+					<label class="filter-field__label tp-label-sm-medium">По дату</label>
 					<AppDatePicker
 						v-model="filterTo"
 						clearable
@@ -237,7 +237,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 
 			<button
 				v-if="activeFilterCount > 0"
-				class="filter-reset"
+				class="filter-reset tp-caption-md-regular"
 				@click="resetFilters">
 				Сбросить фильтры
 			</button>
@@ -268,8 +268,8 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				class="tx-group">
 				<!-- Date header with day totals -->
 				<div class="tx-group__header">
-					<span class="tx-group__date">{{ group.label }}</span>
-					<div class="tx-group__totals">
+					<span class="tx-group__date tp-label-md-semibold">{{ group.label }}</span>
+					<div class="tx-group__totals tp-label-md-semibold">
 						<span
 							v-if="dayTotal(group.transactions).income > 0"
 							class="text-income">
@@ -299,14 +299,14 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 							<AppIcon :name="getCategory(tx.categoryId)?.icon ?? (tx.type === 'transfer' ? 'transfer' : 'other')" />
 						</div>
 						<div class="tx-row__info">
-							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
+							<div class="tx-row__name tp-body-md-medium">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
 							<div
 								v-if="tx.comment"
-								class="tx-row__comment">
+								class="tx-row__comment tp-caption-md-regular">
 								{{ tx.comment }}
 							</div>
 						</div>
-						<div :class="['tx-row__amount', `text-${tx.type}`]">
+						<div :class="['tx-row__amount tp-body-md-semibold', `text-${tx.type}`]">
 							<template v-if="tx.type === 'transfer'">
 								<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
 							</template>
@@ -370,10 +370,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	padding: var(--space-5) var(--space-5) var(--space-3);
 	flex-shrink: 0;
 }
-.tx-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 
 .tx-view__search-wrap {
 	padding: 0 var(--space-5) var(--space-3);
@@ -389,7 +385,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	background: var(--bg-input);
 	color: var(--text-primary);
 	padding: 0 var(--space-3);
-	font-size: var(--font-sm);
 }
 .tx-view__search:focus {
 	outline: none;
@@ -456,9 +451,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	gap: 4px;
 }
 .filter-field__label {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
-	font-weight: 500;
 }
 .filter-field__select {
 	height: 36px;
@@ -467,7 +460,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 }
 .filter-field__select:focus {
 	outline: none;
@@ -479,7 +471,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	border: none;
 	padding: 0;
 	color: var(--accent-primary);
-	font-size: var(--font-xs);
 	cursor: pointer;
 	text-decoration: underline;
 }
@@ -513,15 +504,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	padding: var(--space-2) 0;
 }
 .tx-group__date {
-	font-size: var(--font-sm);
-	font-weight: 600;
 	color: var(--text-secondary);
 }
 .tx-group__totals {
 	display: flex;
 	gap: var(--space-3);
-	font-size: var(--font-sm);
-	font-weight: 600;
 }
 
 .tx-list {
@@ -569,12 +556,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	flex: 1;
 	min-width: 0;
 }
-.tx-row__name {
-	font-size: var(--font-sm);
-	font-weight: 500;
-}
 .tx-row__comment {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	truncate: true;
 	overflow: hidden;
@@ -585,8 +567,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	display: flex;
 	align-items: center;
 	gap: var(--space-1);
-	font-size: var(--font-sm);
-	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }

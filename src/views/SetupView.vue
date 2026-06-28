@@ -67,7 +67,7 @@ async function openExistingVault() {
 	<div class="setup">
 		<div class="setup__card">
 			<div class="setup__logo">💰</div>
-			<h1 class="setup__title">Budget</h1>
+			<h1 class="setup__title tp-display-md-bold">Budget</h1>
 			<p class="setup__desc">
 				Личный учёт финансов без серверов.<br />
 				Ваши данные — только ваши файлы.
@@ -89,7 +89,7 @@ async function openExistingVault() {
 					@click="openExistingVault">
 					Открыть существующее
 				</AppButton>
-				<p class="setup__hint">
+				<p class="setup__hint tp-body-md-regular">
 					Выберите любую папку — обычную или в Google Drive / Dropbox / OneDrive. Синхронизация происходит автоматически через клиент
 					облака.
 				</p>
@@ -104,7 +104,7 @@ async function openExistingVault() {
 
 			<p
 				v-if="error"
-				class="setup__error">
+				class="setup__error tp-body-md-regular">
 				{{ error }}
 			</p>
 		</div>
@@ -136,8 +136,6 @@ async function openExistingVault() {
 	line-height: 1;
 }
 .setup__title {
-	font-size: var(--font-3xl);
-	font-weight: 700;
 	letter-spacing: -0.5px;
 }
 .setup__desc {
@@ -153,7 +151,6 @@ async function openExistingVault() {
 }
 
 .setup__hint {
-	font-size: var(--font-sm);
 	color: var(--text-muted);
 	line-height: 1.5;
 }
@@ -181,7 +178,6 @@ async function openExistingVault() {
 }
 
 .setup__error {
-	font-size: var(--font-sm);
 	color: var(--accent-danger);
 	padding: var(--space-3);
 	background: var(--accent-danger-soft);

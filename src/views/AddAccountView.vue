@@ -103,11 +103,11 @@ async function submit() {
 	<div class="add-account">
 		<div class="add-account__header">
 			<button
-				class="back-btn"
+				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
 				← Назад
 			</button>
-			<h2>Новый счёт</h2>
+			<h2 class="tp-heading-md-bold">Новый счёт</h2>
 		</div>
 
 		<!-- Preview -->
@@ -121,7 +121,7 @@ async function submit() {
 			</div>
 			<div class="preview-card__info">
 				<div class="preview-card__name">{{ name || "Название счёта" }}</div>
-				<div class="preview-card__meta">{{ currency }} · {{ type }}</div>
+				<div class="preview-card__meta tp-caption-md-regular">{{ currency }} · {{ type }}</div>
 			</div>
 			<div class="preview-card__balance">{{ initialBalance || "0" }}</div>
 		</div>
@@ -134,7 +134,7 @@ async function submit() {
 				:error="errors.name" />
 
 			<div class="field">
-				<label class="field__label">Тип счёта</label>
+				<label class="field__label tp-label-md-medium">Тип счёта</label>
 				<AppSelect
 					v-model="type"
 					:options="ACCOUNT_TYPES" />
@@ -142,7 +142,7 @@ async function submit() {
 
 			<div class="row-2">
 				<div class="field">
-					<label class="field__label">Валюта</label>
+					<label class="field__label tp-label-md-medium">Валюта</label>
 					<AppSelect
 						v-model="currency"
 						:options="currencyOptions" />
@@ -193,16 +193,11 @@ async function submit() {
 	gap: var(--space-3);
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
-.add-account__header h2 {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .back-btn {
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
 }
 
 .preview-card {
@@ -234,7 +229,6 @@ async function submit() {
 	font-weight: 600;
 }
 .preview-card__meta {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 .preview-card__balance {
@@ -255,9 +249,7 @@ async function submit() {
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__select {
 	height: 44px;
@@ -266,7 +258,6 @@ async function submit() {
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 }
 .field__select:focus {
 	outline: none;

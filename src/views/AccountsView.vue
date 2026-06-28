@@ -27,7 +27,7 @@ function formatAmount(n: number, currency: string) {
 <template>
 	<div class="accounts-view">
 		<div class="accounts-view__header">
-			<h2 class="accounts-view__title">Счета</h2>
+			<h2 class="accounts-view__title tp-heading-md-bold">Счета</h2>
 			<div class="header-add-btn">
 				<AppButton
 					size="sm"
@@ -103,10 +103,6 @@ function formatAmount(n: number, currency: string) {
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-5);
-}
-.accounts-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
 }
 .accounts-view__empty {
 	text-align: center;

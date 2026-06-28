@@ -84,7 +84,7 @@ async function deleteCategory(cat: Category) {
 <template>
 	<div class="categories-view">
 		<div class="categories-view__header">
-			<h2 class="categories-view__title">Категории</h2>
+			<h2 class="categories-view__title tp-heading-md-bold">Категории</h2>
 			<AppButton
 				size="sm"
 				@click="openAdd"
@@ -95,12 +95,12 @@ async function deleteCategory(cat: Category) {
 		<!-- Tabs -->
 		<div class="tabs">
 			<button
-				:class="['tab', { 'tab--active': activeTab === 'expense' }]"
+				:class="['tab', 'tp-label-md-medium', { 'tab--active': activeTab === 'expense' }]"
 				@click="activeTab = 'expense'">
 				Расходы
 			</button>
 			<button
-				:class="['tab', { 'tab--active': activeTab === 'income' }]"
+				:class="['tab', 'tp-label-md-medium', { 'tab--active': activeTab === 'income' }]"
 				@click="activeTab = 'income'">
 				Доходы
 			</button>
@@ -118,10 +118,10 @@ async function deleteCategory(cat: Category) {
 					:style="{ background: cat.color + '22', color: cat.color }">
 					<AppIcon :name="cat.icon" />
 				</div>
-				<div class="cat-row__name">{{ cat.name }}</div>
+				<div class="cat-row__name tp-label-md-medium">{{ cat.name }}</div>
 				<span
 					v-if="cat.isSystem"
-					class="cat-row__system"
+					class="cat-row__system tp-caption-md-regular"
 					>системная</span
 				>
 				<button
@@ -147,7 +147,7 @@ async function deleteCategory(cat: Category) {
 			<div class="modal-form">
 				<!-- Preview chip -->
 				<div
-					class="cat-preview"
+					class="cat-preview tp-label-md-semibold"
 					:style="{ background: form.color + '22', borderColor: form.color }">
 					<span><AppIcon :name="form.icon" /></span>
 					<span>{{ form.name || "Название" }}</span>
@@ -162,15 +162,15 @@ async function deleteCategory(cat: Category) {
 				<div
 					v-if="!editingCategory"
 					class="field">
-					<label class="field__label">Тип</label>
+					<label class="field__label tp-label-md-medium">Тип</label>
 					<div class="type-btns">
 						<button
-							:class="['type-btn', { 'type-btn--active': form.type === 'expense' }]"
+							:class="['type-btn', 'tp-body-md-regular', { 'type-btn--active': form.type === 'expense' }]"
 							@click="form.type = 'expense'">
 							Расход
 						</button>
 						<button
-							:class="['type-btn', { 'type-btn--active': form.type === 'income' }]"
+							:class="['type-btn', 'tp-body-md-regular', { 'type-btn--active': form.type === 'income' }]"
 							@click="form.type = 'income'">
 							Доход
 						</button>
@@ -212,10 +212,6 @@ async function deleteCategory(cat: Category) {
 	justify-content: space-between;
 	padding: var(--space-5);
 }
-.categories-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 
 .tabs {
 	display: flex;
@@ -229,8 +225,6 @@ async function deleteCategory(cat: Category) {
 	background: var(--bg-elevated);
 	border: none;
 	color: var(--text-secondary);
-	font-size: var(--font-sm);
-	font-weight: 500;
 	cursor: pointer;
 	transition:
 		background var(--transition),
@@ -279,11 +273,8 @@ async function deleteCategory(cat: Category) {
 }
 .cat-row__name {
 	flex: 1;
-	font-size: var(--font-sm);
-	font-weight: 500;
 }
 .cat-row__system {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	padding: 2px var(--space-2);
 	background: var(--bg-elevated);
@@ -317,8 +308,6 @@ async function deleteCategory(cat: Category) {
 	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius-md);
 	border: 1px solid;
-	font-size: var(--font-sm);
-	font-weight: 600;
 }
 
 .field {
@@ -327,9 +316,7 @@ async function deleteCategory(cat: Category) {
 	gap: var(--space-2);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .type-btns {
 	display: flex;
@@ -342,7 +329,6 @@ async function deleteCategory(cat: Category) {
 	background: var(--bg-elevated);
 	border: none;
 	color: var(--text-secondary);
-	font-size: var(--font-sm);
 	cursor: pointer;
 	transition:
 		background var(--transition),

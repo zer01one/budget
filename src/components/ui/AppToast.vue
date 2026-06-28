@@ -21,7 +21,7 @@ onMounted(() => {
 </script>
 
 <template>
-	<div :class="['toast', `toast--${type ?? 'info'}`, { 'toast--visible': visible }]">
+	<div :class="['toast tp-label-md-medium', `toast--${type ?? 'info'}`, { 'toast--visible': visible }]">
 		{{ message }}
 	</div>
 </template>
@@ -30,8 +30,6 @@ onMounted(() => {
 .toast {
 	padding: var(--space-3) var(--space-5);
 	border-radius: var(--radius-md);
-	font-size: var(--font-sm);
-	font-weight: 500;
 	box-shadow: var(--shadow-lg);
 	opacity: 0;
 	transform: translateY(8px);

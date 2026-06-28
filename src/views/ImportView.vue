@@ -129,15 +129,15 @@ const importCategoryOptions = computed(() => [
 	<div class="import-view">
 		<div class="import-view__header">
 			<button
-				class="back-btn"
+				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
 				← Назад
 			</button>
-			<h2 class="import-view__title">Импорт CSV</h2>
+			<h2 class="import-view__title tp-heading-md-bold">Импорт CSV</h2>
 		</div>
 
 		<!-- Step indicator -->
-		<div class="steps">
+		<div class="steps tp-caption-md-regular">
 			<div :class="['step', { 'step--active': step === 'pick', 'step--done': step !== 'pick' }]">1 Файл</div>
 			<div class="step-sep">›</div>
 			<div :class="['step', { 'step--active': step === 'map', 'step--done': step === 'preview' || step === 'done' }]">2 Колонки</div>
@@ -150,7 +150,7 @@ const importCategoryOptions = computed(() => [
 		<!-- Error -->
 		<p
 			v-if="error"
-			class="import-error">
+			class="import-error tp-body-md-regular">
 			{{ error }}
 		</p>
 
@@ -159,7 +159,7 @@ const importCategoryOptions = computed(() => [
 			v-if="step === 'pick'"
 			class="import-card">
 			<div class="import-card__icon">📂</div>
-			<p class="import-card__desc">
+			<p class="import-card__desc tp-body-md-regular">
 				Поддерживаются CSV-файлы от большинства банков.<br />
 				Разделитель: запятая или точка с запятой.
 			</p>
@@ -175,41 +175,41 @@ const importCategoryOptions = computed(() => [
 		<div
 			v-else-if="step === 'map'"
 			class="import-card">
-			<p class="import-card__hint">Найдено строк: {{ rawRows.length }}. Укажите какие колонки соответствуют полям:</p>
+			<p class="import-card__hint tp-body-md-regular">Найдено строк: {{ rawRows.length }}. Укажите какие колонки соответствуют полям:</p>
 
 			<div class="map-grid">
 				<div class="map-field">
-					<label class="map-field__label">Дата *</label>
+					<label class="map-field__label tp-label-sm-medium">Дата *</label>
 					<AppSelect
 						v-model="mapping.date"
 						:options="headerOptions" />
 				</div>
 				<div class="map-field">
-					<label class="map-field__label">Сумма *</label>
+					<label class="map-field__label tp-label-sm-medium">Сумма *</label>
 					<AppSelect
 						v-model="mapping.amount"
 						:options="headerOptions" />
 				</div>
 				<div class="map-field">
-					<label class="map-field__label">Тип (доход/расход)</label>
+					<label class="map-field__label tp-label-sm-medium">Тип (доход/расход)</label>
 					<AppSelect
 						v-model="mapping.type"
 						:options="colMappingOptions" />
 				</div>
 				<div class="map-field">
-					<label class="map-field__label">Комментарий</label>
+					<label class="map-field__label tp-label-sm-medium">Комментарий</label>
 					<AppSelect
 						v-model="mapping.comment"
 						:options="colMappingOptions" />
 				</div>
 				<div class="map-field map-field--full">
-					<label class="map-field__label">Счёт *</label>
+					<label class="map-field__label tp-label-sm-medium">Счёт *</label>
 					<AppSelect
 						v-model="mapping.accountId"
 						:options="importAccountOptions" />
 				</div>
 				<div class="map-field map-field--full">
-					<label class="map-field__label">Категория по умолчанию</label>
+					<label class="map-field__label tp-label-sm-medium">Категория по умолчанию</label>
 					<AppSelect
 						v-model="mapping.categoryId"
 						:options="importCategoryOptions" />
@@ -230,7 +230,7 @@ const importCategoryOptions = computed(() => [
 		<div
 			v-else-if="step === 'preview'"
 			class="import-card import-card--preview">
-			<div class="preview-summary">
+			<div class="preview-summary tp-body-md-semibold">
 				<span class="text-income">✓ {{ validCount }} строк готовы к импорту</span>
 				<span
 					v-if="errorCount > 0"
@@ -240,7 +240,7 @@ const importCategoryOptions = computed(() => [
 			</div>
 
 			<div class="preview-table-wrap">
-				<table class="preview-table">
+				<table class="preview-table tp-caption-md-regular">
 					<thead>
 						<tr>
 							<th>Дата</th>
@@ -279,7 +279,7 @@ const importCategoryOptions = computed(() => [
 				</table>
 				<p
 					v-if="previewRows.length > 20"
-					class="preview-more">
+					class="preview-more tp-caption-md-regular">
 					… и ещё {{ previewRows.length - 20 }} строк
 				</p>
 			</div>
@@ -328,16 +328,11 @@ const importCategoryOptions = computed(() => [
 	gap: var(--space-3);
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
-.import-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .back-btn {
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
 }
 
 .steps {
@@ -345,7 +340,6 @@ const importCategoryOptions = computed(() => [
 	align-items: center;
 	gap: var(--space-2);
 	padding: 0 var(--space-5) var(--space-4);
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 .step {
@@ -369,7 +363,6 @@ const importCategoryOptions = computed(() => [
 	padding: var(--space-3);
 	background: var(--accent-danger-soft);
 	border-radius: var(--radius-md);
-	font-size: var(--font-sm);
 	color: var(--accent-danger);
 }
 
@@ -399,10 +392,8 @@ const importCategoryOptions = computed(() => [
 	color: var(--text-secondary);
 	line-height: 1.6;
 	text-align: center;
-	font-size: var(--font-sm);
 }
 .import-card__hint {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
 }
 
@@ -420,9 +411,7 @@ const importCategoryOptions = computed(() => [
 	grid-column: span 2;
 }
 .map-field__label {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
-	font-weight: 500;
 }
 .map-field__select {
 	height: 40px;
@@ -431,7 +420,6 @@ const importCategoryOptions = computed(() => [
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 }
 
 .import-actions {
@@ -444,8 +432,6 @@ const importCategoryOptions = computed(() => [
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--space-4);
-	font-size: var(--font-sm);
-	font-weight: 600;
 }
 
 .preview-table-wrap {
@@ -456,7 +442,6 @@ const importCategoryOptions = computed(() => [
 .preview-table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: var(--font-xs);
 }
 .preview-table th {
 	position: sticky;
@@ -489,7 +474,6 @@ const importCategoryOptions = computed(() => [
 	cursor: help;
 }
 .preview-more {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	text-align: center;
 	padding: var(--space-2);

@@ -48,7 +48,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 								y2="17" />
 						</svg>
 					</div>
-					<p class="confirm-message">{{ pending.message }}</p>
+					<p class="confirm-message tp-body-lg-regular">{{ pending.message }}</p>
 					<div class="confirm-actions">
 						<AppButton
 							variant="secondary"
@@ -108,7 +108,6 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 }
 
 .confirm-message {
-	font-size: var(--font-md);
 	color: var(--text-primary);
 	line-height: 1.5;
 	margin: 0;

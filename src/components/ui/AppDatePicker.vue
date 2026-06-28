@@ -118,7 +118,7 @@ function clear(e: MouseEvent) {
 		class="app-date-picker">
 		<template #trigger>
 			<div
-				class="app-date__trigger"
+				class="app-date__trigger tp-body-md-regular"
 				:class="{ 'app-date__trigger--disabled': disabled }">
 				<PhCalendarBlank
 					class="app-date__icon"
@@ -161,7 +161,6 @@ function clear(e: MouseEvent) {
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 	cursor: pointer;
 	user-select: none;
 	transition: border-color var(--transition);

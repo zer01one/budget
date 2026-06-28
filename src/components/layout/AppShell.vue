@@ -69,17 +69,17 @@ onMounted(async () => {
 		<main class="shell__main">
 			<div
 				v-if="updateAvailable"
-				class="update-banner">
+				class="update-banner tp-body-md-regular">
 				<span>⬆ Доступна версия {{ updateAvailable.version }}</span>
 				<div class="update-banner__actions">
 					<button
-						class="update-banner__install"
+						class="update-banner__install tp-label-sm-semibold"
 						:disabled="isInstalling"
 						@click="installUpdate">
 						{{ isInstalling ? "Установка…" : "Установить" }}
 					</button>
 					<button
-						class="update-banner__dismiss"
+						class="update-banner__dismiss tp-body-md-regular"
 						@click="dismissUpdate">
 						✕
 					</button>
@@ -88,9 +88,9 @@ onMounted(async () => {
 
 			<div
 				v-if="txStore.lastConflict"
-				class="conflict-banner">
+				class="conflict-banner tp-body-md-regular">
 				<span>⚠ Конфликт синхронизации в {{ txStore.lastConflict.file }} — принята более новая версия</span>
-				<button @click="txStore.clearConflict()">✕</button>
+				<button class="tp-body-lg-regular" @click="txStore.clearConflict()">✕</button>
 			</div>
 
 			<div class="shell__content">
@@ -144,7 +144,6 @@ onMounted(async () => {
 	padding: var(--space-3) var(--space-5);
 	background: var(--accent-warning-soft);
 	border-bottom: 1px solid var(--accent-warning);
-	font-size: var(--font-sm);
 	color: var(--accent-warning);
 	gap: var(--space-3);
 }
@@ -155,7 +154,6 @@ onMounted(async () => {
 	padding: var(--space-3) var(--space-5);
 	background: var(--accent-primary-soft);
 	border-bottom: 1px solid var(--accent-primary);
-	font-size: var(--font-sm);
 	color: var(--accent-primary);
 	gap: var(--space-3);
 }
@@ -171,9 +169,7 @@ onMounted(async () => {
 	border-radius: var(--radius-sm);
 	color: #fff;
 	padding: var(--space-1) var(--space-3);
-	font-size: var(--font-xs);
 	cursor: pointer;
-	font-weight: 600;
 }
 .update-banner__install:disabled {
 	opacity: 0.6;
@@ -184,7 +180,6 @@ onMounted(async () => {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-sm);
 }
 
 .conflict-banner button {
@@ -192,7 +187,6 @@ onMounted(async () => {
 	border: none;
 	color: var(--accent-warning);
 	cursor: pointer;
-	font-size: var(--font-md);
 	flex-shrink: 0;
 }
 

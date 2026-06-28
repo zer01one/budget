@@ -69,8 +69,8 @@ function formatDate(date: string): string {
 	<div class="dashboard">
 		<!-- Header -->
 		<div class="dashboard__header">
-			<div class="dashboard__balance-label">Общий баланс</div>
-			<div class="dashboard__balance">{{ formatCurrency(totalBalance) }}</div>
+			<div class="dashboard__balance-label tp-body-md-regular">Общий баланс</div>
+			<div class="dashboard__balance tp-display-md-bold">{{ formatCurrency(totalBalance) }}</div>
 			<div class="header-add-btn">
 				<AppButton
 					size="sm"
@@ -83,17 +83,17 @@ function formatDate(date: string): string {
 		<!-- Summary cards -->
 		<div class="dashboard__summary">
 			<div class="summary-card">
-				<div class="summary-card__label">Доходы</div>
-				<div class="summary-card__value text-income">+{{ formatCurrency(monthIncome) }}</div>
+				<div class="summary-card__label tp-caption-md-regular">Доходы</div>
+				<div class="summary-card__value tp-title-md-semibold text-income">+{{ formatCurrency(monthIncome) }}</div>
 			</div>
 			<div class="summary-card">
-				<div class="summary-card__label">Расходы</div>
-				<div class="summary-card__value text-expense">-{{ formatCurrency(monthExpenses) }}</div>
+				<div class="summary-card__label tp-caption-md-regular">Расходы</div>
+				<div class="summary-card__value tp-title-md-semibold text-expense">-{{ formatCurrency(monthExpenses) }}</div>
 			</div>
 			<div class="summary-card summary-card--wide">
-				<div class="summary-card__label">Норма сбережений</div>
+				<div class="summary-card__label tp-caption-md-regular">Норма сбережений</div>
 				<div
-					class="summary-card__value"
+					class="summary-card__value tp-title-md-semibold"
 					:class="savingsRate >= 0 ? 'text-income' : 'text-expense'">
 					{{ savingsRate }}%
 				</div>
@@ -106,17 +106,17 @@ function formatDate(date: string): string {
 			class="streak-banner">
 			<span class="streak-banner__icon">🔥</span>
 			<div>
-				<div class="streak-banner__count">{{ gamificationStore.state.currentStreak }} дней подряд</div>
-				<div class="streak-banner__label">{{ gamificationStore.levelLabel }} · {{ gamificationStore.state.xp }} XP</div>
+				<div class="streak-banner__count tp-title-md-semibold">{{ gamificationStore.state.currentStreak }} дней подряд</div>
+				<div class="streak-banner__label tp-body-md-regular">{{ gamificationStore.levelLabel }} · {{ gamificationStore.state.xp }} XP</div>
 			</div>
 		</div>
 
 		<!-- Recent transactions -->
 		<div class="dashboard__section">
 			<div class="section-header">
-				<span class="section-header__title">Последние операции</span>
+				<span class="section-header__title tp-title-md-semibold">Последние операции</span>
 				<button
-					class="section-header__link"
+					class="section-header__link tp-body-md-regular"
 					@click="router.push('/transactions')">
 					Все →
 				</button>
@@ -142,10 +142,10 @@ function formatDate(date: string): string {
 						<AppIcon :name="getCategory(tx.categoryId)?.icon ?? 'other'" />
 					</div>
 					<div class="tx-row__info">
-						<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
-						<div class="tx-row__meta">{{ tx.comment || formatDate(tx.date) }}</div>
+						<div class="tx-row__name tp-label-md-medium">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
+						<div class="tx-row__meta tp-caption-md-regular">{{ tx.comment || formatDate(tx.date) }}</div>
 					</div>
-					<div :class="['tx-row__amount', `text-${tx.type}`]">
+					<div class="tp-title-md-semibold" :class="['tx-row__amount', `text-${tx.type}`]">
 						<template v-if="tx.type === 'transfer'">
 							<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
 						</template>
@@ -183,12 +183,9 @@ function formatDate(date: string): string {
 	text-align: center;
 }
 .dashboard__balance-label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
 }
 .dashboard__balance {
-	font-size: var(--font-3xl);
-	font-weight: 700;
 	letter-spacing: -1px;
 }
 
@@ -208,12 +205,7 @@ function formatDate(date: string): string {
 	gap: var(--space-1);
 }
 .summary-card__label {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
-}
-.summary-card__value {
-	font-size: var(--font-md);
-	font-weight: 600;
 }
 
 @media (max-width: 480px) {
@@ -241,12 +233,7 @@ function formatDate(date: string): string {
 .streak-banner__icon {
 	font-size: 32px;
 }
-.streak-banner__count {
-	font-weight: 600;
-	font-size: var(--font-md);
-}
 .streak-banner__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
 }
 
@@ -260,12 +247,7 @@ function formatDate(date: string): string {
 	align-items: center;
 	justify-content: space-between;
 }
-.section-header__title {
-	font-size: var(--font-md);
-	font-weight: 600;
-}
 .section-header__link {
-	font-size: var(--font-sm);
 	color: var(--accent-primary);
 	background: none;
 	border: none;
@@ -314,12 +296,7 @@ function formatDate(date: string): string {
 	flex: 1;
 	min-width: 0;
 }
-.tx-row__name {
-	font-size: var(--font-sm);
-	font-weight: 500;
-}
 .tx-row__meta {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 .fab-add {
@@ -349,8 +326,6 @@ function formatDate(date: string): string {
 	display: flex;
 	align-items: center;
 	gap: var(--space-1);
-	font-size: var(--font-md);
-	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 }
 </style>

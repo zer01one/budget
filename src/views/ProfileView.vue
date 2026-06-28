@@ -185,21 +185,21 @@ async function doExportJSON() {
 <template>
 	<div class="profile-view">
 		<div class="profile-view__header">
-			<h2 class="profile-view__title">Профиль</h2>
+			<h2 class="profile-view__title tp-heading-md-bold">Профиль</h2>
 		</div>
 
 		<!-- Level card -->
 		<div class="level-card">
-			<div class="level-card__badge">🏅</div>
+			<div class="level-card__badge tp-display-lg-semibold">🏅</div>
 			<div class="level-card__info">
-				<div class="level-card__level">{{ gamificationStore.levelLabel }}</div>
-				<div class="level-card__xp">{{ g.xp }} XP</div>
+				<div class="level-card__level tp-heading-md-bold">{{ gamificationStore.levelLabel }}</div>
+				<div class="level-card__xp tp-label-md-semibold">{{ g.xp }} XP</div>
 				<div class="level-card__bar-wrap">
 					<div
 						class="level-card__bar"
 						:style="{ width: gamificationStore.levelProgress + '%' }" />
 				</div>
-				<div class="level-card__next text-muted">
+				<div class="level-card__next tp-caption-md-regular text-muted">
 					<span v-if="gamificationStore.nextLevel">
 						До уровня «{{ LEVEL_LABELS[gamificationStore.nextLevel] }}»: {{ gamificationStore.xpToNextLevel }} XP
 					</span>
@@ -211,22 +211,22 @@ async function doExportJSON() {
 		<!-- Stats -->
 		<div class="stats-grid">
 			<div class="stat">
-				<div class="stat__value">{{ g.totalTransactions }}</div>
-				<div class="stat__label">Операций</div>
+				<div class="stat__value tp-heading-md-bold">{{ g.totalTransactions }}</div>
+				<div class="stat__label tp-caption-md-regular">Операций</div>
 			</div>
 			<div class="stat">
-				<div class="stat__value">🔥 {{ g.currentStreak }}</div>
-				<div class="stat__label">Дней подряд</div>
+				<div class="stat__value tp-heading-md-bold">🔥 {{ g.currentStreak }}</div>
+				<div class="stat__label tp-caption-md-regular">Дней подряд</div>
 			</div>
 			<div class="stat">
-				<div class="stat__value">{{ g.longestStreak }}</div>
-				<div class="stat__label">Лучшая серия</div>
+				<div class="stat__value tp-heading-md-bold">{{ g.longestStreak }}</div>
+				<div class="stat__label tp-caption-md-regular">Лучшая серия</div>
 			</div>
 		</div>
 
 		<!-- Achievements -->
 		<div class="section">
-			<h3 class="section__title">Достижения</h3>
+			<h3 class="section__title tp-title-lg-semibold">Достижения</h3>
 			<div class="achievements">
 				<div
 					v-for="achievement in g.achievements"
@@ -236,10 +236,10 @@ async function doExportJSON() {
 						{{ achievement.unlockedAt ? "🏆" : "🔒" }}
 					</div>
 					<div class="achievement__info">
-						<div class="achievement__name">
+						<div class="achievement__name tp-label-md-semibold">
 							{{ ACHIEVEMENT_LABELS[achievement.key as AchievementKey]?.name }}
 						</div>
-						<div class="achievement__desc text-muted">
+						<div class="achievement__desc tp-caption-md-regular text-muted">
 							{{ ACHIEVEMENT_LABELS[achievement.key as AchievementKey]?.description }}
 						</div>
 						<div
@@ -256,12 +256,12 @@ async function doExportJSON() {
 
 		<!-- Import -->
 		<div class="section">
-			<h3 class="section__title">Импорт данных</h3>
+			<h3 class="section__title tp-title-lg-semibold">Импорт данных</h3>
 			<div class="export-list">
 				<div class="export-row">
 					<div class="export-row__info">
-						<div class="export-row__name">Импорт из CSV</div>
-						<div class="export-row__desc text-muted">Выписка из банка в формате CSV</div>
+						<div class="export-row__name tp-label-md-medium">Импорт из CSV</div>
+						<div class="export-row__desc tp-caption-md-regular text-muted">Выписка из банка в формате CSV</div>
 					</div>
 					<AppButton
 						size="sm"
@@ -275,12 +275,12 @@ async function doExportJSON() {
 
 		<!-- Export -->
 		<div class="section">
-			<h3 class="section__title">Экспорт данных</h3>
+			<h3 class="section__title tp-title-lg-semibold">Экспорт данных</h3>
 			<div class="export-list">
 				<div class="export-row">
 					<div class="export-row__info">
-						<div class="export-row__name">Транзакции (CSV)</div>
-						<div class="export-row__desc text-muted">Все операции в формате таблицы</div>
+						<div class="export-row__name tp-label-md-medium">Транзакции (CSV)</div>
+						<div class="export-row__desc tp-caption-md-regular text-muted">Все операции в формате таблицы</div>
 					</div>
 					<AppButton
 						size="sm"
@@ -292,8 +292,8 @@ async function doExportJSON() {
 				</div>
 				<div class="export-row">
 					<div class="export-row__info">
-						<div class="export-row__name">Транзакции (JSON)</div>
-						<div class="export-row__desc text-muted">Полный дамп в JSON-формате</div>
+						<div class="export-row__name tp-label-md-medium">Транзакции (JSON)</div>
+						<div class="export-row__desc tp-caption-md-regular text-muted">Полный дамп в JSON-формате</div>
 					</div>
 					<AppButton
 						size="sm"
@@ -315,14 +315,12 @@ async function doExportJSON() {
 		<div
 			v-if="isNativePlatform"
 			class="section">
-			<h3 class="section__title">Уведомления</h3>
+			<h3 class="section__title tp-title-lg-semibold">Уведомления</h3>
 			<div class="settings-list">
 				<div class="setting-row">
 					<div>
 						<div>Ежедневное напоминание</div>
-						<div
-							class="text-muted"
-							style="font-size: var(--font-xs)">
+						<div class="text-muted tp-caption-md-regular">
 							Напомнить записать расходы
 						</div>
 					</div>
@@ -344,7 +342,7 @@ async function doExportJSON() {
 
 		<!-- Settings -->
 		<div class="section">
-			<h3 class="section__title">Настройки</h3>
+			<h3 class="section__title tp-title-lg-semibold">Настройки</h3>
 			<div class="settings-list">
 				<div class="setting-row">
 					<span>Тема</span>
@@ -384,8 +382,8 @@ async function doExportJSON() {
 						@click="moveVault">
 						<div class="vault-option__icon">📦</div>
 						<div class="vault-option__text">
-							<div class="vault-option__title">Перенести данные</div>
-							<div class="vault-option__desc">Скопировать все данные в новую папку</div>
+							<div class="vault-option__title tp-label-md-semibold">Перенести данные</div>
+							<div class="vault-option__desc tp-caption-md-regular">Скопировать все данные в новую папку</div>
 						</div>
 					</button>
 					<button
@@ -393,8 +391,8 @@ async function doExportJSON() {
 						@click="switchVault">
 						<div class="vault-option__icon">📂</div>
 						<div class="vault-option__text">
-							<div class="vault-option__title">Открыть другое хранилище</div>
-							<div class="vault-option__desc">Переключиться на существующую папку</div>
+							<div class="vault-option__title tp-label-md-semibold">Открыть другое хранилище</div>
+							<div class="vault-option__desc tp-caption-md-regular">Переключиться на существующую папку</div>
 						</div>
 					</button>
 				</div>
@@ -424,10 +422,6 @@ async function doExportJSON() {
 .profile-view__header {
 	padding: var(--space-5) var(--space-5) 0;
 }
-.profile-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 
 .level-card {
 	margin: 0 var(--space-5);
@@ -439,20 +433,11 @@ async function doExportJSON() {
 	border: 1px solid var(--border);
 	border-radius: var(--radius-xl);
 }
-.level-card__badge {
-	font-size: 48px;
-}
 .level-card__info {
 	flex: 1;
 }
-.level-card__level {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .level-card__xp {
-	font-size: var(--font-sm);
 	color: var(--accent-primary);
-	font-weight: 600;
 }
 .level-card__bar-wrap {
 	height: 6px;
@@ -466,9 +451,6 @@ async function doExportJSON() {
 	background: var(--accent-primary);
 	border-radius: var(--radius-full);
 	transition: width 0.5s ease;
-}
-.level-card__next {
-	font-size: var(--font-xs);
 }
 
 .stats-grid {
@@ -484,12 +466,7 @@ async function doExportJSON() {
 	padding: var(--space-4);
 	text-align: center;
 }
-.stat__value {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .stat__label {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 
@@ -498,10 +475,6 @@ async function doExportJSON() {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-3);
-}
-.section__title {
-	font-size: var(--font-lg);
-	font-weight: 600;
 }
 
 .achievements {
@@ -528,12 +501,7 @@ async function doExportJSON() {
 .achievement__info {
 	flex: 1;
 }
-.achievement__name {
-	font-weight: 600;
-	font-size: var(--font-sm);
-}
 .achievement__desc {
-	font-size: var(--font-xs);
 	margin-top: 2px;
 }
 .achievement__progress-wrap {
@@ -568,15 +536,7 @@ async function doExportJSON() {
 	flex-direction: column;
 	gap: 2px;
 }
-.export-row__name {
-	font-size: var(--font-sm);
-	font-weight: 500;
-}
-.export-row__desc {
-	font-size: var(--font-xs);
-}
 .export-error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
 	padding: var(--space-2) 0;
 }
@@ -594,7 +554,6 @@ async function doExportJSON() {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-lg);
-	font-size: var(--font-sm);
 }
 .theme-toggle {
 	background: var(--bg-elevated);
@@ -603,7 +562,6 @@ async function doExportJSON() {
 	padding: var(--space-1) var(--space-3);
 	color: var(--text-primary);
 	cursor: pointer;
-	font-size: var(--font-sm);
 }
 
 .toggle {
@@ -646,7 +604,6 @@ async function doExportJSON() {
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 }
 
 .vault-row .vault-row__right {
@@ -662,11 +619,9 @@ async function doExportJSON() {
 	padding: var(--space-1) var(--space-3);
 	color: var(--text-primary);
 	cursor: pointer;
-	font-size: var(--font-sm);
 	flex-shrink: 0;
 }
 .vault-path {
-	font-size: var(--font-xs);
 	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -704,17 +659,11 @@ async function doExportJSON() {
 	font-size: 28px;
 	flex-shrink: 0;
 }
-.vault-option__title {
-	font-size: var(--font-sm);
-	font-weight: 600;
-}
 .vault-option__desc {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	margin-top: 2px;
 }
 .vault-modal__error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
 	padding: var(--space-3);
 	background: var(--accent-danger-soft);

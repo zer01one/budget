@@ -30,7 +30,7 @@ function isActive(path: string): boolean {
 				class="bottom-nav__icon"
 				:size="22"
 				:weight="isActive(item.to) ? 'fill' : 'regular'" />
-			<span class="bottom-nav__label">{{ item.label }}</span>
+			<span class="bottom-nav__label tp-label-sm-medium">{{ item.label }}</span>
 		</button>
 	</nav>
 </template>
@@ -68,8 +68,6 @@ function isActive(path: string): boolean {
 	flex-shrink: 0;
 }
 .bottom-nav__label {
-	font-size: var(--font-xs);
-	font-weight: 500;
 	letter-spacing: 0.3px;
 }
 </style>
