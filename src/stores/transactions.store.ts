@@ -36,8 +36,8 @@ export const useTransactionsStore = defineStore("transactions", () => {
 
 	async function loadCurrentAndPrevMonth(): Promise<void> {
 		const now = new Date();
-		const current = now.toISOString().slice(0, 7);
-		const prev = new Date(now.getFullYear(), now.getMonth() - 1).toISOString().slice(0, 7);
+		const current = now.toLocaleDateString("en-CA").slice(0, 7);
+		const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString("en-CA").slice(0, 7);
 		await Promise.all([loadMonth(current), loadMonth(prev)]);
 	}
 

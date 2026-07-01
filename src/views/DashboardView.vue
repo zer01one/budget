@@ -16,7 +16,7 @@ const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 const gamificationStore = useGamificationStore();
 
-const currentMonth = new Date().toISOString().slice(0, 7);
+const currentMonth = new Date().toLocaleDateString("en-CA").slice(0, 7);
 
 onMounted(async () => {
 	await txStore.loadCurrentAndPrevMonth();
@@ -38,7 +38,10 @@ const savingsRate = computed(() => {
 });
 
 const recentTransactions = computed(() =>
-	[...currentMonthTx.value].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time)).slice(0, 5)
+	txStore.allCached
+		.filter((t) => !t.isDeleted)
+		.sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time))
+		.slice(0, 5)
 );
 
 function formatAmount(tx: Transaction): string {
@@ -125,7 +128,7 @@ function formatDate(date: string): string {
 			<div
 				v-if="recentTransactions.length === 0"
 				class="dashboard__empty">
-				Нет операций за этот месяц
+				Нет операций
 			</div>
 
 			<div

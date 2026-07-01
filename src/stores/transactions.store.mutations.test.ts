@@ -323,10 +323,10 @@ describe("loadCurrentAndPrevMonth", () => {
 		const store = useTransactionsStore();
 		// pre-seed both months so they're already in loadedMonths
 		const now = new Date();
-		const current = now.toISOString().slice(0, 7);
+		const current = now.toLocaleDateString("en-CA").slice(0, 7);
 		store.loadedMonths.add(current);
-		const prevDate = new Date(now.getFullYear(), now.getMonth() - 1);
-		const prev = prevDate.toISOString().slice(0, 7);
+		const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+		const prev = prevDate.toLocaleDateString("en-CA").slice(0, 7);
 		store.loadedMonths.add(prev);
 		await store.loadCurrentAndPrevMonth();
 		expect(transactionsService.loadMonth).not.toHaveBeenCalled();
