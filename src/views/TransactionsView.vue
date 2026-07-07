@@ -291,6 +291,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 					<label class="filter-field__label tp-label-sm-medium">По дату</label>
 					<AppDatePicker
 						v-model="filterTo"
+						:min-date="filterFrom"
 						clearable
 						placeholder="По дату" />
 				</div>

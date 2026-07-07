@@ -15,6 +15,7 @@ const props = defineProps<{
 	dateTo?: string;         // YYYY-MM-DD
 	// common
 	disabled?: boolean;
+	minDate?: string;        // YYYY-MM-DD — disables days before this
 }>();
 
 const emit = defineEmits<{
@@ -28,6 +29,7 @@ const emit = defineEmits<{
 const MONTH_SHORT   = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
 const MONTH_GENITIVE = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 
+const minDate  = computed(() => (props.minDate ? new Date(props.minDate + "T12:00:00") : undefined));
 const maxDate  = new Date();
 const today    = new Date().toLocaleDateString("en-CA");
 const ydDate   = new Date();
@@ -112,6 +114,7 @@ function clear(e: MouseEvent) {
 		:dark="true"
 		:locale="dateFnsRu"
 		:week-start="1"
+		:min-date="minDate"
 		:max-date="maxDate"
 		:disabled="disabled"
 		:ui="{ menu: 'dp-budget-menu' }"
