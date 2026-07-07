@@ -957,3 +957,35 @@ describe("AddTransactionView – no active accounts", () => {
 		expect(errors).toContain("Выберите счёт");
 	});
 });
+
+// ─── save FAB and scan button highlight ───────────────────────────────────────
+
+describe("AddTransactionView – save FAB and scan button highlight", () => {
+	it("save button carries the add-tx__save class (mobile FAB styles hook)", async () => {
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".app-btn").classes()).toContain("add-tx__save");
+	});
+
+	it("save button still submits (single button for desktop and mobile)", async () => {
+		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
+		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
+		const { wrapper } = await mountView();
+		await wrapper.find(".amount-field__input").setValue("100");
+		await wrapper.find(".cat-item").trigger("click");
+		await wrapper.find(".add-tx__save").trigger("click");
+		await flushPromises();
+		expect(addSpy).toHaveBeenCalledOnce();
+	});
+
+	it("scan button renders a QR icon", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".add-tx__scan-btn svg").exists()).toBe(true);
+	});
+
+	it("scan button keeps its label text", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".add-tx__scan-btn").text()).toBe("Сканировать чек");
+	});
+});

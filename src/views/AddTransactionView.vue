@@ -149,6 +149,21 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 				v-if="isScannerAvailable()"
 				class="add-tx__scan-btn tp-label-md-medium"
 				@click="showScanModal = true">
+				<svg
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round">
+					<rect x="3" y="3" width="7" height="7" rx="1" />
+					<rect x="14" y="3" width="7" height="7" rx="1" />
+					<rect x="3" y="14" width="7" height="7" rx="1" />
+					<path d="M14 14h3v3h-3z" />
+					<path d="M21 14v3" />
+					<path d="M14 21h3" />
+				</svg>
 				Сканировать чек
 			</button>
 
@@ -266,7 +281,7 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 			</div>
 
 			<AppButton
-				full-width
+				class="add-tx__save"
 				size="lg"
 				:loading="isSubmitting"
 				@click="submit">
@@ -332,19 +347,41 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 }
 
 .add-tx__scan-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
 	height: 44px;
 	border-radius: var(--radius-md);
-	background: var(--bg-elevated);
-	border: 1px dashed var(--border);
-	color: var(--text-secondary);
+	background: var(--accent-primary-soft);
+	border: 1px solid var(--accent-primary);
+	color: var(--accent-primary);
 	cursor: pointer;
 	transition:
 		background var(--transition),
 		color var(--transition);
 }
 .add-tx__scan-btn:hover {
-	background: var(--border);
-	color: var(--text-primary);
+	background: var(--accent-primary);
+	color: #fff;
+}
+
+.add-tx__save {
+	width: 100%;
+}
+
+@media (max-width: 899px) {
+	.add-tx__form {
+		padding-bottom: calc(52px + var(--space-8) + var(--space-4));
+	}
+	.add-tx__save {
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		left: var(--space-4);
+		right: var(--space-4);
+		width: auto;
+		z-index: 10;
+	}
 }
 
 .amount-field {
