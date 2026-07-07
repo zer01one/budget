@@ -75,7 +75,9 @@ interface FilterChip {
 }
 
 function formatChipDate(date: string): string {
-	return new Date(date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+	const d = new Date(date);
+	const isCurrentYear = d.getFullYear() === new Date().getFullYear();
+	return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: isCurrentYear ? undefined : "numeric" });
 }
 
 const activeFilterChips = computed((): FilterChip[] => {
@@ -100,14 +102,6 @@ function removeFilterChip(key: FilterChipKey) {
 	else if (key === "category") filterCategoryId.value = "";
 	else if (key === "from") filterFrom.value = "";
 	else if (key === "to") filterTo.value = "";
-}
-
-function resetFilters() {
-	filterType.value = "";
-	filterAccountId.value = "";
-	filterCategoryId.value = "";
-	filterFrom.value = "";
-	filterTo.value = "";
 }
 
 onMounted(async () => {
@@ -301,13 +295,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 						placeholder="По дату" />
 				</div>
 			</div>
-
-			<button
-				v-if="activeFilterCount > 0"
-				class="filter-reset tp-caption-md-regular"
-				@click="resetFilters">
-				Сбросить фильтры
-			</button>
 		</div>
 
 		<!-- Loading -->
@@ -563,16 +550,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	outline: none;
 	border-color: var(--border-focus);
 }
-.filter-reset {
-	align-self: flex-start;
-	background: none;
-	border: none;
-	padding: 0;
-	color: var(--accent-primary);
-	cursor: pointer;
-	text-decoration: underline;
-}
-
 .tx-view__loading,
 .tx-view__empty {
 	text-align: center;

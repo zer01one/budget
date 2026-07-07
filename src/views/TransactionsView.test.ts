@@ -463,38 +463,45 @@ describe("TransactionsView – filters", () => {
 	});
 });
 
-// ── Reset filters ─────────────────────────────────────────────────────────────
+// ── Filter chips ───────────────────────────────────────────────────────────────
 
-describe("TransactionsView – reset filters", () => {
-	it("reset button is absent when no active filters", async () => {
+describe("TransactionsView – filter chips", () => {
+	it("no chips are shown when no active filters", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		expect(wrapper.find(".filter-reset").exists()).toBe(false);
+		expect(wrapper.find(".filter-chip").exists()).toBe(false);
 	});
 
-	it("reset button appears when a filter is active", async () => {
+	it("a chip appears when a filter is active", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
 		const [typeSelect] = wrapper.findAll("select");
 		await typeSelect.setValue("income");
 		await flushPromises();
-		expect(wrapper.find(".filter-reset").exists()).toBe(true);
+		expect(wrapper.findAll(".filter-chip")).toHaveLength(1);
+		expect(wrapper.find(".filter-chip").text()).toContain("Доход");
 	});
 
-	it("clicking reset button clears all filters", async () => {
+	it("clicking a chip clears only that filter, leaving others active", async () => {
 		const { wrapper } = await mountView();
 		useAccountsStore().accounts = [makeAccount()];
-		await populateCache([makeTx({ id: "a", type: "income" }), makeTx({ id: "b", type: "expense" })]);
+		await populateCache([
+			makeTx({ id: "a", type: "income", accountId: "acc-1" }),
+			makeTx({ id: "b", type: "expense", accountId: "acc-1" })
+		]);
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		const [typeSelect] = wrapper.findAll("select");
+		const [typeSelect, accountSelect] = wrapper.findAll("select");
 		await typeSelect.setValue("income");
+		await accountSelect.setValue("acc-1");
 		await flushPromises();
 		expect(wrapper.findAll(".tx-row")).toHaveLength(1);
+		expect(wrapper.findAll(".filter-chip")).toHaveLength(2);
 
-		await wrapper.find(".filter-reset").trigger("click");
+		await wrapper.findAll(".filter-chip")[0].trigger("click");
 		await flushPromises();
 		expect(wrapper.findAll(".tx-row")).toHaveLength(2);
-		expect(wrapper.find(".filter-badge").exists()).toBe(false);
+		expect(wrapper.findAll(".filter-chip")).toHaveLength(1);
+		expect(wrapper.find(".filter-chip").text()).toContain("Наличные");
 	});
 });
 
