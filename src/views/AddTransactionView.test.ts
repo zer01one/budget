@@ -844,14 +844,8 @@ describe("AddTransactionView – receipt scan modal", () => {
 	const RECEIPT_TAG = "receipt:1111:2222:3333";
 	const RECEIPT_COMMENT = "Чек от 07.07.2026 15:30";
 
-	it("does not render the scan button when the scanner is unavailable", async () => {
+	it("renders the scan button on every platform, including desktop", async () => {
 		vi.mocked(isScannerAvailable).mockReturnValue(false);
-		const { wrapper } = await mountView();
-		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(false);
-	});
-
-	it("renders the scan button when the scanner is available", async () => {
-		vi.mocked(isScannerAvailable).mockReturnValue(true);
 		const { wrapper } = await mountView();
 		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(true);
 	});

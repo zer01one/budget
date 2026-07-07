@@ -13,7 +13,6 @@ import { useGamificationStore } from "@/stores/gamification.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
-import { isScannerAvailable } from "@/services/qrScanner.service";
 import { receiptComment, type ParsedReceipt } from "@/utils/receiptQr";
 
 const router = useRouter();
@@ -146,7 +145,6 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 		<div class="add-tx__form">
 			<!-- Scan receipt -->
 			<button
-				v-if="isScannerAvailable()"
 				class="add-tx__scan-btn tp-label-md-medium"
 				@click="showScanModal = true">
 				<svg

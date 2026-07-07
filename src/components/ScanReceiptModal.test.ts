@@ -12,7 +12,7 @@ vi.mock("@/services/qrScanner.service", () => ({
 	scanReceiptQrFromImage: vi.fn()
 }));
 
-import { scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
 
 const VALID_QR = "t=20260707T1530&s=1234.56&fn=1111&i=2222&fp=3333&n=1";
 const RECEIPT_TAG = "receipt:1111:2222:3333";
@@ -64,12 +64,31 @@ describe("ScanReceiptModal", () => {
 	beforeEach(() => {
 		pinia = createPinia();
 		setActivePinia(pinia);
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
 	});
 
 	it("initially shows camera and gallery option buttons", async () => {
 		const { wrapper } = await mountModal();
 		expect(document.body.querySelector(".scan-modal__camera")).toBeTruthy();
 		expect(document.body.querySelector(".scan-modal__gallery")).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it("hides the camera button on desktop but keeps the image option", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
+		const { wrapper } = await mountModal();
+		expect(document.body.querySelector(".scan-modal__camera")).toBeNull();
+		expect(document.body.querySelector(".scan-modal__gallery")).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it("gallery scan works on desktop too", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
+		vi.mocked(scanReceiptQrFromImage).mockResolvedValue(VALID_QR);
+		const { wrapper } = await mountModal();
+		(document.body.querySelector(".scan-modal__gallery") as HTMLButtonElement).click();
+		await flushPromises();
+		expect(wrapper.emitted("apply")).toBeTruthy();
 		wrapper.unmount();
 	});
 

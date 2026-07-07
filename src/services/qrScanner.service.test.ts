@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 const { mockIsNativePlatform, mockIsAvailable, mockInstall, mockAddListener, mockScan, mockReadFromImage, mockPickImages } = vi.hoisted(
 	() => ({
@@ -23,6 +23,14 @@ vi.mock("@capawesome/capacitor-file-picker", () => ({
 	FilePicker: {
 		pickImages: mockPickImages
 	}
+}));
+
+const { mockDecodeQrFromBlob } = vi.hoisted(() => ({
+	mockDecodeQrFromBlob: vi.fn()
+}));
+
+vi.mock("@/utils/qrImageDecoder", () => ({
+	decodeQrFromBlob: mockDecodeQrFromBlob
 }));
 
 vi.mock("@capacitor-mlkit/barcode-scanning", () => ({
@@ -151,14 +159,75 @@ describe("scanReceiptQr – native, module needs installing", () => {
 	});
 });
 
-describe("scanReceiptQrFromImage – non-native platform", () => {
-	beforeEach(() => mockIsNativePlatform.mockReturnValue(false));
+describe("scanReceiptQrFromImage – desktop (non-native) platform", () => {
+	let fakeInput: {
+		type: string;
+		accept: string;
+		files: File[];
+		onchange: (() => void) | null;
+		oncancel: (() => void) | null;
+		click: () => void;
+	};
+	let createElementOriginal: typeof document.createElement;
 
-	it("returns null without opening the picker", async () => {
-		const result = await scanReceiptQrFromImage();
-		expect(result).toBeNull();
+	beforeEach(() => {
+		mockIsNativePlatform.mockReturnValue(false);
+		mockDecodeQrFromBlob.mockResolvedValue("raw-qr-from-file");
+		fakeInput = {
+			type: "",
+			accept: "",
+			files: [new File(["img"], "receipt.png", { type: "image/png" })],
+			onchange: null,
+			oncancel: null,
+			click() {
+				this.onchange?.();
+			}
+		};
+		createElementOriginal = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+			if (tag === "input") return fakeInput as unknown as HTMLInputElement;
+			return createElementOriginal(tag);
+		});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("does not use the Capacitor picker or ML Kit", async () => {
+		await scanReceiptQrFromImage();
 		expect(mockPickImages).not.toHaveBeenCalled();
 		expect(mockReadFromImage).not.toHaveBeenCalled();
+	});
+
+	it("opens a file input restricted to images and decodes the chosen file", async () => {
+		const result = await scanReceiptQrFromImage();
+		expect(fakeInput.type).toBe("file");
+		expect(fakeInput.accept).toBe("image/*");
+		expect(mockDecodeQrFromBlob).toHaveBeenCalledWith(fakeInput.files[0]);
+		expect(result).toBe("raw-qr-from-file");
+	});
+
+	it("returns null when the user cancels the file dialog", async () => {
+		fakeInput.click = function () {
+			this.oncancel?.();
+		};
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+		expect(mockDecodeQrFromBlob).not.toHaveBeenCalled();
+	});
+
+	it("returns null when no file is selected", async () => {
+		fakeInput.files = [];
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+		expect(mockDecodeQrFromBlob).not.toHaveBeenCalled();
+	});
+
+	it("returns null when the image contains no QR code", async () => {
+		mockDecodeQrFromBlob.mockResolvedValue(null);
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
 	});
 });
 

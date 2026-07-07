@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppButton from "@/components/ui/AppButton.vue";
-import { scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
 import { parseFiscalReceiptQr, receiptFingerprint, type ParsedReceipt } from "@/utils/receiptQr";
 import { useTransactionsStore } from "@/stores/transactions.store";
 
@@ -91,6 +91,7 @@ function openDuplicate() {
 					Не удалось распознать чек
 				</p>
 				<AppButton
+					v-if="isScannerAvailable()"
 					class="scan-modal__camera"
 					full-width
 					@click="scanWith(scanReceiptQr)">
@@ -99,9 +100,9 @@ function openDuplicate() {
 				<AppButton
 					class="scan-modal__gallery"
 					full-width
-					variant="secondary"
+					:variant="isScannerAvailable() ? 'secondary' : 'primary'"
 					@click="scanWith(scanReceiptQrFromImage)">
-					Из галереи
+					Выбрать изображение
 				</AppButton>
 			</template>
 		</div>
