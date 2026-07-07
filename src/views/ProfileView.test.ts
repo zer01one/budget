@@ -56,6 +56,11 @@ vi.mock("@/stores/settings.store", () => ({
 	}))
 }));
 
+// Секция уведомлений рендерится только под v-if="isNativePlatform"
+vi.mock("@capacitor/core", () => ({
+	Capacitor: { isNativePlatform: () => true }
+}));
+
 vi.mock("@/services/data/export.service", () => ({
 	exportTransactionsCSV: mockExportCSV,
 	exportVaultJSON: mockExportJSON

@@ -3,6 +3,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { nextTick } from "vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import DashboardView from "@/views/DashboardView.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -558,10 +559,12 @@ describe("DashboardView – recent transactions list", () => {
 		expect(wrapper.find(".tx-row__amount").classes()).toContain("text-expense");
 	});
 
-	it("amount has ↔ prefix for transfer", async () => {
+	it("amount shows arrows icon for transfer", async () => {
 		const { wrapper } = await mountView();
 		await setCache(MONTH, [makeTx({ type: "transfer", amount: 500 })]);
-		expect(wrapper.find(".tx-row__amount").text()).toMatch(/^↔/);
+		const amount = wrapper.find(".tx-row__amount");
+		expect(amount.findComponent(PhArrowsLeftRight).exists()).toBe(true);
+		expect(amount.text()).toContain("500");
 	});
 });
 

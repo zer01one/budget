@@ -3,6 +3,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import AddTransactionView from "./AddTransactionView.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
 import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -815,9 +816,8 @@ describe("AddTransactionView – double submit prevention", () => {
 describe("AddTransactionView – date and time defaults", () => {
 	it("date field is initialized to today in en-CA format", async () => {
 		const { wrapper } = await mountView();
-		const dateInput = wrapper.find("input[type='date']");
 		const today = new Date().toLocaleDateString("en-CA");
-		expect((dateInput.element as HTMLInputElement).value).toBe(today);
+		expect(wrapper.findComponent(AppDatePicker).props("modelValue")).toBe(today);
 	});
 
 	it("time field is initialized to current time (HH:MM format)", async () => {

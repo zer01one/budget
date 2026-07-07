@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { createTestingPinia } from "@pinia/testing";
+import { PhCaretLeft, PhCaretRight } from "@phosphor-icons/vue";
 import SideNav from "./SideNav.vue";
 
 function makeRouter(initialPath = "/dashboard") {
@@ -65,16 +66,20 @@ describe("SideNav – labels visibility", () => {
 });
 
 describe("SideNav – toggle button", () => {
-	it("toggle shows ▶ when collapsed", async () => {
+	it("toggle shows right caret when collapsed", async () => {
 		const { w } = await mountSideNav("/dashboard", false);
 		await w.vm.$nextTick();
-		expect(w.find(".side-nav__toggle").text()).toBe("▶");
+		const toggle = w.find(".side-nav__toggle");
+		expect(toggle.findComponent(PhCaretRight).exists()).toBe(true);
+		expect(toggle.findComponent(PhCaretLeft).exists()).toBe(false);
 	});
 
-	it("toggle shows ◀ when expanded", async () => {
+	it("toggle shows left caret when expanded", async () => {
 		const { w } = await mountSideNav("/dashboard", true);
 		await w.vm.$nextTick();
-		expect(w.find(".side-nav__toggle").text()).toBe("◀");
+		const toggle = w.find(".side-nav__toggle");
+		expect(toggle.findComponent(PhCaretLeft).exists()).toBe(true);
+		expect(toggle.findComponent(PhCaretRight).exists()).toBe(false);
 	});
 
 	it("clicking toggle calls settingsStore.toggleSidebar", async () => {

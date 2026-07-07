@@ -105,10 +105,10 @@ describe("AccountsView", () => {
 			expect(wrapper.find(".account-card__name").text()).toBe("Кошелёк");
 		});
 
-		it("displays account type", async () => {
+		it("displays localized account type label", async () => {
 			useAccountsStore().accounts = [makeAccount({ type: "savings" })];
 			const { wrapper } = await mountView();
-			expect(wrapper.find(".account-card__type").text()).toBe("savings");
+			expect(wrapper.find(".account-card__type").text()).toBe("Накопления");
 		});
 
 		it("displays icon for account", async () => {

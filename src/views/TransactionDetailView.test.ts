@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import TransactionDetailView from "@/views/TransactionDetailView.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -251,9 +253,9 @@ describe("TransactionDetailView – view mode transfer", () => {
 		categoriesStore.categories = [];
 	});
 
-	it("shows ↔ sign", async () => {
+	it("shows arrows icon", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".detail-amount").text()).toContain("↔");
+		expect(wrapper.find(".detail-amount").findComponent(PhArrowsLeftRight).exists()).toBe(true);
 	});
 
 	it("shows type label Перевод", async () => {
@@ -355,10 +357,10 @@ describe("TransactionDetailView – startEdit", () => {
 		expect(wrapper.find(".type-tab--active").text()).toBe("Расход");
 	});
 
-	it("date input prefilled", async () => {
+	it("date picker prefilled", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect((wrapper.find("input[type='date']").element as HTMLInputElement).value).toBe("2026-06-15");
+		expect(wrapper.findComponent(AppDatePicker).props("modelValue")).toBe("2026-06-15");
 	});
 
 	it("time input prefilled", async () => {

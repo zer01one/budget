@@ -134,20 +134,21 @@ describe("ChartsView – rendering", () => {
 		const titles = w.findAll(".chart-card__title").map((el) => el.text());
 		expect(titles).toContain("Расходы по категориям");
 		expect(titles).toContain("Топ-5 категорий");
-		expect(titles).toContain("Доходы и расходы за 6 месяцев");
-		expect(titles).toContain("Динамика за месяц");
+		expect(titles).toContain("Доходы и расходы по месяцам");
+		expect(titles).toContain("Динамика за период");
 	});
 
-	it("calls loadCurrentAndPrevMonth on mount (loads 2 months)", async () => {
+	it("loads all 6 bar months on mount", async () => {
 		await mountView();
-		expect(mockLoadMonth).toHaveBeenCalledTimes(2);
+		expect(mockLoadMonth).toHaveBeenCalledTimes(6);
 		expect(mockLoadMonth).toHaveBeenCalledWith(MONTH);
+		expect(mockLoadMonth).toHaveBeenCalledWith("2026-01");
 	});
 });
 
-// ── Month navigation ──────────────────────────────────────────────────────────
+// ── Period range picker ───────────────────────────────────────────────────────
 
-describe("ChartsView – month navigation", () => {
+describe("ChartsView – period range", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-06-15"));
@@ -156,64 +157,43 @@ describe("ChartsView – month navigation", () => {
 	});
 	afterEach(() => vi.useRealTimers());
 
-	it("displays current month label on mount", async () => {
+	function setup(w: any) {
+		return (w.vm as any).$.setupState;
+	}
+
+	it("renders the range date picker", async () => {
 		const w = await mountView();
-		expect(w.find(".month-nav__label").text()).toContain("2026");
+		expect(w.find(".period-picker").exists()).toBe(true);
 	});
 
-	it("nextMonth button is disabled when on current month", async () => {
+	it("defaults to current month: from 1st to today", async () => {
 		const w = await mountView();
-		const [, nextBtn] = w.findAll(".month-nav__btn");
-		expect(nextBtn.attributes("disabled")).toBeDefined();
+		expect(setup(w).dateFrom).toBe("2026-06-01");
+		expect(setup(w).dateTo).toBe("2026-06-15");
 	});
 
-	it("prevMonth click changes the month label", async () => {
+	it("rangeMonths contains single month for default range", async () => {
 		const w = await mountView();
-		const before = w.find(".month-nav__label").text();
-		await w.findAll(".month-nav__btn")[0].trigger("click");
-		expect(w.find(".month-nav__label").text()).not.toBe(before);
+		expect(setup(w).rangeMonths).toEqual([MONTH]);
 	});
 
-	it("prevMonth navigates across year boundary Jan → Dec", async () => {
-		vi.setSystemTime(new Date("2026-01-15"));
-		pinia = createPinia();
-		setActivePinia(pinia);
+	it("rangeMonths spans year boundary Dec → Jan", async () => {
 		const w = await mountView();
-		await w.findAll(".month-nav__btn")[0].trigger("click");
-		expect(w.find(".month-nav__label").text()).toContain("2025");
+		setup(w).dateFrom = "2025-12-15";
+		setup(w).dateTo = "2026-01-10";
+		await nextTick();
+		expect(setup(w).rangeMonths).toEqual(["2025-12", "2026-01"]);
 	});
 
-	it("nextMonth button is enabled after navigating to past month", async () => {
+	it("changing the range loads the new months", async () => {
 		const w = await mountView();
-		await w.findAll(".month-nav__btn")[0].trigger("click");
-		expect(w.findAll(".month-nav__btn")[1].attributes("disabled")).toBeUndefined();
-	});
-
-	it("nextMonth click advances from past month", async () => {
-		const w = await mountView();
-		await w.findAll(".month-nav__btn")[0].trigger("click"); // → May
-		const labelMay = w.find(".month-nav__label").text();
-		await w.findAll(".month-nav__btn")[1].trigger("click"); // → June
-		expect(w.find(".month-nav__label").text()).not.toBe(labelMay);
-	});
-
-	it("nextMonth click stays when advancing would exceed current month", async () => {
-		const w = await mountView();
-		const before = w.find(".month-nav__label").text();
-		await w.findAll(".month-nav__btn")[1].trigger("click");
-		expect(w.find(".month-nav__label").text()).toBe(before);
-	});
-
-	it("nextMonth navigates across year boundary Dec → Jan", async () => {
-		vi.setSystemTime(new Date("2027-06-01"));
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const w = await mountView();
-		// Go back far enough to Dec 2026
-		for (let i = 0; i < 6; i++) await w.findAll(".month-nav__btn")[0].trigger("click");
-		const labelBefore = w.find(".month-nav__label").text();
-		await w.findAll(".month-nav__btn")[1].trigger("click");
-		expect(w.find(".month-nav__label").text()).not.toBe(labelBefore);
+		mockLoadMonth.mockClear();
+		// months outside the initially loaded Jan–Jun 2026 window
+		setup(w).dateFrom = "2025-10-01";
+		setup(w).dateTo = "2025-11-15";
+		await flushPromises();
+		expect(mockLoadMonth).toHaveBeenCalledWith("2025-10");
+		expect(mockLoadMonth).toHaveBeenCalledWith("2025-11");
 	});
 });
 
@@ -482,9 +462,11 @@ describe("ChartsView – lineOption", () => {
 		expect(getLine(w).xAxis.data).not.toContain("16");
 	});
 
-	it("past month: maxDay equals full days in month (May = 31)", async () => {
+	it("past month range: labels cover full days in month (May = 31)", async () => {
 		const w = await mountView();
-		await w.findAll(".month-nav__btn")[0].trigger("click"); // → May 2026
+		const setup = (w.vm as any).$.setupState;
+		setup.dateFrom = "2026-05-01";
+		setup.dateTo = "2026-05-31";
 		await setCache("2026-05", [makeTx({ id: "e1", type: "expense", amount: 100, date: "2026-05-31" })]);
 		expect(getLine(w).xAxis.data).toContain("31");
 		expect(getLine(w).xAxis.data).toHaveLength(31);
@@ -528,8 +510,9 @@ describe("ChartsView – lineOption", () => {
 		const w = await mountView();
 		await setCache(MONTH, []);
 		const result = getLine(w).tooltip.formatter([{ marker: "●", seriesName: "Расходы", value: 500, axisValue: "5" }]);
-		expect(result).toContain("День 5");
+		expect(result).toContain("5<br/>");
 		expect(result).toContain("Расходы");
+		expect(result).toContain("500");
 	});
 
 	it("yAxis formatter shows k suffix for values >= 1000", async () => {
@@ -615,9 +598,9 @@ describe("ChartsView – barMonthlyOption", () => {
 	});
 });
 
-// ── last6Months computed ──────────────────────────────────────────────────────
+// ── barMonths computed ────────────────────────────────────────────────────────
 
-describe("ChartsView – last6Months computed", () => {
+describe("ChartsView – barMonths computed", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-06-15"));
@@ -626,21 +609,21 @@ describe("ChartsView – last6Months computed", () => {
 	});
 	afterEach(() => vi.useRealTimers());
 
-	it("always returns exactly 6 months", async () => {
+	it("returns exactly 6 months when range is within one month", async () => {
 		const w = await mountView();
-		const months = (w.vm as any).$.setupState.last6Months as string[];
+		const months = (w.vm as any).$.setupState.barMonths as string[];
 		expect(months).toHaveLength(6);
 	});
 
 	it("last entry equals selected month", async () => {
 		const w = await mountView();
-		const months = (w.vm as any).$.setupState.last6Months as string[];
+		const months = (w.vm as any).$.setupState.barMonths as string[];
 		expect(months[5]).toBe(MONTH);
 	});
 
 	it("months are in ascending order", async () => {
 		const w = await mountView();
-		const months = (w.vm as any).$.setupState.last6Months as string[];
+		const months = (w.vm as any).$.setupState.barMonths as string[];
 		for (let i = 1; i < months.length; i++) {
 			expect(months[i] > months[i - 1]).toBe(true);
 		}
@@ -651,8 +634,17 @@ describe("ChartsView – last6Months computed", () => {
 		pinia = createPinia();
 		setActivePinia(pinia);
 		const w = await mountView();
-		const months = (w.vm as any).$.setupState.last6Months as string[];
+		const months = (w.vm as any).$.setupState.barMonths as string[];
 		expect(months[0]).toBe("2025-10");
 		expect(months[5]).toBe("2026-03");
+	});
+
+	it("equals rangeMonths when range spans multiple months", async () => {
+		const w = await mountView();
+		const setup = (w.vm as any).$.setupState;
+		setup.dateFrom = "2026-04-15";
+		setup.dateTo = "2026-06-15";
+		await nextTick();
+		expect(setup.barMonths).toEqual(["2026-04", "2026-05", "2026-06"]);
 	});
 });
