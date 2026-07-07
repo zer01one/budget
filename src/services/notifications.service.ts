@@ -26,20 +26,17 @@ export async function scheduleDailyReminder(timeStr: string): Promise<void> {
 
 	await notif.plugin.cancel({ notifications: [{ id: 1 }] });
 
-	const now = new Date();
-	const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
-	if (next <= now) next.setDate(next.getDate() + 1);
-
 	await notif.plugin.schedule({
 		notifications: [
 			{
 				id: 1,
 				title: "Budget",
 				body: "Не забудьте записать сегодняшние расходы 💰",
+				// Только cron-режим `on`: на Android `at` + `repeats: true` повторяет
+				// с интервалом (at - now), т.е. уведомления сыплются постоянно.
 				schedule: {
-					at: next,
-					repeats: true,
-					every: "day"
+					on: { hour: hours, minute: minutes },
+					allowWhileIdle: true
 				},
 				smallIcon: "ic_notification",
 				sound: undefined
