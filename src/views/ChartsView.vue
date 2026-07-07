@@ -367,6 +367,11 @@ const summary = computed(() => {
 .period-picker {
 	width: fit-content;
 }
+/* match the 32px height of the sm AppButton used in other view headers, so the
+   title sits at the same vertical position across pages */
+.period-picker :deep(.app-date__trigger) {
+	height: 32px;
+}
 
 .summary-row {
 	display: flex;
