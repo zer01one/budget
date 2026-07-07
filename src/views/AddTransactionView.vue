@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
+import AppTimePicker from "@/components/ui/AppTimePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -18,6 +21,17 @@ const gamificationStore = useGamificationStore();
 
 const type = ref<TransactionType>("expense");
 const amount = ref("");
+
+const accountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+]);
+const toAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts
+		.filter((a) => a.id !== accountId.value)
+		.map((a) => ({ value: a.id, label: a.name })),
+]);
 const date = ref(new Date().toLocaleDateString("en-CA"));
 const time = ref(new Date().toTimeString().slice(0, 5));
 const accountId = ref(accountsStore.activeAccounts[0]?.id ?? "");
@@ -31,9 +45,28 @@ const errors = ref<Record<string, string>>({});
 
 const categories = computed(() => categoriesStore.byType(type.value));
 
+async function onAmountInput(event: Event) {
+	let val = (event.target as HTMLInputElement).value;
+	amount.value = val;
+	await nextTick();
+
+	val = val.replace(/[^\d.,]/g, "");
+	val = val.replace(/^0+(?=[.,]|$)/, "0");
+	val = val.replace(/^0(?=[1-9])/, "");
+	val = val.replace(",", ".");
+	let [main, decimal] = val.split(".");
+
+	if (decimal) {
+		const cents = decimal.replace(/\D/g, "").slice(0, 2);
+		val = `${main}.${cents}`;
+	}
+
+	amount.value = val;
+}
+
 function validate(): boolean {
 	errors.value = {};
-	const parsed = parseFloat(String(amount.value).replace(",", "."));
+	const parsed = parseFloat(amount.value || "0");
 	if (isNaN(parsed) || parsed <= 0) errors.value.amount = "Введите положительную сумму";
 	if (!accountId.value) errors.value.account = "Выберите счёт";
 	if (type.value === "transfer" && !toAccountId.value) errors.value.toAccount = "Выберите счёт назначения";
@@ -47,8 +80,8 @@ async function submit() {
 	try {
 		const tx = await txStore.addTransaction({
 			type: type.value,
-			amount: parseFloat(String(amount.value).replace(",", ".")),
-			currency: accountsStore.getById(accountId.value)?.currency ?? "KZT",
+			amount: parseFloat(amount.value),
+			currency: accountsStore.getById(accountId.value)?.currency ?? "RUB",
 			date: date.value,
 			time: time.value,
 			accountId: accountId.value,
@@ -72,11 +105,11 @@ async function submit() {
 	<div class="add-tx">
 		<div class="add-tx__header">
 			<button
-				class="add-tx__back"
+				class="add-tx__back tp-body-lg-regular"
 				@click="router.back()">
 				← Назад
 			</button>
-			<h2 class="add-tx__title">Новая операция</h2>
+			<h2 class="add-tx__title tp-heading-md-bold">Новая операция</h2>
 		</div>
 
 		<!-- Type tabs -->
@@ -84,7 +117,7 @@ async function submit() {
 			<button
 				v-for="t in ['expense', 'income', 'transfer'] as TransactionType[]"
 				:key="t"
-				:class="['type-tab', { 'type-tab--active': type === t }]"
+				:class="['type-tab tp-label-md-medium', { 'type-tab--active': type === t }]"
 				@click="
 					type = t;
 					categoryId = '';
@@ -97,40 +130,31 @@ async function submit() {
 			<!-- Amount -->
 			<div class="amount-field">
 				<input
-					v-model="amount"
-					type="number"
+					:value="amount"
+					@input="onAmountInput"
+					type="text"
 					inputmode="decimal"
-					class="amount-field__input"
-					placeholder="0"
-					min="0"
-					step="any" />
-				<span class="amount-field__currency">
-					{{ accountsStore.getById(accountId)?.currency ?? "KZT" }}
+					placeholder="0" 
+					class="amount-field__input tp-display-lg-bold"/>
+				<span class="amount-field__currency tp-heading-md-semibold">
+					{{ accountsStore.getById(accountId)?.currency ?? "RUB" }}
 				</span>
 			</div>
 			<span
 				v-if="errors.amount"
-				class="field-error"
+				class="field-error tp-caption-md-regular"
 				>{{ errors.amount }}</span
 			>
 
 			<!-- Account -->
 			<div class="field">
-				<label class="field__label">Счёт</label>
-				<select
+				<label class="field__label tp-label-md-medium">Счёт</label>
+				<AppSelect
 					v-model="accountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="accountOptions" />
 				<span
 					v-if="errors.account"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.account }}</span
 				>
 			</div>
@@ -139,21 +163,13 @@ async function submit() {
 			<div
 				v-if="type === 'transfer'"
 				class="field">
-				<label class="field__label">Счёт назначения</label>
-				<select
+				<label class="field__label tp-label-md-medium">Счёт назначения</label>
+				<AppSelect
 					v-model="toAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts.filter((a) => a.id !== accountId)"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="toAccountOptions" />
 				<span
 					v-if="errors.toAccount"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.toAccount }}</span
 				>
 			</div>
@@ -162,7 +178,7 @@ async function submit() {
 			<div
 				v-if="type !== 'transfer'"
 				class="field">
-				<label class="field__label">Категория</label>
+				<label class="field__label tp-label-md-medium">Категория</label>
 				<div class="cat-grid">
 					<button
 						v-for="cat in categories"
@@ -176,7 +192,7 @@ async function submit() {
 				</div>
 				<span
 					v-if="errors.category"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.category }}</span
 				>
 			</div>
@@ -184,18 +200,12 @@ async function submit() {
 			<!-- Date + Time -->
 			<div class="row-2">
 				<div class="field">
-					<label class="field__label">Дата</label>
-					<input
-						type="date"
-						v-model="date"
-						class="field__select" />
+					<label class="field__label tp-label-md-medium">Дата</label>
+					<AppDatePicker v-model="date" />
 				</div>
 				<div class="field">
-					<label class="field__label">Время</label>
-					<input
-						type="time"
-						v-model="time"
-						class="field__select" />
+					<label class="field__label tp-label-md-medium">Время</label>
+					<AppTimePicker v-model="time" />
 				</div>
 			</div>
 
@@ -210,7 +220,7 @@ async function submit() {
 				v-if="type !== 'transfer'"
 				class="field">
 				<div class="recurring-row">
-					<label class="field__label">Повторять</label>
+					<label class="field__label tp-label-md-medium">Повторять</label>
 					<button
 						:class="['toggle', { 'toggle--on': isRecurring }]"
 						@click="isRecurring = !isRecurring">
@@ -223,7 +233,7 @@ async function submit() {
 					<button
 						v-for="rule in ['daily', 'weekly', 'monthly'] as const"
 						:key="rule"
-						:class="['rule-tab', { 'rule-tab--active': recurringRule === rule }]"
+						:class="['rule-tab tp-caption-md-regular', { 'rule-tab--active': recurringRule === rule }]"
 						@click="recurringRule = rule">
 						{{ rule === "daily" ? "Каждый день" : rule === "weekly" ? "Каждую неделю" : "Каждый месяц" }}
 					</button>
@@ -259,11 +269,6 @@ async function submit() {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
-}
-.add-tx__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
 }
 
 .type-tabs {
@@ -278,8 +283,6 @@ async function submit() {
 	background: var(--bg-elevated);
 	border: none;
 	color: var(--text-secondary);
-	font-size: var(--font-sm);
-	font-weight: 500;
 	cursor: pointer;
 	transition:
 		background var(--transition),
@@ -306,8 +309,6 @@ async function submit() {
 	padding: var(--space-6) 0;
 }
 .amount-field__input {
-	font-size: 48px;
-	font-weight: 700;
 	background: none;
 	border: none;
 	color: var(--text-primary);
@@ -318,7 +319,6 @@ async function submit() {
 	outline: none;
 }
 .amount-field__currency {
-	font-size: var(--font-xl);
 	color: var(--text-secondary);
 }
 
@@ -328,9 +328,7 @@ async function submit() {
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__select {
 	height: 44px;
@@ -339,7 +337,6 @@ async function submit() {
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 }
 .field__select:focus {
 	outline: none;
@@ -378,6 +375,7 @@ async function submit() {
 }
 .cat-item__icon {
 	font-size: 20px;
+	color: var(--cat-color, var(--text-primary));
 }
 .cat-item__name {
 	font-size: 10px;
@@ -387,7 +385,6 @@ async function submit() {
 }
 
 .field-error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
 }
 
@@ -437,7 +434,6 @@ async function submit() {
 	background: var(--bg-elevated);
 	border: none;
 	color: var(--text-secondary);
-	font-size: var(--font-xs);
 	cursor: pointer;
 	transition:
 		background var(--transition),

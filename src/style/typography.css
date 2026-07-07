@@ -1,0 +1,179 @@
+/* ─── Typography utility classes ───────────────────────────────────────────────
+ *
+ *  Naming: .tp-{category}-{size}-{weight}
+ *
+ *  Categories:  display | heading | title | body | label | caption
+ *  Sizes:       lg | md | sm
+ *  Weights:     bold (700) | semibold (600) | medium (500) | regular (400)
+ *
+ *  Each class is fully self-contained: font-size + font-weight + line-height
+ *  + letter-spacing. No cascade required — drop one class on any element.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── display ── 48px / 33px ─────────────────────────────────────────────────
+ *  Hero numbers: account balance, total amounts, big stats
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-display-lg-bold {
+	font-size: 48px;
+	font-weight: 700;
+	line-height: 52px;
+	letter-spacing: normal;
+}
+.tp-display-lg-semibold {
+	font-size: 48px;
+	font-weight: 600;
+	line-height: 52px;
+	letter-spacing: normal;
+}
+.tp-display-md-bold {
+	font-size: 33px;
+	font-weight: 700;
+	line-height: 38px;
+	letter-spacing: normal;
+}
+.tp-display-md-semibold {
+	font-size: 33px;
+	font-weight: 600;
+	line-height: 38px;
+	letter-spacing: normal;
+}
+
+/* ── heading ── 27px / 23px ─────────────────────────────────────────────────
+ *  Page titles, screen headers
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-heading-lg-bold {
+	font-size: 27px;
+	font-weight: 700;
+	line-height: 34px;
+	letter-spacing: normal;
+}
+.tp-heading-lg-semibold {
+	font-size: 27px;
+	font-weight: 600;
+	line-height: 34px;
+	letter-spacing: normal;
+}
+.tp-heading-md-bold {
+	font-size: 23px;
+	font-weight: 700;
+	line-height: 30px;
+	letter-spacing: normal;
+}
+.tp-heading-md-semibold {
+	font-size: 23px;
+	font-weight: 600;
+	line-height: 30px;
+	letter-spacing: normal;
+}
+
+/* ── title ── 20px / 18px ───────────────────────────────────────────────────
+ *  Card titles, section headers, dialog titles
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-title-lg-semibold {
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 26px;
+	letter-spacing: normal;
+}
+.tp-title-lg-medium {
+	font-size: 20px;
+	font-weight: 500;
+	line-height: 26px;
+	letter-spacing: normal;
+}
+.tp-title-md-semibold {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 24px;
+	letter-spacing: normal;
+}
+.tp-title-md-medium {
+	font-size: 18px;
+	font-weight: 500;
+	line-height: 24px;
+	letter-spacing: normal;
+}
+
+/* ── body ── 18px / 16px ────────────────────────────────────────────────────
+ *  Main content, descriptions, transaction names
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-body-lg-regular {
+	font-size: 18px;
+	font-weight: 400;
+	line-height: 26px;
+	letter-spacing: normal;
+}
+.tp-body-lg-medium {
+	font-size: 18px;
+	font-weight: 500;
+	line-height: 26px;
+	letter-spacing: normal;
+}
+.tp-body-lg-semibold {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 26px;
+	letter-spacing: normal;
+}
+.tp-body-md-regular {
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 22px;
+	letter-spacing: normal;
+}
+.tp-body-md-medium {
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 22px;
+	letter-spacing: normal;
+}
+.tp-body-md-semibold {
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 22px;
+	letter-spacing: normal;
+}
+
+/* ── label ── 16px / 14px ───────────────────────────────────────────────────
+ *  Form labels, button text, tab items, navigation items
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-label-md-semibold {
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 20px;
+	letter-spacing: normal;
+}
+.tp-label-md-medium {
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 20px;
+	letter-spacing: normal;
+}
+.tp-label-sm-semibold {
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 18px;
+	letter-spacing: normal;
+}
+.tp-label-sm-medium {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: normal;
+}
+
+/* ── caption ── 14px ────────────────────────────────────────────────────────
+ *  Hints, error messages, timestamps, secondary meta
+ * ────────────────────────────────────────────────────────────────────────── */
+.tp-caption-md-regular {
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: normal;
+}
+.tp-caption-md-medium {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: normal;
+}

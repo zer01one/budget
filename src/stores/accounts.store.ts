@@ -33,6 +33,7 @@ export const useAccountsStore = defineStore("accounts", () => {
 		const now = new Date().toISOString();
 		const account: Account = {
 			...input,
+			balance: Math.round((input.balance ?? input.initialBalance) * 100) / 100,
 			id: crypto.randomUUID(),
 			updatedAt: now,
 			deviceId: settingsStore.settings.deviceId,
@@ -41,6 +42,15 @@ export const useAccountsStore = defineStore("accounts", () => {
 		accounts.value = [...accounts.value, account];
 		await save();
 		return account;
+	}
+
+	async function adjustBalance(id: string, delta: number): Promise<void> {
+		const idx = accounts.value.findIndex((a) => a.id === id);
+		if (idx === -1) return;
+		const acc = accounts.value[idx];
+		const updated = { ...acc, balance: Math.round(((acc.balance ?? acc.initialBalance) + delta) * 100) / 100 };
+		accounts.value = [...accounts.value.slice(0, idx), updated, ...accounts.value.slice(idx + 1)];
+		await save();
 	}
 
 	async function updateAccount(id: string, patch: Partial<Account>): Promise<void> {
@@ -62,5 +72,5 @@ export const useAccountsStore = defineStore("accounts", () => {
 		await updateAccount(id, { isArchived: true });
 	}
 
-	return { accounts, activeAccounts, isLoaded, getById, load, save, addAccount, updateAccount, deleteAccount };
+	return { accounts, activeAccounts, isLoaded, getById, load, save, addAccount, updateAccount, deleteAccount, adjustBalance };
 });

@@ -174,14 +174,14 @@ describe("AddAccountView – ACCOUNT_TYPES coverage", () => {
 });
 
 describe("AddAccountView – CURRENCIES coverage", () => {
-	const CURRENCIES = ["KZT", "USD", "EUR", "RUB", "GBP", "CNY"];
+	const CURRENCIES = ["RUB", "USD"];
 
-	it("has 6 currencies", () => {
-		expect(CURRENCIES).toHaveLength(6);
+	it("has 2 currencies", () => {
+		expect(CURRENCIES).toHaveLength(2);
 	});
 
-	it("includes KZT", () => {
-		expect(CURRENCIES).toContain("KZT");
+	it("includes RUB", () => {
+		expect(CURRENCIES).toContain("RUB");
 	});
 });
 
@@ -203,9 +203,9 @@ describe("AddAccountView – initial render", () => {
 		expect(wrapper.find(".preview-card__name").text()).toBe("Название счёта");
 	});
 
-	it("preview shows default KZT · card meta", async () => {
+	it("preview shows default RUB · card meta", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".preview-card__meta").text()).toBe("KZT · card");
+		expect(wrapper.find(".preview-card__meta").text()).toBe("RUB · card");
 	});
 
 	it("preview shows 0 as default balance", async () => {
@@ -225,10 +225,10 @@ describe("AddAccountView – initial render", () => {
 		expect((selects[0].element as HTMLSelectElement).value).toBe("card");
 	});
 
-	it("currency select defaults to KZT", async () => {
+	it("currency select defaults to RUB", async () => {
 		const { wrapper } = await mountView();
 		const selects = wrapper.findAll("select.field__select");
-		expect((selects[1].element as HTMLSelectElement).value).toBe("KZT");
+		expect((selects[1].element as HTMLSelectElement).value).toBe("RUB");
 	});
 
 	it("type select has 6 options", async () => {
@@ -237,10 +237,10 @@ describe("AddAccountView – initial render", () => {
 		expect(typeSelect.findAll("option")).toHaveLength(6);
 	});
 
-	it("currency select has 6 options", async () => {
+	it("currency select has 2 options", async () => {
 		const { wrapper } = await mountView();
 		const currencySelect = wrapper.findAll("select.field__select")[1];
-		expect(currencySelect.findAll("option")).toHaveLength(6);
+		expect(currencySelect.findAll("option")).toHaveLength(2);
 	});
 
 	it("no validation errors shown on initial render", async () => {
@@ -277,7 +277,7 @@ describe("AddAccountView – preview card reactivity", () => {
 	it("changing type updates preview meta", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.findAll("select.field__select")[0].setValue("cash");
-		expect(wrapper.find(".preview-card__meta").text()).toBe("KZT · cash");
+		expect(wrapper.find(".preview-card__meta").text()).toBe("RUB · cash");
 	});
 
 	it("typing balance updates preview balance display", async () => {

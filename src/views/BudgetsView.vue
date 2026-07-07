@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import { useBudgetsStore } from "@/stores/budgets.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -10,6 +11,7 @@ import { useGamificationStore } from "@/stores/gamification.store";
 import { notifyBudgetWarning } from "@/services/notifications.service";
 import type { BudgetEntry } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { showConfirm } from "@/utils/confirm";
 
 const budgetsStore = useBudgetsStore();
 const categoriesStore = useCategoriesStore();
@@ -70,7 +72,7 @@ const showModal = ref(false);
 const editingBudget = ref<BudgetEntry | null>(null);
 const formCategoryId = ref("");
 const formLimit = ref("");
-const formCurrency = ref("KZT");
+const formCurrency = ref("RUB");
 const isSubmitting = ref(false);
 const errors = ref<Record<string, string>>({});
 
@@ -78,7 +80,7 @@ function openAdd() {
 	editingBudget.value = null;
 	formCategoryId.value = availableCategories.value[0]?.id ?? "";
 	formLimit.value = "";
-	formCurrency.value = "KZT";
+	formCurrency.value = "RUB";
 	errors.value = {};
 	showModal.value = true;
 }
@@ -132,7 +134,7 @@ async function save() {
 }
 
 async function deleteBudget(id: string) {
-	if (!confirm("Удалить бюджет?")) return;
+	if (!await showConfirm("Удалить бюджет?")) return;
 	await budgetsStore.deleteBudget(id);
 }
 
@@ -159,7 +161,11 @@ function checkBudgetNotifications() {
 
 watch(monthBudgets, checkBudgetNotifications);
 
-const CURRENCIES = ["KZT", "USD", "EUR", "RUB"];
+const CURRENCIES = ["RUB", "USD"];
+const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+const categoryOptions = computed(() =>
+	availableCategories.value.map((cat) => ({ value: cat.id, label: cat.name }))
+);
 
 const totalBudgeted = computed(() => monthBudgets.value.reduce((s, b) => s + b.limitAmount, 0));
 const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpent(b), 0));
@@ -169,7 +175,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	<div class="budgets-view">
 		<!-- Header -->
 		<div class="budgets-view__header">
-			<h2 class="budgets-view__title">Бюджеты</h2>
+			<h2 class="budgets-view__title tp-heading-md-bold">Бюджеты</h2>
 			<AppButton
 				size="sm"
 				:disabled="availableCategories.length === 0"
@@ -185,7 +191,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 				@click="prevMonth">
 				‹
 			</button>
-			<span class="month-nav__label">{{ formatMonthLabel(selectedMonth) }}</span>
+			<span class="month-nav__label tp-title-md-semibold">{{ formatMonthLabel(selectedMonth) }}</span>
 			<button
 				class="month-nav__btn"
 				:disabled="isCurrentMonth"
@@ -198,7 +204,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 		<div
 			v-if="monthBudgets.length > 0"
 			class="overview">
-			<div class="overview__numbers">
+			<div class="overview__numbers tp-body-md-regular">
 				<span
 					>Потрачено <strong class="text-expense">{{ totalSpent.toLocaleString("ru-RU") }}</strong></span
 				>
@@ -221,7 +227,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 			v-if="monthBudgets.length === 0"
 			class="empty">
 			<div class="empty__icon">📋</div>
-			<div class="empty__text">Нет бюджетов на этот месяц</div>
+			<div class="empty__text tp-body-lg-regular">Нет бюджетов на этот месяц</div>
 			<AppButton
 				size="sm"
 				:disabled="availableCategories.length === 0"
@@ -248,17 +254,17 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 							}">
 							<AppIcon :name="categoriesStore.getById(budget.categoryId)?.icon ?? 'other'" />
 						</div>
-						<span class="budget-card__cat-name">
+						<span class="budget-card__cat-name tp-label-md-semibold">
 							{{ categoriesStore.getById(budget.categoryId)?.name ?? "—" }}
 						</span>
 					</div>
 					<div class="budget-card__amounts">
 						<span
-							class="budget-card__spent"
+							class="budget-card__spent tp-title-md-semibold"
 							:style="{ color: progressColor(getProgress(budget)) }">
 							{{ getSpent(budget).toLocaleString("ru-RU") }}
 						</span>
-						<span class="budget-card__limit">/ {{ budget.limitAmount.toLocaleString("ru-RU") }} {{ budget.currency }}</span>
+						<span class="budget-card__limit tp-caption-md-regular">/ {{ budget.limitAmount.toLocaleString("ru-RU") }} {{ budget.currency }}</span>
 					</div>
 				</div>
 
@@ -272,7 +278,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 						}" />
 				</div>
 
-				<div class="budget-card__bottom">
+				<div class="budget-card__bottom tp-caption-md-regular">
 					<span
 						class="budget-card__pct"
 						:style="{ color: progressColor(getProgress(budget)) }">
@@ -303,20 +309,13 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 				<div
 					v-if="!editingBudget"
 					class="field">
-					<label class="field__label">Категория</label>
-					<select
+					<label class="field__label tp-label-md-medium">Категория</label>
+					<AppSelect
 						v-model="formCategoryId"
-						class="field__select">
-						<option
-							v-for="cat in availableCategories"
-							:key="cat.id"
-							:value="cat.id">
-							{{ cat.name }}
-						</option>
-					</select>
+						:options="categoryOptions" />
 					<span
 						v-if="errors.category"
-						class="field-error"
+						class="field-error tp-caption-md-regular"
 						>{{ errors.category }}</span
 					>
 				</div>
@@ -333,7 +332,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 						}">
 						<AppIcon :name="categoriesStore.getById(editingBudget.categoryId)?.icon ?? 'other'" />
 					</div>
-					<span class="budget-preview__name">
+					<span class="budget-preview__name tp-label-md-semibold">
 						{{ categoriesStore.getById(editingBudget.categoryId)?.name ?? "—" }}
 					</span>
 				</div>
@@ -348,17 +347,10 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 
 				<!-- Currency -->
 				<div class="field">
-					<label class="field__label">Валюта</label>
-					<select
+					<label class="field__label tp-label-md-medium">Валюта</label>
+					<AppSelect
 						v-model="formCurrency"
-						class="field__select">
-						<option
-							v-for="c in CURRENCIES"
-							:key="c"
-							:value="c">
-							{{ c }}
-						</option>
-					</select>
+						:options="currencyOptions" />
 				</div>
 			</div>
 
@@ -390,10 +382,6 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	justify-content: space-between;
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
-.budgets-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 
 .month-nav {
 	display: flex;
@@ -421,8 +409,6 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	cursor: default;
 }
 .month-nav__label {
-	font-size: var(--font-md);
-	font-weight: 600;
 	min-width: 160px;
 	text-align: center;
 }
@@ -440,7 +426,6 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 .overview__numbers {
 	display: flex;
 	justify-content: space-between;
-	font-size: var(--font-sm);
 }
 .overview__bar-wrap {
 	height: 8px;
@@ -466,7 +451,6 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 }
 .empty__text {
 	color: var(--text-muted);
-	font-size: var(--font-md);
 }
 
 .budget-list {
@@ -511,21 +495,14 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	font-size: 16px;
 	flex-shrink: 0;
 }
-.budget-card__cat-name {
-	font-size: var(--font-sm);
-	font-weight: 600;
-}
 
 .budget-card__amounts {
 	text-align: right;
 }
 .budget-card__spent {
-	font-size: var(--font-md);
-	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 }
 .budget-card__limit {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	display: block;
 }
@@ -546,7 +523,6 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	display: flex;
 	align-items: center;
 	gap: var(--space-3);
-	font-size: var(--font-xs);
 }
 .budget-card__pct {
 	font-weight: 700;
@@ -581,9 +557,7 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__select {
 	height: 44px;
@@ -592,14 +566,12 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 }
 .field__select:focus {
 	outline: none;
 	border-color: var(--border-focus);
 }
 .field-error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
 }
 
@@ -619,9 +591,5 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 	align-items: center;
 	justify-content: center;
 	font-size: 16px;
-}
-.budget-preview__name {
-	font-size: var(--font-sm);
-	font-weight: 600;
 }
 </style>

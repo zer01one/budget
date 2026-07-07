@@ -1,42 +1,107 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, onBeforeRouteLeave } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
-import type { Transaction, TransactionType } from "@/types";
+import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight, PhFunnel, PhX } from "@phosphor-icons/vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
+import { useScrollRestore } from "@/composables/useScrollRestore";
+import { getFiltersSnapshot, setFiltersSnapshot } from "@/composables/useTransactionFiltersSnapshot";
+import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
+const filtersSnapshot = getFiltersSnapshot();
 const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 const accountsStore = useAccountsStore();
 
-const search = ref("");
+const txGroupsRef = ref<HTMLElement | null>(null);
+useScrollRestore(txGroupsRef);
+
+const search = ref(filtersSnapshot?.search ?? "");
 const isLoadingMore = ref(false);
 const allMonths = ref<string[]>([]);
 const loadedMonthsCount = ref(2);
 
 // ── Filters ───────────────────────────────────────────────────────────────────
-const showFilters = ref(false);
-const filterType = ref<TransactionType | "">("");
-const filterAccountId = ref("");
-const filterCategoryId = ref("");
-const filterFrom = ref("");
-const filterTo = ref("");
+const showFilters = ref(filtersSnapshot?.showFilters ?? false);
+const filterType = ref(filtersSnapshot?.filterType ?? "");
+const filterAccountId = ref(filtersSnapshot?.filterAccountId ?? "");
+const filterCategoryId = ref(filtersSnapshot?.filterCategoryId ?? "");
+const filterFrom = ref(filtersSnapshot?.filterFrom ?? "");
+const filterTo = ref(filtersSnapshot?.filterTo ?? "");
+
+onBeforeRouteLeave(() => {
+	setFiltersSnapshot({
+		search: search.value,
+		showFilters: showFilters.value,
+		filterType: filterType.value,
+		filterAccountId: filterAccountId.value,
+		filterCategoryId: filterCategoryId.value,
+		filterFrom: filterFrom.value,
+		filterTo: filterTo.value
+	});
+});
+
+const filterTypeOptions = [
+	{ value: "", label: "Все" },
+	{ value: "expense", label: "Расход" },
+	{ value: "income", label: "Доход" },
+	{ value: "transfer", label: "Перевод" }
+];
+const filterAccountOptions = computed(() => [
+	{ value: "", label: "Все счета" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
+]);
+const filterCategoryOptions = computed(() => [
+	{ value: "", label: "Все категории" },
+	...categoriesStore.categories.filter((c) => !c.isArchived).map((c) => ({ value: c.id, label: c.name }))
+]);
 
 const activeFilterCount = computed(
 	() => [filterType.value, filterAccountId.value, filterCategoryId.value, filterFrom.value, filterTo.value].filter(Boolean).length
 );
 
-function resetFilters() {
-	filterType.value = "";
-	filterAccountId.value = "";
-	filterCategoryId.value = "";
-	filterFrom.value = "";
-	filterTo.value = "";
+type FilterChipKey = "type" | "account" | "category" | "from" | "to";
+interface FilterChip {
+	key: FilterChipKey;
+	label: string;
+}
+
+function formatChipDate(date: string): string {
+	const d = new Date(date);
+	const isCurrentYear = d.getFullYear() === new Date().getFullYear();
+	return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: isCurrentYear ? undefined : "numeric" });
+}
+
+const activeFilterChips = computed((): FilterChip[] => {
+	const chips: FilterChip[] = [];
+	if (filterType.value) {
+		chips.push({ key: "type", label: filterTypeOptions.find((o) => o.value === filterType.value)?.label ?? filterType.value });
+	}
+	if (filterAccountId.value) {
+		chips.push({ key: "account", label: accountsStore.activeAccounts.find((a) => a.id === filterAccountId.value)?.name ?? "" });
+	}
+	if (filterCategoryId.value) {
+		chips.push({ key: "category", label: categoriesStore.getById(filterCategoryId.value)?.name ?? "" });
+	}
+	if (filterFrom.value) chips.push({ key: "from", label: `с ${formatChipDate(filterFrom.value)}` });
+	if (filterTo.value) chips.push({ key: "to", label: `по ${formatChipDate(filterTo.value)}` });
+	return chips;
+});
+
+function removeFilterChip(key: FilterChipKey) {
+	if (key === "type") filterType.value = "";
+	else if (key === "account") filterAccountId.value = "";
+	else if (key === "category") filterCategoryId.value = "";
+	else if (key === "from") filterFrom.value = "";
+	else if (key === "to") filterTo.value = "";
 }
 
 onMounted(async () => {
@@ -134,29 +199,50 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	<div class="tx-view">
 		<!-- Header -->
 		<div class="tx-view__header">
-			<h2 class="tx-view__title">Операции</h2>
-			<AppButton
-				size="sm"
-				@click="router.push('/transactions/add')"
-				>+ Добавить</AppButton
-			>
+			<h2 class="tx-view__title tp-heading-md-bold">Операции</h2>
+			<div class="header-add-btn">
+				<AppButton
+					size="sm"
+					@click="router.push('/transactions/add')"
+					>+ Добавить</AppButton
+				>
+			</div>
 		</div>
 
 		<!-- Search + filter toggle -->
 		<div class="tx-view__search-wrap">
 			<input
 				v-model="search"
-				class="tx-view__search"
+				class="tx-view__search tp-body-md-regular"
 				placeholder="Поиск по операциям…" />
 			<button
 				:class="['tx-view__filter-btn', { 'tx-view__filter-btn--active': activeFilterCount > 0 }]"
 				@click="showFilters = !showFilters"
 				:title="showFilters ? 'Скрыть фильтры' : 'Фильтры'">
-				⊟<span
+				<PhFunnel
+					:size="18"
+					weight="bold" /><span
 					v-if="activeFilterCount > 0"
 					class="filter-badge"
 					>{{ activeFilterCount }}</span
 				>
+			</button>
+		</div>
+
+		<!-- Active filter chips -->
+		<div
+			v-if="activeFilterChips.length > 0"
+			class="filter-chips">
+			<button
+				v-for="chip in activeFilterChips"
+				:key="chip.key"
+				type="button"
+				class="filter-chip tp-caption-md-regular"
+				@click="removeFilterChip(chip.key)">
+				<span>{{ chip.label }}</span>
+				<PhX
+					:size="12"
+					weight="bold" />
 			</button>
 		</div>
 
@@ -167,76 +253,49 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			<div class="filter-row">
 				<!-- Type -->
 				<div class="filter-field">
-					<label class="filter-field__label">Тип</label>
-					<select
+					<label class="filter-field__label tp-label-sm-medium">Тип</label>
+					<AppSelect
 						v-model="filterType"
-						class="filter-field__select">
-						<option value="">Все</option>
-						<option value="expense">Расход</option>
-						<option value="income">Доход</option>
-						<option value="transfer">Перевод</option>
-					</select>
+						:options="filterTypeOptions" />
 				</div>
 				<!-- Account -->
 				<div class="filter-field">
-					<label class="filter-field__label">Счёт</label>
-					<select
+					<label class="filter-field__label tp-label-sm-medium">Счёт</label>
+					<AppSelect
 						v-model="filterAccountId"
-						class="filter-field__select">
-						<option value="">Все счета</option>
-						<option
-							v-for="acc in accountsStore.activeAccounts"
-							:key="acc.id"
-							:value="acc.id">
-							{{ acc.name }}
-						</option>
-					</select>
+						:options="filterAccountOptions" />
 				</div>
 			</div>
 
 			<div class="filter-row">
 				<!-- Category -->
 				<div class="filter-field">
-					<label class="filter-field__label">Категория</label>
-					<select
+					<label class="filter-field__label tp-label-sm-medium">Категория</label>
+					<AppSelect
 						v-model="filterCategoryId"
-						class="filter-field__select">
-						<option value="">Все категории</option>
-						<option
-							v-for="cat in categoriesStore.categories.filter((c) => !c.isArchived)"
-							:key="cat.id"
-							:value="cat.id">
-							{{ cat.name }}
-						</option>
-					</select>
+						:options="filterCategoryOptions" />
 				</div>
 			</div>
 
 			<div class="filter-row">
 				<!-- Date from -->
 				<div class="filter-field">
-					<label class="filter-field__label">С даты</label>
-					<input
-						type="date"
+					<label class="filter-field__label tp-label-sm-medium">С даты</label>
+					<AppDatePicker
 						v-model="filterFrom"
-						class="filter-field__select" />
+						clearable
+						placeholder="С даты" />
 				</div>
 				<!-- Date to -->
 				<div class="filter-field">
-					<label class="filter-field__label">По дату</label>
-					<input
-						type="date"
+					<label class="filter-field__label tp-label-sm-medium">По дату</label>
+					<AppDatePicker
 						v-model="filterTo"
-						class="filter-field__select" />
+						:min-date="filterFrom"
+						clearable
+						placeholder="По дату" />
 				</div>
 			</div>
-
-			<button
-				v-if="activeFilterCount > 0"
-				class="filter-reset"
-				@click="resetFilters">
-				Сбросить фильтры
-			</button>
 		</div>
 
 		<!-- Loading -->
@@ -256,6 +315,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		<!-- Grouped list -->
 		<div
 			v-else
+			ref="txGroupsRef"
 			class="tx-groups">
 			<div
 				v-for="group in grouped"
@@ -263,8 +323,8 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				class="tx-group">
 				<!-- Date header with day totals -->
 				<div class="tx-group__header">
-					<span class="tx-group__date">{{ group.label }}</span>
-					<div class="tx-group__totals">
+					<span class="tx-group__date tp-label-md-semibold">{{ group.label }}</span>
+					<div class="tx-group__totals tp-label-md-semibold">
 						<span
 							v-if="dayTotal(group.transactions).income > 0"
 							class="text-income">
@@ -294,15 +354,18 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 							<AppIcon :name="getCategory(tx.categoryId)?.icon ?? (tx.type === 'transfer' ? 'transfer' : 'other')" />
 						</div>
 						<div class="tx-row__info">
-							<div class="tx-row__name">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
+							<div class="tx-row__name tp-body-md-medium">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
 							<div
 								v-if="tx.comment"
-								class="tx-row__comment">
+								class="tx-row__comment tp-caption-md-regular">
 								{{ tx.comment }}
 							</div>
 						</div>
-						<div :class="['tx-row__amount', `text-${tx.type}`]">
-							{{ formatAmount(tx) }}
+						<div :class="['tx-row__amount tp-body-md-semibold', `text-${tx.type}`]">
+							<template v-if="tx.type === 'transfer'">
+								<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+							</template>
+							<template v-else>{{ formatAmount(tx) }}</template>
 						</div>
 					</div>
 				</div>
@@ -321,6 +384,13 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			</div>
 		</div>
 	</div>
+	<ScrollToTopButton :scroll-el="txGroupsRef" />
+	<AppButton
+		class="fab-add"
+		size="lg"
+		@click="router.push('/transactions/add')">
+		Добавить
+	</AppButton>
 </template>
 
 <style scoped>
@@ -329,16 +399,31 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	flex-direction: column;
 	height: 100%;
 }
+.fab-add {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.header-add-btn {
+		display: none;
+	}
+
+	.fab-add {
+		display: flex;
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		left: var(--space-4);
+		right: var(--space-4);
+		z-index: 10;
+	}
+}
+
 .tx-view__header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-5) var(--space-5) var(--space-3);
 	flex-shrink: 0;
-}
-.tx-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
 }
 
 .tx-view__search-wrap {
@@ -355,7 +440,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	background: var(--bg-input);
 	color: var(--text-primary);
 	padding: 0 var(--space-3);
-	font-size: var(--font-sm);
 }
 .tx-view__search:focus {
 	outline: none;
@@ -363,6 +447,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 }
 .tx-view__filter-btn {
 	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: 40px;
 	height: 40px;
 	border-radius: var(--radius-md);
@@ -370,7 +457,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	background: var(--bg-input);
 	color: var(--text-secondary);
 	cursor: pointer;
-	font-size: 18px;
 	flex-shrink: 0;
 	transition:
 		background var(--transition),
@@ -402,6 +488,35 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	font-weight: 700;
 }
 
+.filter-chips {
+	padding: 0 var(--space-5) var(--space-3);
+	flex-shrink: 0;
+	display: flex;
+	gap: var(--space-2);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.filter-chips::-webkit-scrollbar {
+	display: none;
+}
+.filter-chip {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+	flex-shrink: 0;
+	padding: 6px var(--space-2);
+	border-radius: var(--radius-full);
+	border: 1px solid var(--accent-primary);
+	background: var(--accent-primary-soft);
+	color: var(--accent-primary);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background var(--transition);
+}
+.filter-chip:hover {
+	background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
 .filter-panel {
 	padding: 0 var(--space-5) var(--space-3);
 	flex-shrink: 0;
@@ -422,9 +537,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	gap: 4px;
 }
 .filter-field__label {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
-	font-weight: 500;
 }
 .filter-field__select {
 	height: 36px;
@@ -433,23 +546,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-sm);
 }
 .filter-field__select:focus {
 	outline: none;
 	border-color: var(--border-focus);
 }
-.filter-reset {
-	align-self: flex-start;
-	background: none;
-	border: none;
-	padding: 0;
-	color: var(--accent-primary);
-	font-size: var(--font-xs);
-	cursor: pointer;
-	text-decoration: underline;
-}
-
 .tx-view__loading,
 .tx-view__empty {
 	text-align: center;
@@ -479,15 +580,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	padding: var(--space-2) 0;
 }
 .tx-group__date {
-	font-size: var(--font-sm);
-	font-weight: 600;
 	color: var(--text-secondary);
 }
 .tx-group__totals {
 	display: flex;
 	gap: var(--space-3);
-	font-size: var(--font-sm);
-	font-weight: 600;
 }
 
 .tx-list {
@@ -535,12 +632,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	flex: 1;
 	min-width: 0;
 }
-.tx-row__name {
-	font-size: var(--font-sm);
-	font-weight: 500;
-}
 .tx-row__comment {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 	truncate: true;
 	overflow: hidden;
@@ -548,8 +640,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	white-space: nowrap;
 }
 .tx-row__amount {
-	font-size: var(--font-sm);
-	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }
@@ -558,5 +651,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	display: flex;
 	justify-content: center;
 	padding: var(--space-4) 0;
+}
+
+@media (max-width: 899px) {
+	.tx-groups {
+		padding-bottom: calc(32px + 44px + var(--space-4) + var(--space-3) * 2);
+	}
 }
 </style>

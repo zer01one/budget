@@ -39,6 +39,16 @@ export function useBootstrap() {
 		// Preload current + previous month transactions
 		await txStore.loadCurrentAndPrevMonth();
 
+		// One-time migration: compute stored balance for accounts that predate the balance field
+		if (accountsStore.accounts.some((a) => a.balance === undefined)) {
+			await txStore.loadAllMonths();
+			for (const acc of accountsStore.accounts) {
+				if (acc.balance === undefined) {
+					await accountsStore.updateAccount(acc.id, { balance: txStore.computeAccountBalance(acc.id, acc.initialBalance) });
+				}
+			}
+		}
+
 		// Spawn any missing recurring transaction occurrences
 		await processRecurringTransactions();
 	}

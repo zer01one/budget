@@ -11,6 +11,9 @@ const config: CapacitorConfig = {
 	//   cleartext: true,
 	// },
 	plugins: {
+		StatusBar: {
+			style: "DARK"
+		},
 		LocalNotifications: {
 			smallIcon: "ic_stat_icon_config_sample",
 			iconColor: "#7C3AED"

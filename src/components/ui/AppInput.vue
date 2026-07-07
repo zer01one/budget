@@ -4,6 +4,7 @@ defineProps<{
 	label?: string;
 	placeholder?: string;
 	type?: string;
+	inputmode?: "text" | "email" | "search" | "tel" | "url" | "none" | "numeric" | "decimal";
 	error?: string;
 	hint?: string;
 	disabled?: boolean;
@@ -18,24 +19,25 @@ defineEmits<{
 	<div class="field">
 		<label
 			v-if="label"
-			class="field__label"
+			class="field__label tp-label-md-medium"
 			>{{ label }}</label
 		>
 		<input
 			:type="type ?? 'text'"
+			:inputmode="inputmode"
 			:value="modelValue"
 			:placeholder="placeholder"
 			:disabled="disabled"
-			:class="['field__input', { 'field__input--error': error }]"
+			:class="['field__input tp-body-lg-regular', { 'field__input--error': error }]"
 			@input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
 		<span
 			v-if="error"
-			class="field__error"
+			class="field__error tp-caption-md-regular"
 			>{{ error }}</span
 		>
 		<span
 			v-else-if="hint"
-			class="field__hint"
+			class="field__hint tp-caption-md-regular"
 			>{{ hint }}</span
 		>
 	</div>
@@ -48,9 +50,7 @@ defineEmits<{
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__input {
 	height: 44px;
@@ -59,7 +59,6 @@ defineEmits<{
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 	transition: border-color var(--transition);
 	width: 100%;
 }
@@ -71,11 +70,9 @@ defineEmits<{
 	border-color: var(--accent-danger);
 }
 .field__error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
 }
 .field__hint {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 </style>

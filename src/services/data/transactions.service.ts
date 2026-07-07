@@ -27,7 +27,7 @@ export const transactionsService = {
 		}
 		_lastKnownModified.set(path, result.modifiedAt);
 		return {
-			transactions: result.data.transactions.filter((t) => !t.isDeleted),
+			transactions: result.data.transactions,
 			conflict
 		};
 	},

@@ -2,7 +2,6 @@ package com.budget.app;
 
 import com.getcapacitor.BridgeActivity;
 import android.os.Bundle;
-import java.util.ArrayList;
 
 public class MainActivity extends BridgeActivity {
     @Override

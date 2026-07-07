@@ -1,17 +1,23 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
-import { useTransactionsStore } from "@/stores/transactions.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { useScrollRestore } from "@/composables/useScrollRestore";
+import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
-const txStore = useTransactionsStore();
+useScrollRestore();
 
-function getBalance(id: string, initial: number) {
-	return txStore.computeAccountBalance(id, initial);
-}
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+	card: "Банковская карта",
+	cash: "Наличные",
+	bank: "Банковский счёт",
+	savings: "Накопления",
+	investment: "Инвестиции",
+	crypto: "Криптовалюта"
+};
 
 function formatAmount(n: number, currency: string) {
 	return n.toLocaleString("ru-RU") + " " + currency;
@@ -21,12 +27,14 @@ function formatAmount(n: number, currency: string) {
 <template>
 	<div class="accounts-view">
 		<div class="accounts-view__header">
-			<h2 class="accounts-view__title">Счета</h2>
-			<AppButton
-				size="sm"
-				@click="router.push('/accounts/new')"
-				>+ Добавить</AppButton
-			>
+			<h2 class="accounts-view__title tp-heading-md-bold">Счета</h2>
+			<div class="header-add-btn">
+				<AppButton
+					size="sm"
+					@click="router.push('/accounts/new')"
+					>+ Добавить</AppButton
+				>
+			</div>
 		</div>
 
 		<div
@@ -44,18 +52,50 @@ function formatAmount(n: number, currency: string) {
 				@click="router.push(`/accounts/${acc.id}`)">
 				<div class="account-card__icon"><AppIcon :name="acc.icon ?? 'other'" /></div>
 				<div class="account-card__info">
-					<div class="account-card__name">{{ acc.name }}</div>
-					<div class="account-card__type text-muted">{{ acc.type }}</div>
+					<div class="account-card__name tp-body-md-medium">{{ acc.name }}</div>
+					<div class="account-card__type tp-caption-md-regular text-muted">
+						{{ ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type }}
+					</div>
 				</div>
-				<div class="account-card__balance">
-					{{ formatAmount(getBalance(acc.id, acc.initialBalance), acc.currency) }}
+				<div class="account-card__balance tp-body-md-semibold">
+					{{ formatAmount(acc.balance ?? acc.initialBalance, acc.currency) }}
 				</div>
 			</div>
 		</div>
 	</div>
+	<ScrollToTopButton />
+	<AppButton
+		class="fab-add"
+		size="lg"
+		@click="router.push('/accounts/new')">
+		Добавить
+	</AppButton>
 </template>
 
 <style scoped>
+.fab-add {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.header-add-btn {
+		display: none;
+	}
+
+	.fab-add {
+		display: flex;
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		left: var(--space-4);
+		right: var(--space-4);
+		z-index: 10;
+	}
+
+	.accounts-list {
+		padding-bottom: calc(52px + 44px + var(--space-4) + var(--space-3) * 2);
+	}
+}
+
 .accounts-view {
 	display: flex;
 	flex-direction: column;
@@ -65,10 +105,6 @@ function formatAmount(n: number, currency: string) {
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-5);
-}
-.accounts-view__title {
-	font-size: var(--font-xl);
-	font-weight: 700;
 }
 .accounts-view__empty {
 	text-align: center;
@@ -110,12 +146,19 @@ function formatAmount(n: number, currency: string) {
 }
 .account-card__info {
 	flex: 1;
+	min-width: 0;
 }
 .account-card__name {
-	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.account-card__type {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .account-card__balance {
-	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 }
 </style>

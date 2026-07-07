@@ -19,6 +19,9 @@ export class CapacitorAdapter implements IFileSystemAdapter {
 		const { FilePicker } = await import("@capawesome/capacitor-file-picker");
 		const result = await FilePicker.pickDirectory();
 		const uri = result.path ?? "";
+		// Must persist read+write permission while the picker grant is still active.
+		// Capawesome only persists read; without this call write access is lost on restart.
+		await VaultFile.persistPermission({ treeUri: uri });
 		await Preferences.set({ key: VAULT_URI_KEY, value: uri });
 		vaultUri = uri;
 		return { uri, displayPath: uri };

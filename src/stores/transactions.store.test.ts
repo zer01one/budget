@@ -292,6 +292,36 @@ describe("loadMonth – isLoading lifecycle", () => {
 	});
 });
 
+// ── loadAllMonths ─────────────────────────────────────────────────────────────
+
+describe("loadAllMonths", () => {
+	beforeEach(() => setActivePinia(createPinia()));
+
+	it("loads every month returned by listMonths", async () => {
+		vi.mocked(transactionsService.listMonths).mockResolvedValue(["2026-01", "2026-02", "2026-03"]);
+		vi.mocked(transactionsService.loadMonth).mockResolvedValue({ transactions: [], conflict: null });
+		const store = useTransactionsStore();
+		await store.loadAllMonths();
+		expect(store.loadedMonths.size).toBe(3);
+	});
+
+	it("does nothing when vault has no months", async () => {
+		vi.mocked(transactionsService.listMonths).mockResolvedValue([]);
+		const store = useTransactionsStore();
+		await store.loadAllMonths();
+		expect(store.loadedMonths.size).toBe(0);
+	});
+
+	it("skips months already loaded", async () => {
+		vi.mocked(transactionsService.listMonths).mockResolvedValue(["2026-01", "2026-02"]);
+		vi.mocked(transactionsService.loadMonth).mockClear();
+		const store = useTransactionsStore();
+		store.loadedMonths.add("2026-01");
+		await store.loadAllMonths();
+		expect(transactionsService.loadMonth).toHaveBeenCalledTimes(1);
+	});
+});
+
 // ── computeAccountBalance – self-transfer edge case ───────────────────────────
 
 describe("computeAccountBalance – self-transfer", () => {

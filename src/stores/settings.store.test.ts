@@ -56,9 +56,9 @@ describe("useSettingsStore – default state", () => {
 		expect(store.settings.theme).toBe("dark");
 	});
 
-	it("defaultCurrency defaults to KZT", () => {
+	it("defaultCurrency defaults to RUB", () => {
 		const store = useSettingsStore();
-		expect(store.settings.defaultCurrency).toBe("KZT");
+		expect(store.settings.defaultCurrency).toBe("RUB");
 	});
 
 	it("locale defaults to ru-RU", () => {
@@ -187,7 +187,7 @@ describe("useSettingsStore – load (Tauri path)", () => {
 		const store = useSettingsStore();
 		await store.load();
 		expect(store.settings.theme).toBe("dark");
-		expect(store.settings.defaultCurrency).toBe("KZT");
+		expect(store.settings.defaultCurrency).toBe("RUB");
 	});
 
 	it("merges saved settings with defaults", async () => {
@@ -202,7 +202,7 @@ describe("useSettingsStore – load (Tauri path)", () => {
 		expect(store.settings.theme).toBe("light");
 		expect(store.settings.locale).toBe("en-US");
 		// defaults preserved for unset keys
-		expect(store.settings.defaultCurrency).toBe("KZT");
+		expect(store.settings.defaultCurrency).toBe("RUB");
 	});
 });
 
@@ -229,7 +229,7 @@ describe("useSettingsStore – load (Capacitor path)", () => {
 		const store = useSettingsStore();
 		await store.load();
 		expect(store.settings.theme).toBe("dark");
-		expect(store.settings.defaultCurrency).toBe("KZT");
+		expect(store.settings.defaultCurrency).toBe("RUB");
 	});
 
 	it("merges saved settings from Preferences", async () => {
@@ -240,7 +240,7 @@ describe("useSettingsStore – load (Capacitor path)", () => {
 		await store.load();
 		expect(store.settings.theme).toBe("light");
 		expect(store.settings.locale).toBe("en-US");
-		expect(store.settings.defaultCurrency).toBe("KZT");
+		expect(store.settings.defaultCurrency).toBe("RUB");
 	});
 });
 

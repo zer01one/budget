@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+﻿import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { setActivePinia, createPinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import AccountsView from "./AccountsView.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
-import { useTransactionsStore } from "@/stores/transactions.store";
-import type { Account, Transaction } from "@/types";
+import type { Account } from "@/types";
 
 vi.mock("@/services/filesystem", () => ({
 	getFileSystemAdapter: vi.fn().mockResolvedValue({
@@ -43,29 +42,6 @@ function makeAccount(overrides: Partial<Account> = {}): Account {
 		sortOrder: 0,
 		notes: "",
 		updatedAt: "2026-01-01T00:00:00.000Z",
-		deviceId: "test-device",
-		version: 1,
-		...overrides
-	};
-}
-
-function makeTx(overrides: Partial<Transaction> = {}): Transaction {
-	return {
-		id: "tx-1",
-		type: "income",
-		amount: 500,
-		currency: "KZT",
-		date: "2026-06-01",
-		time: "12:00",
-		accountId: "acc-1",
-		toAccountId: null,
-		categoryId: null,
-		comment: "",
-		tags: [],
-		isRecurring: false,
-		recurringParentId: null,
-		isDeleted: false,
-		updatedAt: "2026-06-01T00:00:00.000Z",
 		deviceId: "test-device",
 		version: 1,
 		...overrides
@@ -155,33 +131,22 @@ describe("AccountsView", () => {
 			expect(wrapper.find(".account-card__balance").text()).toContain("5 000");
 		});
 
-		it("adds income transactions to balance", async () => {
-			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 1000, currency: "KZT" })];
-			useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "income", amount: 200 })]);
+		it("shows account.balance when set", async () => {
+			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 500, balance: 800, currency: "KZT" })];
 			const { wrapper } = await mountView();
-			expect(wrapper.find(".account-card__balance").text()).toContain("1 200");
+			expect(wrapper.find(".account-card__balance").text()).toContain("800");
 		});
 
-		it("subtracts expense transactions from balance", async () => {
-			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 1000, currency: "KZT" })];
-			useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "expense", amount: 300 })]);
+		it("shows reduced balance when account.balance reflects expenses", async () => {
+			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 1000, balance: 700, currency: "KZT" })];
 			const { wrapper } = await mountView();
 			expect(wrapper.find(".account-card__balance").text()).toContain("700");
 		});
 
-		it("adds incoming transfer to balance", async () => {
-			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 0, currency: "KZT" })];
-			useTransactionsStore()._cache.set("2026-06", [
-				makeTx({ id: "tx-t", accountId: "acc-other", toAccountId: "acc-1", type: "transfer", amount: 400 })
-			]);
+		it("falls back to initialBalance when balance is undefined", async () => {
+			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 500, balance: undefined, currency: "KZT" })];
 			const { wrapper } = await mountView();
-			expect(wrapper.find(".account-card__balance").text()).toContain("400");
-		});
-
-		it("displays currency in balance", async () => {
-			useAccountsStore().accounts = [makeAccount({ id: "acc-1", initialBalance: 50, currency: "USD" })];
-			const { wrapper } = await mountView();
-			expect(wrapper.find(".account-card__balance").text()).toContain("USD");
+			expect(wrapper.find(".account-card__balance").text()).toContain("500");
 		});
 	});
 

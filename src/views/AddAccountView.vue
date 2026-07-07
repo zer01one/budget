@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import IconPicker from "@/components/ui/IconPicker.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -33,8 +34,8 @@ const accountsStore = useAccountsStore();
 
 const name = ref("");
 const type = ref<AccountType>("card");
-const currency = ref("KZT");
-const initialBalance = ref("0");
+const currency = ref("RUB");
+const initialBalance = ref("");
 const color = ref("#3B82F6");
 const icon = ref("card");
 const notes = ref("");
@@ -50,12 +51,28 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 	{ value: "crypto", label: "Криптовалюта" }
 ];
 
-const CURRENCIES = ["KZT", "USD", "EUR", "RUB", "GBP", "CNY"];
+const CURRENCIES = ["RUB", "USD"];
+const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+
+async function onBalanceInput(val: string) {
+	initialBalance.value = val;
+	await nextTick();
+	val = val.replace(/[^\d.,]/g, "");
+	val = val.replace(/^0+(?=[.,]|$)/, "0");
+	val = val.replace(/^0(?=[1-9])/, "");
+	val = val.replace(",", ".");
+	const [integer, decimal] = val.split(".");
+	if (decimal !== undefined) {
+		const cents = decimal.replace(/\D/g, "").slice(0, 2);
+		val = `${integer}.${cents}`;
+	}
+	initialBalance.value = val;
+}
 
 function validate(): boolean {
 	errors.value = {};
 	if (!name.value.trim()) errors.value.name = "Введите название счёта";
-	const bal = parseFloat(initialBalance.value.replace(",", "."));
+	const bal = parseFloat(initialBalance.value || "0");
 	if (isNaN(bal)) errors.value.balance = "Введите число";
 	return Object.keys(errors.value).length === 0;
 }
@@ -86,11 +103,11 @@ async function submit() {
 	<div class="add-account">
 		<div class="add-account__header">
 			<button
-				class="back-btn"
+				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
 				← Назад
 			</button>
-			<h2>Новый счёт</h2>
+			<h2 class="tp-heading-md-bold">Новый счёт</h2>
 		</div>
 
 		<!-- Preview -->
@@ -104,7 +121,7 @@ async function submit() {
 			</div>
 			<div class="preview-card__info">
 				<div class="preview-card__name">{{ name || "Название счёта" }}</div>
-				<div class="preview-card__meta">{{ currency }} · {{ type }}</div>
+				<div class="preview-card__meta tp-caption-md-regular">{{ currency }} · {{ type }}</div>
 			</div>
 			<div class="preview-card__balance">{{ initialBalance || "0" }}</div>
 		</div>
@@ -117,37 +134,25 @@ async function submit() {
 				:error="errors.name" />
 
 			<div class="field">
-				<label class="field__label">Тип счёта</label>
-				<select
+				<label class="field__label tp-label-md-medium">Тип счёта</label>
+				<AppSelect
 					v-model="type"
-					class="field__select">
-					<option
-						v-for="t in ACCOUNT_TYPES"
-						:key="t.value"
-						:value="t.value">
-						{{ t.label }}
-					</option>
-				</select>
+					:options="ACCOUNT_TYPES" />
 			</div>
 
 			<div class="row-2">
 				<div class="field">
-					<label class="field__label">Валюта</label>
-					<select
+					<label class="field__label tp-label-md-medium">Валюта</label>
+					<AppSelect
 						v-model="currency"
-						class="field__select">
-						<option
-							v-for="c in CURRENCIES"
-							:key="c"
-							:value="c">
-							{{ c }}
-						</option>
-					</select>
+						:options="currencyOptions" />
 				</div>
 				<AppInput
-					v-model="initialBalance"
+					:model-value="initialBalance"
+					@update:model-value="onBalanceInput"
 					label="Начальный баланс"
-					type="number"
+					type="text"
+					inputmode="decimal"
 					placeholder="0"
 					:error="errors.balance" />
 			</div>
@@ -188,16 +193,11 @@ async function submit() {
 	gap: var(--space-3);
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
-.add-account__header h2 {
-	font-size: var(--font-xl);
-	font-weight: 700;
-}
 .back-btn {
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
 }
 
 .preview-card {
@@ -229,7 +229,6 @@ async function submit() {
 	font-weight: 600;
 }
 .preview-card__meta {
-	font-size: var(--font-xs);
 	color: var(--text-muted);
 }
 .preview-card__balance {
@@ -250,9 +249,7 @@ async function submit() {
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__select {
 	height: 44px;
@@ -261,7 +258,6 @@ async function submit() {
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 }
 .field__select:focus {
 	outline: none;

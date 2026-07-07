@@ -1,36 +1,36 @@
 import { Capacitor } from "@capacitor/core";
 import type { BudgetEntry } from "@/types";
 
-// Lazy-load LocalNotifications only on native platform
+// Lazy-load LocalNotifications only on native platform.
+// Wrapped in { plugin } to prevent `await` from treating the Capacitor Proxy as a thenable.
 async function getNotifications() {
 	if (!Capacitor.isNativePlatform()) return null;
 	const { LocalNotifications } = await import("@capacitor/local-notifications");
-	return LocalNotifications;
+	return { plugin: LocalNotifications };
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
-	const ln = await getNotifications();
-	if (!ln) return false;
-	const status = await ln.requestPermissions();
+	const notif = await getNotifications();
+	if (!notif) return false;
+	const status = await notif.plugin.requestPermissions();
 	return status.display === "granted";
 }
 
 // ── Daily reminder ────────────────────────────────────────────────────────────
 
 export async function scheduleDailyReminder(timeStr: string): Promise<void> {
-	const ln = await getNotifications();
-	if (!ln) return;
+	const notif = await getNotifications();
+	if (!notif) return;
 
 	const [hours, minutes] = timeStr.split(":").map(Number);
 
-	// Cancel previous daily reminder
-	await ln.cancel({ notifications: [{ id: 1 }] });
+	await notif.plugin.cancel({ notifications: [{ id: 1 }] });
 
 	const now = new Date();
 	const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
 	if (next <= now) next.setDate(next.getDate() + 1);
 
-	await ln.schedule({
+	await notif.plugin.schedule({
 		notifications: [
 			{
 				id: 1,
@@ -49,21 +49,21 @@ export async function scheduleDailyReminder(timeStr: string): Promise<void> {
 }
 
 export async function cancelDailyReminder(): Promise<void> {
-	const ln = await getNotifications();
-	if (!ln) return;
-	await ln.cancel({ notifications: [{ id: 1 }] });
+	const notif = await getNotifications();
+	if (!notif) return;
+	await notif.plugin.cancel({ notifications: [{ id: 1 }] });
 }
 
 // ── Budget alerts ─────────────────────────────────────────────────────────────
 
 export async function notifyBudgetWarning(budget: BudgetEntry, categoryName: string, pct: number): Promise<void> {
-	const ln = await getNotifications();
-	if (!ln) return;
+	const notif = await getNotifications();
+	if (!notif) return;
 
 	const id = 2000 + (parseInt(budget.id.slice(-4), 16) % 1000);
 	const exceeded = pct >= 100;
 
-	await ln.schedule({
+	await notif.plugin.schedule({
 		notifications: [
 			{
 				id,

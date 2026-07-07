@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { useRoute } from "vue-router";
 import AppShell from "@/components/layout/AppShell.vue";
+import AppConfirm from "@/components/ui/AppConfirm.vue";
 import { useSettingsStore } from "@/stores/settings.store";
 
 const settingsStore = useSettingsStore();
@@ -21,4 +22,5 @@ onMounted(() => {
 			<RouterView />
 		</AppShell>
 	</template>
+	<AppConfirm />
 </template>

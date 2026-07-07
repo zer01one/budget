@@ -22,7 +22,7 @@ vi.mock("@/stores/settings.store", () => ({
 	}))
 }));
 vi.mock("@/stores/accounts.store", () => ({
-	useAccountsStore: vi.fn(() => ({ load: mockAccountsLoad }))
+	useAccountsStore: vi.fn(() => ({ load: mockAccountsLoad, accounts: [], updateAccount: vi.fn(async () => {}) }))
 }));
 vi.mock("@/stores/categories.store", () => ({
 	useCategoriesStore: vi.fn(() => ({ load: mockCategoriesLoad }))

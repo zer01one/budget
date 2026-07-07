@@ -29,6 +29,9 @@ vi.mock("@/services/filesystem", () => ({
 	})
 }));
 
+
+const mockShowConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+vi.mock("@/utils/confirm", () => ({ showConfirm: mockShowConfirm }));
 // ── Globals ───────────────────────────────────────────────────────────────────
 
 beforeAll(() => {
@@ -405,7 +408,6 @@ describe("CategoriesView – delete", () => {
 	});
 
 	it("confirm → calls deleteCategory with the category id", async () => {
-		vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
 		const wrapper = await mountView();
 		await wrapper.find(".cat-row__delete").trigger("click");
 		await flushPromises();
@@ -413,7 +415,7 @@ describe("CategoriesView – delete", () => {
 	});
 
 	it("cancel confirm → does NOT call deleteCategory", async () => {
-		vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+		mockShowConfirm.mockResolvedValueOnce(false);
 		const wrapper = await mountView();
 		await wrapper.find(".cat-row__delete").trigger("click");
 		await flushPromises();

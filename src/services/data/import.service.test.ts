@@ -355,9 +355,9 @@ describe("previewRowsToTransactions", () => {
 		expect(tx.isRecurring).toBe(false);
 	});
 
-	it("sets currency to KZT", () => {
+	it("sets currency to RUB", () => {
 		const [tx] = previewRowsToTransactions([validRow], baseMapping, "device-1");
-		expect(tx.currency).toBe("KZT");
+		expect(tx.currency).toBe("RUB");
 	});
 
 	it("sets fixed time to 12:00", () => {

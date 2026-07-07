@@ -1,13 +1,18 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+import AppSelect from "@/components/ui/AppSelect.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
+import AppTimePicker from "@/components/ui/AppTimePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
 const route = useRoute();
@@ -30,6 +35,17 @@ const editAmount = ref("");
 const editDate = ref("");
 const editTime = ref("");
 const editAccountId = ref("");
+
+const editAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+]);
+const editToAccountOptions = computed(() => [
+	{ value: "", label: "— выберите счёт —" },
+	...accountsStore.activeAccounts
+		.filter((a) => a.id !== editAccountId.value)
+		.map((a) => ({ value: a.id, label: a.name })),
+]);
 const editToAccountId = ref("");
 const editCategoryId = ref("");
 const editComment = ref("");
@@ -90,7 +106,7 @@ async function saveEdit() {
 
 async function deleteTx() {
 	if (!tx.value) return;
-	if (!confirm("Удалить операцию?")) return;
+	if (!await showConfirm("Удалить операцию?")) return;
 	await txStore.deleteTransaction(tx.value.id);
 	router.back();
 }
@@ -104,14 +120,14 @@ function formatDateLabel(date: string): string {
 	<div class="detail-view">
 		<div class="detail-view__header">
 			<button
-				class="detail-view__back"
+				class="detail-view__back tp-body-lg-regular"
 				@click="isEditing ? (isEditing = false) : router.back()">
 				← {{ isEditing ? "Отмена" : "Назад" }}
 			</button>
-			<span class="detail-view__mode">{{ isEditing ? "Редактирование" : "" }}</span>
+			<span class="detail-view__mode tp-body-md-regular">{{ isEditing ? "Редактирование" : "" }}</span>
 			<button
 				v-if="!isEditing && tx"
-				class="detail-view__edit-btn"
+				class="detail-view__edit-btn tp-label-md-medium"
 				@click="startEdit">
 				Изменить
 			</button>
@@ -128,10 +144,11 @@ function formatDateLabel(date: string): string {
 			v-else-if="!isEditing"
 			class="detail-view__content">
 			<div
-				class="detail-amount"
+				class="detail-amount tp-display-md-bold"
 				:class="`text-${tx.type}`">
-				{{ tx.type === "income" ? "+" : tx.type === "expense" ? "-" : "↔" }}{{ tx.amount.toLocaleString("ru-RU") }}
-				{{ tx.currency }}
+				<template v-if="tx.type === 'transfer'"><PhArrowsLeftRight :size="20" /></template>
+				<template v-else>{{ tx.type === "income" ? "+" : "-" }}</template>
+				{{ tx.amount.toLocaleString("ru-RU") }} {{ tx.currency }}
 			</div>
 
 			<div class="detail-rows">
@@ -141,7 +158,7 @@ function formatDateLabel(date: string): string {
 				</div>
 				<div
 					v-if="category"
-					class="detail-row">
+					class="detail-row tp-body-md-regular">
 					<span class="detail-row__label">Категория</span>
 					<span class="detail-row__cat">
 						<span
@@ -158,7 +175,7 @@ function formatDateLabel(date: string): string {
 				</div>
 				<div
 					v-if="toAccount"
-					class="detail-row">
+					class="detail-row tp-body-md-regular">
 					<span class="detail-row__label">Куда</span>
 					<span>{{ toAccount.name }}</span>
 				</div>
@@ -168,19 +185,30 @@ function formatDateLabel(date: string): string {
 				</div>
 				<div
 					v-if="tx.comment"
-					class="detail-row">
+					class="detail-row tp-body-md-regular">
 					<span class="detail-row__label">Комментарий</span>
 					<span>{{ tx.comment }}</span>
 				</div>
 			</div>
 
-			<AppButton
-				variant="danger"
-				full-width
-				@click="deleteTx"
-				>Удалить операцию</AppButton
-			>
+			<div class="delete-btn-inline">
+				<AppButton
+					variant="danger"
+					full-width
+					@click="deleteTx"
+					>Удалить операцию</AppButton
+				>
+			</div>
 		</div>
+
+	<AppButton
+		v-if="!isEditing && tx"
+		class="fab-delete"
+		variant="danger"
+		size="lg"
+		@click="deleteTx">
+		Удалить
+	</AppButton>
 
 		<!-- EDIT MODE -->
 		<div
@@ -191,7 +219,7 @@ function formatDateLabel(date: string): string {
 				<button
 					v-for="t in ['expense', 'income', 'transfer'] as TransactionType[]"
 					:key="t"
-					:class="['type-tab', { 'type-tab--active': editType === t }]"
+					:class="['type-tab tp-label-md-medium', { 'type-tab--active': editType === t }]"
 					@click="editType = t">
 					{{ t === "expense" ? "Расход" : t === "income" ? "Доход" : "Перевод" }}
 				</button>
@@ -203,37 +231,29 @@ function formatDateLabel(date: string): string {
 					v-model="editAmount"
 					type="number"
 					inputmode="decimal"
-					class="amount-field__input"
+					class="amount-field__input tp-display-lg-bold"
 					placeholder="0"
 					min="0"
 					step="any" />
-				<span class="amount-field__currency">
-					{{ accountsStore.getById(editAccountId)?.currency ?? tx?.currency ?? "KZT" }}
+				<span class="amount-field__currency tp-heading-md-semibold">
+					{{ accountsStore.getById(editAccountId)?.currency ?? tx?.currency ?? "RUB" }}
 				</span>
 			</div>
 			<span
 				v-if="errors.amount"
-				class="field-error"
+				class="field-error tp-caption-md-regular"
 				>{{ errors.amount }}</span
 			>
 
 			<!-- Account -->
 			<div class="field">
-				<label class="field__label">Счёт</label>
-				<select
+				<label class="field__label tp-label-md-medium">Счёт</label>
+				<AppSelect
 					v-model="editAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="editAccountOptions" />
 				<span
 					v-if="errors.account"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.account }}</span
 				>
 			</div>
@@ -242,21 +262,13 @@ function formatDateLabel(date: string): string {
 			<div
 				v-if="editType === 'transfer'"
 				class="field">
-				<label class="field__label">Счёт назначения</label>
-				<select
+				<label class="field__label tp-label-md-medium">Счёт назначения</label>
+				<AppSelect
 					v-model="editToAccountId"
-					class="field__select">
-					<option value="">— выберите счёт —</option>
-					<option
-						v-for="acc in accountsStore.activeAccounts.filter((a) => a.id !== editAccountId)"
-						:key="acc.id"
-						:value="acc.id">
-						{{ acc.name }}
-					</option>
-				</select>
+					:options="editToAccountOptions" />
 				<span
 					v-if="errors.toAccount"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.toAccount }}</span
 				>
 			</div>
@@ -265,7 +277,7 @@ function formatDateLabel(date: string): string {
 			<div
 				v-if="editType !== 'transfer'"
 				class="field">
-				<label class="field__label">Категория</label>
+				<label class="field__label tp-label-md-medium">Категория</label>
 				<div class="cat-grid">
 					<button
 						v-for="cat in editCategories"
@@ -279,7 +291,7 @@ function formatDateLabel(date: string): string {
 				</div>
 				<span
 					v-if="errors.category"
-					class="field-error"
+					class="field-error tp-caption-md-regular"
 					>{{ errors.category }}</span
 				>
 			</div>
@@ -287,18 +299,12 @@ function formatDateLabel(date: string): string {
 			<!-- Date + Time -->
 			<div class="row-2">
 				<div class="field">
-					<label class="field__label">Дата</label>
-					<input
-						type="date"
-						v-model="editDate"
-						class="field__select" />
+					<label class="field__label tp-label-md-medium">Дата</label>
+					<AppDatePicker v-model="editDate" />
 				</div>
 				<div class="field">
-					<label class="field__label">Время</label>
-					<input
-						type="time"
-						v-model="editTime"
-						class="field__select" />
+					<label class="field__label tp-label-md-medium">Время</label>
+					<AppTimePicker v-model="editTime" />
 				</div>
 			</div>
 
@@ -343,12 +349,10 @@ function formatDateLabel(date: string): string {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-md);
 }
 .detail-view__mode {
 	flex: 1;
 	text-align: center;
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
 }
 .detail-view__edit-btn {
@@ -356,8 +360,6 @@ function formatDateLabel(date: string): string {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
-	font-size: var(--font-sm);
-	font-weight: 500;
 }
 .detail-view__not-found {
 	text-align: center;
@@ -372,8 +374,6 @@ function formatDateLabel(date: string): string {
 }
 
 .detail-amount {
-	font-size: var(--font-3xl);
-	font-weight: 700;
 	text-align: center;
 	padding: var(--space-8) 0;
 }
@@ -391,7 +391,6 @@ function formatDateLabel(date: string): string {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-lg);
-	font-size: var(--font-sm);
 }
 .detail-row__label {
 	color: var(--text-muted);
@@ -431,8 +430,6 @@ function formatDateLabel(date: string): string {
 	background: var(--bg-elevated);
 	border: none;
 	color: var(--text-secondary);
-	font-size: var(--font-sm);
-	font-weight: 500;
 	cursor: pointer;
 	transition:
 		background var(--transition),
@@ -451,8 +448,6 @@ function formatDateLabel(date: string): string {
 	padding: var(--space-4) 0;
 }
 .amount-field__input {
-	font-size: 48px;
-	font-weight: 700;
 	background: none;
 	border: none;
 	color: var(--text-primary);
@@ -463,7 +458,6 @@ function formatDateLabel(date: string): string {
 	outline: none;
 }
 .amount-field__currency {
-	font-size: var(--font-xl);
 	color: var(--text-secondary);
 }
 
@@ -473,9 +467,7 @@ function formatDateLabel(date: string): string {
 	gap: var(--space-1);
 }
 .field__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .field__select {
 	height: 44px;
@@ -484,7 +476,6 @@ function formatDateLabel(date: string): string {
 	border: 1px solid var(--border);
 	background: var(--bg-input);
 	color: var(--text-primary);
-	font-size: var(--font-md);
 }
 .field__select:focus {
 	outline: none;
@@ -532,7 +523,27 @@ function formatDateLabel(date: string): string {
 }
 
 .field-error {
-	font-size: var(--font-xs);
 	color: var(--accent-danger);
+}
+
+.fab-delete {
+	display: none;
+}
+
+@media (max-width: 899px) {
+	.delete-btn-inline {
+		display: none;
+	}
+
+	.fab-delete {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		position: fixed;
+		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+		left: var(--space-4);
+		right: var(--space-4);
+		z-index: 10;
+	}
 }
 </style>

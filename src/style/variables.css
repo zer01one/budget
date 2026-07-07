@@ -42,13 +42,14 @@
 	--space-10: 40px;
 	--space-12: 48px;
 
-	--font-xs: 11px;
-	--font-sm: 13px;
-	--font-md: 15px;
-	--font-lg: 17px;
-	--font-xl: 20px;
-	--font-2xl: 24px;
-	--font-3xl: 30px;
+	--font-xs: 14px;
+	--font-sm: 16px;
+	--font-md: 18px;
+	--font-lg: 20px;
+	--font-xl: 23px;
+	--font-2xl: 27px;
+	--font-3xl: 33px;
+	--font-4xl: 48px;
 
 	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
 	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);

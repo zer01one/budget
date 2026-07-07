@@ -154,7 +154,7 @@ export function previewRowsToTransactions(
 		.map((r) => ({
 			type: r.type,
 			amount: r.amount,
-			currency: "KZT",
+			currency: "RUB",
 			date: r.date,
 			time: "12:00",
 			accountId: mapping.accountId,

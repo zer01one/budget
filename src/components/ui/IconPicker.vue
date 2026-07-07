@@ -57,7 +57,7 @@ const CATEGORY_ICONS = [
 	<div class="icon-picker">
 		<label
 			v-if="label"
-			class="icon-picker__label"
+			class="icon-picker__label tp-label-md-medium"
 			>{{ label }}</label
 		>
 		<div class="icon-picker__grid">
@@ -82,9 +82,7 @@ const CATEGORY_ICONS = [
 	gap: var(--space-2);
 }
 .icon-picker__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .icon-picker__grid {
 	display: grid;

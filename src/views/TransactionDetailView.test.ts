@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
@@ -18,6 +18,16 @@ vi.mock("@/services/data/transactions.service", () => ({
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
 }));
+
+vi.mock("@/services/filesystem", () => ({
+	getFileSystemAdapter: vi.fn().mockResolvedValue({
+		readJson: vi.fn().mockResolvedValue(null),
+		writeJson: vi.fn().mockResolvedValue(undefined)
+	})
+}));
+
+const mockShowConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+vi.mock("@/utils/confirm", () => ({ showConfirm: mockShowConfirm }));
 
 beforeAll(() => {
 	vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn().mockResolvedValue({}) });
@@ -583,11 +593,7 @@ describe("TransactionDetailView – saveEdit success", () => {
 // ── deleteTx ─────────────────────────────────────────────────────────────────
 
 describe("TransactionDetailView – deleteTx", () => {
-	let confirmMock: ReturnType<typeof vi.fn>;
-
 	beforeEach(() => {
-		confirmMock = vi.fn();
-		vi.stubGlobal("confirm", confirmMock);
 		pinia = createPinia();
 		setActivePinia(pinia);
 		const txStore = useTransactionsStore();
@@ -598,12 +604,8 @@ describe("TransactionDetailView – deleteTx", () => {
 		categoriesStore.categories = [makeCategory()];
 	});
 
-	afterEach(() => {
-		vi.unstubAllGlobals();
-	});
 
 	it("marks tx as deleted when confirmed", async () => {
-		confirmMock.mockReturnValue(true);
 		const txStore = useTransactionsStore();
 		const { wrapper, router } = await mountView();
 		vi.spyOn(router, "back").mockImplementation(() => {});
@@ -616,7 +618,6 @@ describe("TransactionDetailView – deleteTx", () => {
 	});
 
 	it("calls router.back after deletion", async () => {
-		confirmMock.mockReturnValue(true);
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back").mockImplementation(() => {});
 		await wrapper
@@ -628,7 +629,7 @@ describe("TransactionDetailView – deleteTx", () => {
 	});
 
 	it("does not delete when cancelled", async () => {
-		confirmMock.mockReturnValue(false);
+		mockShowConfirm.mockResolvedValueOnce(false);
 		const txStore = useTransactionsStore();
 		const { wrapper } = await mountView();
 		await wrapper
@@ -639,7 +640,7 @@ describe("TransactionDetailView – deleteTx", () => {
 	});
 
 	it("does not call router.back when cancelled", async () => {
-		confirmMock.mockReturnValue(false);
+		mockShowConfirm.mockResolvedValueOnce(false);
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back");
 		await wrapper

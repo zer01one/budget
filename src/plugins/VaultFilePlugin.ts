@@ -10,6 +10,7 @@ export interface VaultFilePlugin {
 	listFiles(options: { treeUri: string; relativeDir?: string }): Promise<{ files: string[] }>;
 	exists(options: { treeUri: string; relativePath: string }): Promise<{ exists: boolean }>;
 	mkdir(options: { treeUri: string; relativePath: string }): Promise<void>;
+	persistPermission(options: { treeUri: string }): Promise<void>;
 }
 
 export const VaultFile = registerPlugin<VaultFilePlugin>("VaultFile");

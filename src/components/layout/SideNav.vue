@@ -1,19 +1,30 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 import { useSettingsStore } from "@/stores/settings.store";
+import {
+	PhHouseLine,
+	PhArrowsDownUp,
+	PhWallet,
+	PhTag,
+	PhChartBar,
+	PhPiggyBank,
+	PhUserCircle,
+	PhCaretLeft,
+	PhCaretRight
+} from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
 
 const items = [
-	{ to: "/dashboard", label: "Главная", icon: "⊞" },
-	{ to: "/transactions", label: "Операции", icon: "↕" },
-	{ to: "/accounts", label: "Счета", icon: "◈" },
-	{ to: "/categories", label: "Категории", icon: "⊙" },
-	{ to: "/charts", label: "Графики", icon: "◉" },
-	{ to: "/budgets", label: "Бюджеты", icon: "◳" },
-	{ to: "/profile", label: "Профиль", icon: "◎" }
+	{ to: "/dashboard", label: "Главная", icon: PhHouseLine },
+	{ to: "/transactions", label: "Операции", icon: PhArrowsDownUp },
+	{ to: "/accounts", label: "Счета", icon: PhWallet },
+	{ to: "/categories", label: "Категории", icon: PhTag },
+	{ to: "/charts", label: "Графики", icon: PhChartBar },
+	{ to: "/budgets", label: "Бюджеты", icon: PhPiggyBank },
+	{ to: "/profile", label: "Профиль", icon: PhUserCircle }
 ];
 
 function isActive(path: string): boolean {
@@ -24,19 +35,25 @@ function isActive(path: string): boolean {
 <template>
 	<nav :class="['side-nav', { 'side-nav--expanded': settingsStore.settings.sidebarExpanded }]">
 		<button
-			class="side-nav__toggle"
+			class="side-nav__toggle tp-body-md-regular"
 			@click="settingsStore.toggleSidebar">
-			<span>{{ settingsStore.settings.sidebarExpanded ? "◀" : "▶" }}</span>
+			<component
+				:is="settingsStore.settings.sidebarExpanded ? PhCaretLeft : PhCaretRight"
+				:size="16" />
 		</button>
 		<button
 			v-for="item in items"
 			:key="item.to"
-			:class="['side-nav__item', { 'side-nav__item--active': isActive(item.to) }]"
+			:class="['side-nav__item tp-body-lg-regular', { 'side-nav__item--active': isActive(item.to) }]"
 			@click="router.push(item.to)">
-			<span class="side-nav__icon">{{ item.icon }}</span>
+			<component
+				:is="item.icon"
+				class="side-nav__icon"
+				:size="22"
+				:weight="isActive(item.to) ? 'fill' : 'regular'" />
 			<span
 				v-if="settingsStore.settings.sidebarExpanded"
-				class="side-nav__label">
+				class="side-nav__label tp-label-md-medium">
 				{{ item.label }}
 			</span>
 		</button>
@@ -71,7 +88,6 @@ function isActive(path: string): boolean {
 	align-items: center;
 	justify-content: center;
 	margin-bottom: var(--space-3);
-	font-size: 12px;
 	transition: color var(--transition);
 }
 .side-nav__toggle:hover {
@@ -94,7 +110,6 @@ function isActive(path: string): boolean {
 	transition:
 		color var(--transition),
 		background var(--transition);
-	font-size: var(--font-md);
 }
 .side-nav__item:hover {
 	background: var(--bg-elevated);
@@ -106,13 +121,7 @@ function isActive(path: string): boolean {
 }
 
 .side-nav__icon {
-	font-size: 20px;
 	flex-shrink: 0;
 	width: 24px;
-	text-align: center;
-}
-.side-nav__label {
-	font-size: var(--font-sm);
-	font-weight: 500;
 }
 </style>

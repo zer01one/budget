@@ -29,7 +29,7 @@ const PALETTE = [
 	<div class="color-picker">
 		<label
 			v-if="label"
-			class="color-picker__label"
+			class="color-picker__label tp-label-md-medium"
 			>{{ label }}</label
 		>
 		<div class="color-picker__grid">
@@ -50,9 +50,7 @@ const PALETTE = [
 	gap: var(--space-2);
 }
 .color-picker__label {
-	font-size: var(--font-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
 }
 .color-picker__grid {
 	display: grid;
