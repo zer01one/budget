@@ -118,12 +118,12 @@ afterEach(() => {
 	vi.clearAllMocks();
 });
 
-async function mountView() {
+async function mountView(query: Record<string, string> = {}) {
 	const router = createRouter({
 		history: createMemoryHistory(),
 		routes: [{ path: "/", component: AddTransactionView }]
 	});
-	router.push("/");
+	router.push({ path: "/", query });
 	await router.isReady();
 	const wrapper = mount(AddTransactionView, {
 		global: { plugins: [pinia, router] }
@@ -818,6 +818,69 @@ describe("AddTransactionView – date and time defaults", () => {
 		const val = (timeInput.element as HTMLInputElement).value;
 		// just check it matches HH:MM format
 		expect(val).toMatch(/^\d{2}:\d{2}$/);
+	});
+});
+
+// ─── prefill from receipt scan (route query) ─────────────────────────────────
+
+describe("AddTransactionView – prefill from receipt scan (route query)", () => {
+	it("prefills amount from query.amount", async () => {
+		const { wrapper } = await mountView({ amount: "1234.56" });
+		expect((wrapper.vm as any).$.setupState.amount).toBe("1234.56");
+	});
+
+	it("prefills date from query.date", async () => {
+		const { wrapper } = await mountView({ date: "2026-07-07" });
+		expect((wrapper.vm as any).$.setupState.date).toBe("2026-07-07");
+	});
+
+	it("prefills time from query.time", async () => {
+		const { wrapper } = await mountView({ time: "15:30" });
+		expect((wrapper.vm as any).$.setupState.time).toBe("15:30");
+	});
+
+	it("prefills type from query.type=income and activates the income tab", async () => {
+		const { wrapper } = await mountView({ type: "income" });
+		const tabs = wrapper.findAll(".type-tab");
+		expect(tabs[1].classes()).toContain("type-tab--active");
+	});
+
+	it("defaults to expense type when query.type is absent", async () => {
+		const { wrapper } = await mountView();
+		const tabs = wrapper.findAll(".type-tab");
+		expect(tabs[0].classes()).toContain("type-tab--active");
+	});
+
+	it("defaults amount to empty string when query.amount is absent", async () => {
+		const { wrapper } = await mountView();
+		expect((wrapper.vm as any).$.setupState.amount).toBe("");
+	});
+
+	it("defaults date to today when query.date is absent", async () => {
+		const { wrapper } = await mountView();
+		const today = new Date().toLocaleDateString("en-CA");
+		expect((wrapper.vm as any).$.setupState.date).toBe(today);
+	});
+
+	it("includes the receiptTag in tags on submit when present in query", async () => {
+		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
+		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
+		const { wrapper } = await mountView({ amount: "100", receiptTag: "receipt:1:2:3" });
+		await wrapper.find(".cat-item").trigger("click");
+		await wrapper.find(".app-btn").trigger("click");
+		await flushPromises();
+		expect(addSpy.mock.calls[0][0].tags).toEqual(["receipt:1:2:3"]);
+	});
+
+	it("tags is an empty array on submit when there is no receiptTag in query", async () => {
+		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
+		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
+		const { wrapper } = await mountView();
+		await wrapper.find(".amount-field__input").setValue("100");
+		await wrapper.find(".cat-item").trigger("click");
+		await wrapper.find(".app-btn").trigger("click");
+		await flushPromises();
+		expect(addSpy.mock.calls[0][0].tags).toEqual([]);
 	});
 });
 

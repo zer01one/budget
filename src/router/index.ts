@@ -34,6 +34,12 @@ const router = createRouter({
 			meta: { requiresVault: true }
 		},
 		{
+			path: "/transactions/scan",
+			name: "scan-receipt",
+			component: () => import("@/views/ScanReceiptView.vue"),
+			meta: { requiresVault: true }
+		},
+		{
 			path: "/transactions/:id",
 			name: "transaction-detail",
 			component: () => import("@/views/TransactionDetailView.vue"),

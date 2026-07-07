@@ -37,6 +37,7 @@ describe("router", () => {
 			"dashboard",
 			"transactions",
 			"add-transaction",
+			"scan-receipt",
 			"transaction-detail",
 			"accounts",
 			"add-account",
@@ -136,7 +137,7 @@ describe("router", () => {
 			await router.push("/setup");
 			await router.isReady();
 
-			for (const name of ["transactions", "accounts", "categories", "charts", "budgets", "profile", "import"]) {
+			for (const name of ["transactions", "scan-receipt", "accounts", "categories", "charts", "budgets", "profile", "import"]) {
 				const route = router.getRoutes().find((r) => r.name === name)!;
 				await router.push(route.path.replace(/:.*/, "test-id"));
 				await router.isReady();

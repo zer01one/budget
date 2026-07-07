@@ -6,6 +6,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
+import { isScannerAvailable } from "@/services/qrScanner.service";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight, PhFunnel, PhX } from "@phosphor-icons/vue";
@@ -385,12 +386,22 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		</div>
 	</div>
 	<ScrollToTopButton :scroll-el="txGroupsRef" />
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/transactions/add')">
-		Добавить
-	</AppButton>
+	<div class="fab-row">
+		<AppButton
+			class="fab-add"
+			size="lg"
+			@click="router.push('/transactions/add')">
+			Добавить
+		</AppButton>
+		<AppButton
+			v-if="isScannerAvailable()"
+			class="fab-scan"
+			size="lg"
+			variant="secondary"
+			@click="router.push('/transactions/scan')">
+			Скан
+		</AppButton>
+	</div>
 </template>
 
 <style scoped>
@@ -399,8 +410,11 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	flex-direction: column;
 	height: 100%;
 }
-.fab-add {
+.fab-row {
 	display: none;
+}
+.fab-add {
+	flex: 1;
 }
 
 @media (max-width: 899px) {
@@ -408,8 +422,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 		display: none;
 	}
 
-	.fab-add {
+	.fab-row {
 		display: flex;
+		gap: var(--space-2);
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 		left: var(--space-4);

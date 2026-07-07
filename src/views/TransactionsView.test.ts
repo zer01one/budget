@@ -3,6 +3,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import TransactionsView from "@/views/TransactionsView.vue";
+import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -32,6 +33,10 @@ vi.mock("@/services/filesystem", () => ({
 
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
+}));
+
+vi.mock("@/services/qrScanner.service", () => ({
+	isScannerAvailable: vi.fn()
 }));
 
 // ── Global stubs ──────────────────────────────────────────────────────────────
@@ -235,6 +240,26 @@ describe("TransactionsView – navigation", () => {
 		const pushSpy = vi.spyOn(router, "push");
 		await wrapper.find(".tx-view__header .app-btn").trigger("click");
 		expect(pushSpy).toHaveBeenCalledWith("/transactions/add");
+	});
+
+	it("does not render the scan-receipt button when the scanner is unavailable", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".fab-scan").exists()).toBe(false);
+	});
+
+	it("renders the scan-receipt button when the scanner is available", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".fab-scan").exists()).toBe(true);
+	});
+
+	it("scan-receipt button click navigates to /transactions/scan", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper, router } = await mountView();
+		const pushSpy = vi.spyOn(router, "push");
+		await wrapper.find(".fab-scan").trigger("click");
+		expect(pushSpy).toHaveBeenCalledWith("/transactions/scan");
 	});
 
 	it("transaction row click navigates to /transactions/{id}", async () => {

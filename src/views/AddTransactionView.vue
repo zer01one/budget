@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
@@ -14,13 +14,16 @@ import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 
 const router = useRouter();
+const route = useRoute();
 const txStore = useTransactionsStore();
 const accountsStore = useAccountsStore();
 const categoriesStore = useCategoriesStore();
 const gamificationStore = useGamificationStore();
 
-const type = ref<TransactionType>("expense");
-const amount = ref("");
+const receiptTag = route.query.receiptTag ? String(route.query.receiptTag) : null;
+
+const type = ref<TransactionType>((route.query.type as TransactionType) || "expense");
+const amount = ref(String(route.query.amount ?? ""));
 
 const accountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
@@ -32,8 +35,8 @@ const toAccountOptions = computed(() => [
 		.filter((a) => a.id !== accountId.value)
 		.map((a) => ({ value: a.id, label: a.name })),
 ]);
-const date = ref(new Date().toLocaleDateString("en-CA"));
-const time = ref(new Date().toTimeString().slice(0, 5));
+const date = ref(String(route.query.date ?? new Date().toLocaleDateString("en-CA")));
+const time = ref(String(route.query.time ?? new Date().toTimeString().slice(0, 5)));
 const accountId = ref(accountsStore.activeAccounts[0]?.id ?? "");
 const toAccountId = ref("");
 const categoryId = ref("");
@@ -88,7 +91,7 @@ async function submit() {
 			toAccountId: type.value === "transfer" ? toAccountId.value : null,
 			categoryId: type.value !== "transfer" ? categoryId.value || null : null,
 			comment: comment.value.trim(),
-			tags: [],
+			tags: receiptTag ? [receiptTag] : [],
 			isRecurring: isRecurring.value,
 			recurringRule: isRecurring.value ? recurringRule.value : undefined,
 			recurringParentId: null

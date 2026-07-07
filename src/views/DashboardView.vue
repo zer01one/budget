@@ -6,6 +6,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
+import { isScannerAvailable } from "@/services/qrScanner.service";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight } from "@phosphor-icons/vue";
@@ -159,12 +160,22 @@ function formatDate(date: string): string {
 		</div>
 	</div>
 
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/transactions/add')">
-		Добавить операцию
-	</AppButton>
+	<div class="fab-row">
+		<AppButton
+			class="fab-add"
+			size="lg"
+			@click="router.push('/transactions/add')">
+			Добавить операцию
+		</AppButton>
+		<AppButton
+			v-if="isScannerAvailable()"
+			class="fab-scan"
+			size="lg"
+			variant="secondary"
+			@click="router.push('/transactions/scan')">
+			Скан
+		</AppButton>
+	</div>
 </template>
 
 <style scoped>
@@ -302,8 +313,11 @@ function formatDate(date: string): string {
 .tx-row__meta {
 	color: var(--text-muted);
 }
-.fab-add {
+.fab-row {
 	display: none;
+}
+.fab-add {
+	flex: 1;
 }
 
 @media (max-width: 899px) {
@@ -311,8 +325,9 @@ function formatDate(date: string): string {
 		display: none;
 	}
 
-	.fab-add {
+	.fab-row {
 		display: flex;
+		gap: var(--space-2);
 		position: fixed;
 		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 		left: var(--space-4);
