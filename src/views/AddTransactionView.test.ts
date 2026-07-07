@@ -3,6 +3,8 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import AddTransactionView from "./AddTransactionView.vue";
+import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
+import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -28,6 +30,12 @@ vi.mock("@/services/data/transactions.service", () => ({
 
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
+}));
+
+vi.mock("@/services/qrScanner.service", () => ({
+	isScannerAvailable: vi.fn(() => false),
+	scanReceiptQr: vi.fn(),
+	scanReceiptQrFromImage: vi.fn()
 }));
 
 // ─── factories ────────────────────────────────────────────────────────────────
@@ -821,58 +829,97 @@ describe("AddTransactionView – date and time defaults", () => {
 	});
 });
 
-// ─── prefill from receipt scan (route query) ─────────────────────────────────
+// ─── receipt scan modal ───────────────────────────────────────────────────────
 
-describe("AddTransactionView – prefill from receipt scan (route query)", () => {
-	it("prefills amount from query.amount", async () => {
-		const { wrapper } = await mountView({ amount: "1234.56" });
-		expect((wrapper.vm as any).$.setupState.amount).toBe("1234.56");
-	});
+describe("AddTransactionView – receipt scan modal", () => {
+	const PARSED = {
+		amount: 1234.56,
+		date: "2026-07-07",
+		time: "15:30",
+		type: "expense" as const,
+		fn: "1111",
+		fd: "2222",
+		fp: "3333"
+	};
+	const RECEIPT_TAG = "receipt:1111:2222:3333";
+	const RECEIPT_COMMENT = "Чек от 07.07.2026 15:30";
 
-	it("prefills date from query.date", async () => {
-		const { wrapper } = await mountView({ date: "2026-07-07" });
-		expect((wrapper.vm as any).$.setupState.date).toBe("2026-07-07");
-	});
-
-	it("prefills time from query.time", async () => {
-		const { wrapper } = await mountView({ time: "15:30" });
-		expect((wrapper.vm as any).$.setupState.time).toBe("15:30");
-	});
-
-	it("prefills type from query.type=income and activates the income tab", async () => {
-		const { wrapper } = await mountView({ type: "income" });
-		const tabs = wrapper.findAll(".type-tab");
-		expect(tabs[1].classes()).toContain("type-tab--active");
-	});
-
-	it("defaults to expense type when query.type is absent", async () => {
+	it("does not render the scan button when the scanner is unavailable", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
 		const { wrapper } = await mountView();
-		const tabs = wrapper.findAll(".type-tab");
-		expect(tabs[0].classes()).toContain("type-tab--active");
+		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(false);
 	});
 
-	it("defaults amount to empty string when query.amount is absent", async () => {
+	it("renders the scan button when the scanner is available", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
 		const { wrapper } = await mountView();
-		expect((wrapper.vm as any).$.setupState.amount).toBe("");
+		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(true);
 	});
 
-	it("defaults date to today when query.date is absent", async () => {
+	it("modal is not shown initially", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
 		const { wrapper } = await mountView();
-		const today = new Date().toLocaleDateString("en-CA");
-		expect((wrapper.vm as any).$.setupState.date).toBe(today);
+		expect(wrapper.findComponent(ScanReceiptModal).exists()).toBe(false);
 	});
 
-	it("includes the receiptTag in tags on submit when present in query", async () => {
+	it("clicking the scan button opens the modal", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		await wrapper.find(".add-tx__scan-btn").trigger("click");
+		expect(wrapper.findComponent(ScanReceiptModal).exists()).toBe(true);
+	});
+
+	it("modal close event hides the modal", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		await wrapper.find(".add-tx__scan-btn").trigger("click");
+		wrapper.findComponent(ScanReceiptModal).vm.$emit("close");
+		await wrapper.vm.$nextTick();
+		expect(wrapper.findComponent(ScanReceiptModal).exists()).toBe(false);
+	});
+
+	async function applyScan(wrapper: ReturnType<typeof mount>) {
+		await wrapper.find(".add-tx__scan-btn").trigger("click");
+		wrapper.findComponent(ScanReceiptModal).vm.$emit("apply", PARSED, RECEIPT_TAG);
+		await wrapper.vm.$nextTick();
+	}
+
+	it("apply fills amount, date, time and comment and closes the modal", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		await applyScan(wrapper);
+		const state = (wrapper.vm as any).$.setupState;
+		expect(state.amount).toBe("1234.56");
+		expect(state.date).toBe("2026-07-07");
+		expect(state.time).toBe("15:30");
+		expect(state.comment).toBe(RECEIPT_COMMENT);
+		expect(wrapper.findComponent(ScanReceiptModal).exists()).toBe(false);
+	});
+
+	it("apply switches the type tab according to the receipt", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
+		const { wrapper } = await mountView();
+		await wrapper.find(".add-tx__scan-btn").trigger("click");
+		wrapper.findComponent(ScanReceiptModal).vm.$emit("apply", { ...PARSED, type: "income" }, RECEIPT_TAG);
+		await wrapper.vm.$nextTick();
+		expect(wrapper.findAll(".type-tab")[1].classes()).toContain("type-tab--active");
+	});
+
+	it("submit after apply includes the receipt tag in tags", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
 		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
 		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
-		const { wrapper } = await mountView({ amount: "100", receiptTag: "receipt:1:2:3" });
+		const { wrapper } = await mountView();
+		await applyScan(wrapper);
 		await wrapper.find(".cat-item").trigger("click");
 		await wrapper.find(".app-btn").trigger("click");
 		await flushPromises();
-		expect(addSpy.mock.calls[0][0].tags).toEqual(["receipt:1:2:3"]);
+		expect(addSpy.mock.calls[0][0].tags).toEqual([RECEIPT_TAG]);
+		expect(addSpy.mock.calls[0][0].comment).toBe(RECEIPT_COMMENT);
 	});
 
-	it("tags is an empty array on submit when there is no receiptTag in query", async () => {
+	it("tags is an empty array on submit without a scan", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
 		const addSpy = vi.spyOn(useTransactionsStore(), "addTransaction").mockResolvedValue(makeTx());
 		vi.spyOn(useGamificationStore(), "onTransactionAdded").mockImplementation(() => {});
 		const { wrapper } = await mountView();

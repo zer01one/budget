@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseFiscalReceiptQr, receiptFingerprint } from "./receiptQr";
+import { parseFiscalReceiptQr, receiptFingerprint, receiptComment } from "./receiptQr";
 
 const VALID_QR = "t=20260707T1530&s=1234.56&fn=1234567890123456&i=123456&fp=1234567890&n=1";
 
@@ -109,6 +109,12 @@ describe("parseFiscalReceiptQr", () => {
 
 	it("returns null for an unrelated QR payload", () => {
 		expect(parseFiscalReceiptQr("https://example.com/some-page")).toBeNull();
+	});
+});
+
+describe("receiptComment", () => {
+	it("formats the receipt date and time into a human-readable comment", () => {
+		expect(receiptComment({ date: "2026-07-07", time: "15:30" })).toBe("Чек от 07.07.2026 15:30");
 	});
 });
 

@@ -4,7 +4,6 @@ import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { nextTick } from "vue";
 import DashboardView from "@/views/DashboardView.vue";
-import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
@@ -34,10 +33,6 @@ vi.mock("@/services/filesystem", () => ({
 
 vi.mock("@/stores/settings.store", () => ({
 	useSettingsStore: vi.fn(() => ({ settings: { deviceId: "test-device" } }))
-}));
-
-vi.mock("@/services/qrScanner.service", () => ({
-	isScannerAvailable: vi.fn()
 }));
 
 // ── Globals ───────────────────────────────────────────────────────────────────
@@ -125,7 +120,6 @@ async function mountView() {
 		routes: [
 			{ path: "/", component: DashboardView },
 			{ path: "/transactions/add", component: { template: "<div/>" } },
-			{ path: "/transactions/scan", component: { template: "<div/>" } },
 			{ path: "/transactions", component: { template: "<div/>" } },
 			{ path: "/transactions/:id", component: { template: "<div/>" } }
 		]
@@ -587,26 +581,6 @@ describe("DashboardView – navigation", () => {
 		const pushSpy = vi.spyOn(router, "push");
 		await wrapper.find(".app-btn").trigger("click");
 		expect(pushSpy).toHaveBeenCalledWith("/transactions/add");
-	});
-
-	it("does not render the scan-receipt button when the scanner is unavailable", async () => {
-		vi.mocked(isScannerAvailable).mockReturnValue(false);
-		const { wrapper } = await mountView();
-		expect(wrapper.find(".fab-scan").exists()).toBe(false);
-	});
-
-	it("renders the scan-receipt button when the scanner is available", async () => {
-		vi.mocked(isScannerAvailable).mockReturnValue(true);
-		const { wrapper } = await mountView();
-		expect(wrapper.find(".fab-scan").exists()).toBe(true);
-	});
-
-	it("scan-receipt button click navigates to /transactions/scan", async () => {
-		vi.mocked(isScannerAvailable).mockReturnValue(true);
-		const { wrapper, router } = await mountView();
-		const pushSpy = vi.spyOn(router, "push");
-		await wrapper.find(".fab-scan").trigger("click");
-		expect(pushSpy).toHaveBeenCalledWith("/transactions/scan");
 	});
 
 	it("Все → button navigates to /transactions", async () => {

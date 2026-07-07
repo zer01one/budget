@@ -42,3 +42,20 @@ export async function scanReceiptQr(): Promise<string | null> {
 		return null;
 	}
 }
+
+export async function scanReceiptQrFromImage(): Promise<string | null> {
+	if (!isScannerAvailable()) return null;
+
+	const { FilePicker } = await import("@capawesome/capacitor-file-picker");
+	const { BarcodeScanner, BarcodeFormat } = await import("@capacitor-mlkit/barcode-scanning");
+
+	try {
+		const { files } = await FilePicker.pickImages({ limit: 1 });
+		const path = files[0]?.path;
+		if (!path) return null;
+		const { barcodes } = await BarcodeScanner.readBarcodesFromImage({ path, formats: [BarcodeFormat.QrCode] });
+		return barcodes[0]?.rawValue ?? null;
+	} catch {
+		return null;
+	}
+}

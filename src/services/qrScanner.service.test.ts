@@ -1,18 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-const { mockIsNativePlatform, mockIsAvailable, mockInstall, mockAddListener, mockScan } = vi.hoisted(() => ({
-	mockIsNativePlatform: vi.fn(() => false),
-	mockIsAvailable: vi.fn(async () => ({ available: true })),
-	mockInstall: vi.fn(async () => {}),
-	mockAddListener: vi.fn(async (_event: string, cb: (e: { state: number }) => void) => {
-		(mockAddListener as any).lastCb = cb;
-		return { remove: vi.fn() };
-	}),
-	mockScan: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-data" }] }))
-}));
+const { mockIsNativePlatform, mockIsAvailable, mockInstall, mockAddListener, mockScan, mockReadFromImage, mockPickImages } = vi.hoisted(
+	() => ({
+		mockIsNativePlatform: vi.fn(() => false),
+		mockIsAvailable: vi.fn(async () => ({ available: true })),
+		mockInstall: vi.fn(async () => {}),
+		mockAddListener: vi.fn(async (_event: string, cb: (e: { state: number }) => void) => {
+			(mockAddListener as any).lastCb = cb;
+			return { remove: vi.fn() };
+		}),
+		mockScan: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-data" }] })),
+		mockReadFromImage: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-from-image" }] })),
+		mockPickImages: vi.fn(async () => ({ files: [{ path: "/gallery/receipt.jpg" }] }))
+	})
+);
 
 vi.mock("@capacitor/core", () => ({
 	Capacitor: { isNativePlatform: mockIsNativePlatform }
+}));
+
+vi.mock("@capawesome/capacitor-file-picker", () => ({
+	FilePicker: {
+		pickImages: mockPickImages
+	}
 }));
 
 vi.mock("@capacitor-mlkit/barcode-scanning", () => ({
@@ -20,7 +30,8 @@ vi.mock("@capacitor-mlkit/barcode-scanning", () => ({
 		isGoogleBarcodeScannerModuleAvailable: mockIsAvailable,
 		installGoogleBarcodeScannerModule: mockInstall,
 		addListener: mockAddListener,
-		scan: mockScan
+		scan: mockScan,
+		readBarcodesFromImage: mockReadFromImage
 	},
 	BarcodeFormat: { QrCode: "QR_CODE" },
 	GoogleBarcodeScannerModuleInstallState: {
@@ -35,12 +46,14 @@ vi.mock("@capacitor-mlkit/barcode-scanning", () => ({
 	}
 }));
 
-import { isScannerAvailable, scanReceiptQr } from "./qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage } from "./qrScanner.service";
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsAvailable.mockResolvedValue({ available: true });
 	mockScan.mockResolvedValue({ barcodes: [{ rawValue: "raw-qr-data" }] });
+	mockReadFromImage.mockResolvedValue({ barcodes: [{ rawValue: "raw-qr-from-image" }] });
+	mockPickImages.mockResolvedValue({ files: [{ path: "/gallery/receipt.jpg" }] });
 });
 
 describe("isScannerAvailable", () => {
@@ -135,5 +148,67 @@ describe("scanReceiptQr – native, module needs installing", () => {
 		const result = await promise;
 		expect(result).toBeNull();
 		expect(mockScan).not.toHaveBeenCalled();
+	});
+});
+
+describe("scanReceiptQrFromImage – non-native platform", () => {
+	beforeEach(() => mockIsNativePlatform.mockReturnValue(false));
+
+	it("returns null without opening the picker", async () => {
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+		expect(mockPickImages).not.toHaveBeenCalled();
+		expect(mockReadFromImage).not.toHaveBeenCalled();
+	});
+});
+
+describe("scanReceiptQrFromImage – native platform", () => {
+	beforeEach(() => mockIsNativePlatform.mockReturnValue(true));
+
+	it("picks a single image from the gallery", async () => {
+		await scanReceiptQrFromImage();
+		expect(mockPickImages).toHaveBeenCalledWith({ limit: 1 });
+	});
+
+	it("reads barcodes from the picked image path restricted to QR_CODE", async () => {
+		await scanReceiptQrFromImage();
+		expect(mockReadFromImage).toHaveBeenCalledWith({ path: "/gallery/receipt.jpg", formats: ["QR_CODE"] });
+	});
+
+	it("returns the raw value of the first detected barcode", async () => {
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBe("raw-qr-from-image");
+	});
+
+	it("returns null when the user picks nothing", async () => {
+		mockPickImages.mockResolvedValueOnce({ files: [] });
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+		expect(mockReadFromImage).not.toHaveBeenCalled();
+	});
+
+	it("returns null when the picked file has no path", async () => {
+		mockPickImages.mockResolvedValueOnce({ files: [{ path: undefined as unknown as string }] });
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+		expect(mockReadFromImage).not.toHaveBeenCalled();
+	});
+
+	it("returns null when the image contains no QR code", async () => {
+		mockReadFromImage.mockResolvedValueOnce({ barcodes: [] });
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+	});
+
+	it("returns null when the picker throws (user cancelled)", async () => {
+		mockPickImages.mockRejectedValueOnce(new Error("pickImages canceled"));
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
+	});
+
+	it("returns null when readBarcodesFromImage throws", async () => {
+		mockReadFromImage.mockRejectedValueOnce(new Error("decode failed"));
+		const result = await scanReceiptQrFromImage();
+		expect(result).toBeNull();
 	});
 });

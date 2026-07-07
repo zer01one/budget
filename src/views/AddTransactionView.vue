@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
@@ -12,18 +12,21 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
+import { isScannerAvailable } from "@/services/qrScanner.service";
+import { receiptComment, type ParsedReceipt } from "@/utils/receiptQr";
 
 const router = useRouter();
-const route = useRoute();
 const txStore = useTransactionsStore();
 const accountsStore = useAccountsStore();
 const categoriesStore = useCategoriesStore();
 const gamificationStore = useGamificationStore();
 
-const receiptTag = route.query.receiptTag ? String(route.query.receiptTag) : null;
+const receiptTag = ref<string | null>(null);
+const showScanModal = ref(false);
 
-const type = ref<TransactionType>((route.query.type as TransactionType) || "expense");
-const amount = ref(String(route.query.amount ?? ""));
+const type = ref<TransactionType>("expense");
+const amount = ref("");
 
 const accountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
@@ -35,8 +38,8 @@ const toAccountOptions = computed(() => [
 		.filter((a) => a.id !== accountId.value)
 		.map((a) => ({ value: a.id, label: a.name })),
 ]);
-const date = ref(String(route.query.date ?? new Date().toLocaleDateString("en-CA")));
-const time = ref(String(route.query.time ?? new Date().toTimeString().slice(0, 5)));
+const date = ref(new Date().toLocaleDateString("en-CA"));
+const time = ref(new Date().toTimeString().slice(0, 5));
 const accountId = ref(accountsStore.activeAccounts[0]?.id ?? "");
 const toAccountId = ref("");
 const categoryId = ref("");
@@ -91,7 +94,7 @@ async function submit() {
 			toAccountId: type.value === "transfer" ? toAccountId.value : null,
 			categoryId: type.value !== "transfer" ? categoryId.value || null : null,
 			comment: comment.value.trim(),
-			tags: receiptTag ? [receiptTag] : [],
+			tags: receiptTag.value ? [receiptTag.value] : [],
 			isRecurring: isRecurring.value,
 			recurringRule: isRecurring.value ? recurringRule.value : undefined,
 			recurringParentId: null
@@ -101,6 +104,17 @@ async function submit() {
 	} finally {
 		isSubmitting.value = false;
 	}
+}
+
+function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
+	if (parsed.type !== type.value) categoryId.value = "";
+	type.value = parsed.type;
+	amount.value = String(parsed.amount);
+	date.value = parsed.date;
+	time.value = parsed.time;
+	comment.value = receiptComment(parsed);
+	receiptTag.value = fingerprint;
+	showScanModal.value = false;
 }
 </script>
 
@@ -130,6 +144,14 @@ async function submit() {
 		</div>
 
 		<div class="add-tx__form">
+			<!-- Scan receipt -->
+			<button
+				v-if="isScannerAvailable()"
+				class="add-tx__scan-btn tp-label-md-medium"
+				@click="showScanModal = true">
+				Сканировать чек
+			</button>
+
 			<!-- Amount -->
 			<div class="amount-field">
 				<input
@@ -251,6 +273,11 @@ async function submit() {
 				Сохранить
 			</AppButton>
 		</div>
+
+		<ScanReceiptModal
+			v-if="showScanModal"
+			@close="showScanModal = false"
+			@apply="onScanApply" />
 	</div>
 </template>
 
@@ -302,6 +329,22 @@ async function submit() {
 	gap: var(--space-4);
 	padding: var(--space-3) var(--space-5) var(--space-8);
 	overflow-y: auto;
+}
+
+.add-tx__scan-btn {
+	height: 44px;
+	border-radius: var(--radius-md);
+	background: var(--bg-elevated);
+	border: 1px dashed var(--border);
+	color: var(--text-secondary);
+	cursor: pointer;
+	transition:
+		background var(--transition),
+		color var(--transition);
+}
+.add-tx__scan-btn:hover {
+	background: var(--border);
+	color: var(--text-primary);
 }
 
 .amount-field {

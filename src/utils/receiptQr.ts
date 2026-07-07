@@ -48,3 +48,8 @@ export function parseFiscalReceiptQr(raw: string): ParsedReceipt | null {
 export function receiptFingerprint(r: Pick<ParsedReceipt, "fn" | "fd" | "fp">): string {
 	return `receipt:${r.fn}:${r.fd}:${r.fp}`;
 }
+
+export function receiptComment(r: Pick<ParsedReceipt, "date" | "time">): string {
+	const [year, month, day] = r.date.split("-");
+	return `Чек от ${day}.${month}.${year} ${r.time}`;
+}

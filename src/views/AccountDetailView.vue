@@ -9,7 +9,6 @@ import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
-import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
@@ -119,16 +118,9 @@ async function archiveAccount() {
 			<!-- Add transaction shortcut -->
 			<div class="account-detail__actions">
 				<AppButton
-					class="account-detail__add-btn"
+					full-width
 					@click="router.push('/transactions/add')">
 					+ Добавить операцию
-				</AppButton>
-				<AppButton
-					v-if="isScannerAvailable()"
-					class="account-detail__scan-btn"
-					variant="secondary"
-					@click="router.push('/transactions/scan')">
-					Скан
 				</AppButton>
 			</div>
 
@@ -244,12 +236,7 @@ async function archiveAccount() {
 }
 
 .account-detail__actions {
-	display: flex;
-	gap: var(--space-2);
 	padding: 0 var(--space-5) var(--space-4);
-}
-.account-detail__add-btn {
-	flex: 1;
 }
 
 .section {
