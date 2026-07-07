@@ -8,7 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight, PhFunnel } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhFunnel, PhX } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
@@ -67,6 +67,40 @@ const filterCategoryOptions = computed(() => [
 const activeFilterCount = computed(
 	() => [filterType.value, filterAccountId.value, filterCategoryId.value, filterFrom.value, filterTo.value].filter(Boolean).length
 );
+
+type FilterChipKey = "type" | "account" | "category" | "from" | "to";
+interface FilterChip {
+	key: FilterChipKey;
+	label: string;
+}
+
+function formatChipDate(date: string): string {
+	return new Date(date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
+
+const activeFilterChips = computed((): FilterChip[] => {
+	const chips: FilterChip[] = [];
+	if (filterType.value) {
+		chips.push({ key: "type", label: filterTypeOptions.find((o) => o.value === filterType.value)?.label ?? filterType.value });
+	}
+	if (filterAccountId.value) {
+		chips.push({ key: "account", label: accountsStore.activeAccounts.find((a) => a.id === filterAccountId.value)?.name ?? "" });
+	}
+	if (filterCategoryId.value) {
+		chips.push({ key: "category", label: categoriesStore.getById(filterCategoryId.value)?.name ?? "" });
+	}
+	if (filterFrom.value) chips.push({ key: "from", label: `с ${formatChipDate(filterFrom.value)}` });
+	if (filterTo.value) chips.push({ key: "to", label: `по ${formatChipDate(filterTo.value)}` });
+	return chips;
+});
+
+function removeFilterChip(key: FilterChipKey) {
+	if (key === "type") filterType.value = "";
+	else if (key === "account") filterAccountId.value = "";
+	else if (key === "category") filterCategoryId.value = "";
+	else if (key === "from") filterFrom.value = "";
+	else if (key === "to") filterTo.value = "";
+}
 
 function resetFilters() {
 	filterType.value = "";
@@ -198,6 +232,23 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 					class="filter-badge"
 					>{{ activeFilterCount }}</span
 				>
+			</button>
+		</div>
+
+		<!-- Active filter chips -->
+		<div
+			v-if="activeFilterChips.length > 0"
+			class="filter-chips">
+			<button
+				v-for="chip in activeFilterChips"
+				:key="chip.key"
+				type="button"
+				class="filter-chip tp-caption-md-regular"
+				@click="removeFilterChip(chip.key)">
+				<span>{{ chip.label }}</span>
+				<PhX
+					:size="12"
+					weight="bold" />
 			</button>
 		</div>
 
@@ -447,6 +498,35 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	align-items: center;
 	justify-content: center;
 	font-weight: 700;
+}
+
+.filter-chips {
+	padding: 0 var(--space-5) var(--space-3);
+	flex-shrink: 0;
+	display: flex;
+	gap: var(--space-2);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.filter-chips::-webkit-scrollbar {
+	display: none;
+}
+.filter-chip {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+	flex-shrink: 0;
+	padding: 6px var(--space-2);
+	border-radius: var(--radius-full);
+	border: 1px solid var(--accent-primary);
+	background: var(--accent-primary-soft);
+	color: var(--accent-primary);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background var(--transition);
+}
+.filter-chip:hover {
+	background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
 
 .filter-panel {
