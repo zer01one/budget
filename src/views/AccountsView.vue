@@ -52,10 +52,12 @@ function formatAmount(n: number, currency: string) {
 				@click="router.push(`/accounts/${acc.id}`)">
 				<div class="account-card__icon"><AppIcon :name="acc.icon ?? 'other'" /></div>
 				<div class="account-card__info">
-					<div class="account-card__name">{{ acc.name }}</div>
-					<div class="account-card__type text-muted">{{ ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type }}</div>
+					<div class="account-card__name tp-body-md-medium">{{ acc.name }}</div>
+					<div class="account-card__type tp-caption-md-regular text-muted">
+						{{ ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type }}
+					</div>
 				</div>
-				<div class="account-card__balance">
+				<div class="account-card__balance tp-body-md-semibold">
 					{{ formatAmount(acc.balance ?? acc.initialBalance, acc.currency) }}
 				</div>
 			</div>
@@ -147,7 +149,6 @@ function formatAmount(n: number, currency: string) {
 	min-width: 0;
 }
 .account-card__name {
-	font-weight: 600;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -158,7 +159,6 @@ function formatAmount(n: number, currency: string) {
 	white-space: nowrap;
 }
 .account-card__balance {
-	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 }
 </style>
