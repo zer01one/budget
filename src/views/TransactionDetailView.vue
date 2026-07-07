@@ -11,7 +11,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
@@ -122,7 +122,8 @@ function formatDateLabel(date: string): string {
 			<button
 				class="detail-view__back tp-body-lg-regular"
 				@click="isEditing ? (isEditing = false) : router.back()">
-				← {{ isEditing ? "Отмена" : "Назад" }}
+				<PhCaretLeft :size="18" />
+				{{ isEditing ? "Отмена" : "Назад" }}
 			</button>
 			<span class="detail-view__mode tp-body-md-regular">{{ isEditing ? "Редактирование" : "" }}</span>
 			<button
@@ -345,6 +346,9 @@ function formatDateLabel(date: string): string {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .detail-view__back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);

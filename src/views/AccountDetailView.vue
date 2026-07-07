@@ -7,7 +7,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
@@ -68,7 +68,8 @@ async function archiveAccount() {
 			<button
 				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
 			<h2 class="account-detail__title tp-heading-md-bold">{{ account?.name ?? "Счёт" }}</h2>
 		</div>
@@ -192,6 +193,9 @@ async function archiveAccount() {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);

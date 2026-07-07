@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
+import { PhCaretLeft } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -131,7 +132,8 @@ const importCategoryOptions = computed(() => [
 			<button
 				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
 			<h2 class="import-view__title tp-heading-md-bold">Импорт CSV</h2>
 		</div>
@@ -329,6 +331,9 @@ const importCategoryOptions = computed(() => [
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);

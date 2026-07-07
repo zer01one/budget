@@ -8,6 +8,7 @@ import ColorPicker from "@/components/ui/ColorPicker.vue";
 import IconPicker from "@/components/ui/IconPicker.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import { PhCaretLeft } from "@phosphor-icons/vue";
 import type { AccountType } from "@/types";
 
 const ACCOUNT_ICONS = [
@@ -105,7 +106,8 @@ async function submit() {
 			<button
 				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
 			<h2 class="tp-heading-md-bold">Новый счёт</h2>
 		</div>
@@ -194,6 +196,9 @@ async function submit() {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);

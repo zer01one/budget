@@ -2,6 +2,7 @@
 import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
+import { PhCaretLeft } from "@phosphor-icons/vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
@@ -123,7 +124,8 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 			<button
 				class="add-tx__back tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
 			<h2 class="add-tx__title tp-heading-md-bold">Новая операция</h2>
 		</div>
@@ -308,6 +310,9 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .add-tx__back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);

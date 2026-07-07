@@ -8,7 +8,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhCaretRight } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -121,7 +121,8 @@ function formatDate(date: string): string {
 				<button
 					class="section-header__link tp-body-md-regular"
 					@click="router.push('/transactions')">
-					Все →
+					Все
+					<PhCaretRight :size="16" />
 				</button>
 			</div>
 
@@ -251,6 +252,9 @@ function formatDate(date: string): string {
 	justify-content: space-between;
 }
 .section-header__link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	color: var(--accent-primary);
 	background: none;
 	border: none;
