@@ -1,20 +1,22 @@
 ﻿<script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, onBeforeRouteLeave } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
-import type { Transaction, TransactionType } from "@/types";
+import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight, PhFunnel } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
+import { getFiltersSnapshot, setFiltersSnapshot } from "@/composables/useTransactionFiltersSnapshot";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
 
 const router = useRouter();
+const filtersSnapshot = getFiltersSnapshot();
 const txStore = useTransactionsStore();
 const categoriesStore = useCategoriesStore();
 const accountsStore = useAccountsStore();
@@ -22,18 +24,30 @@ const accountsStore = useAccountsStore();
 const txGroupsRef = ref<HTMLElement | null>(null);
 useScrollRestore(txGroupsRef);
 
-const search = ref("");
+const search = ref(filtersSnapshot?.search ?? "");
 const isLoadingMore = ref(false);
 const allMonths = ref<string[]>([]);
 const loadedMonthsCount = ref(2);
 
 // ── Filters ───────────────────────────────────────────────────────────────────
-const showFilters = ref(false);
-const filterType = ref<TransactionType | "">("");
-const filterAccountId = ref("");
-const filterCategoryId = ref("");
-const filterFrom = ref("");
-const filterTo = ref("");
+const showFilters = ref(filtersSnapshot?.showFilters ?? false);
+const filterType = ref(filtersSnapshot?.filterType ?? "");
+const filterAccountId = ref(filtersSnapshot?.filterAccountId ?? "");
+const filterCategoryId = ref(filtersSnapshot?.filterCategoryId ?? "");
+const filterFrom = ref(filtersSnapshot?.filterFrom ?? "");
+const filterTo = ref(filtersSnapshot?.filterTo ?? "");
+
+onBeforeRouteLeave(() => {
+	setFiltersSnapshot({
+		search: search.value,
+		showFilters: showFilters.value,
+		filterType: filterType.value,
+		filterAccountId: filterAccountId.value,
+		filterCategoryId: filterCategoryId.value,
+		filterFrom: filterFrom.value,
+		filterTo: filterTo.value
+	});
+});
 
 const filterTypeOptions = [
 	{ value: "", label: "Все" },
