@@ -8,7 +8,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import { transactionsService } from "@/services/data/transactions.service";
 import type { Transaction, TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhFunnel } from "@phosphor-icons/vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
@@ -177,7 +177,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				:class="['tx-view__filter-btn', { 'tx-view__filter-btn--active': activeFilterCount > 0 }]"
 				@click="showFilters = !showFilters"
 				:title="showFilters ? 'Скрыть фильтры' : 'Фильтры'">
-				⊟<span
+				<PhFunnel
+					:size="18"
+					weight="bold" /><span
 					v-if="activeFilterCount > 0"
 					class="filter-badge"
 					>{{ activeFilterCount }}</span
@@ -392,6 +394,9 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 }
 .tx-view__filter-btn {
 	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: 40px;
 	height: 40px;
 	border-radius: var(--radius-md);
@@ -399,7 +404,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	background: var(--bg-input);
 	color: var(--text-secondary);
 	cursor: pointer;
-	font-size: 18px;
 	flex-shrink: 0;
 	transition:
 		background var(--transition),

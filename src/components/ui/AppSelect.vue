@@ -39,13 +39,18 @@ function updatePosition() {
 	};
 }
 
+function onOutsideScroll(e: Event) {
+	if (dropdownListRef.value && e.target instanceof Node && dropdownListRef.value.contains(e.target)) return;
+	close();
+}
+
 function open() {
 	if (props.disabled) return;
 	updatePosition();
 	isOpen.value = true;
 	focusedIndex.value = props.options.findIndex((o) => o.value === props.modelValue);
 	document.addEventListener("mousedown", onClickOutside);
-	document.addEventListener("scroll", close, { capture: true, passive: true } as AddEventListenerOptions);
+	document.addEventListener("scroll", onOutsideScroll, { capture: true, passive: true } as AddEventListenerOptions);
 	window.addEventListener("resize", close, { passive: true } as AddEventListenerOptions);
 }
 
@@ -53,7 +58,7 @@ function close() {
 	if (!isOpen.value) return;
 	isOpen.value = false;
 	document.removeEventListener("mousedown", onClickOutside);
-	document.removeEventListener("scroll", close, { capture: true } as EventListenerOptions);
+	document.removeEventListener("scroll", onOutsideScroll, { capture: true } as EventListenerOptions);
 	window.removeEventListener("resize", close);
 }
 
