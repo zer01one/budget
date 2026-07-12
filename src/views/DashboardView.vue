@@ -8,6 +8,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 import { PhArrowsLeftRight, PhCaretRight } from "@phosphor-icons/vue";
 
 const router = useRouter();
@@ -160,12 +161,14 @@ function formatDate(date: string): string {
 		</div>
 	</div>
 
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/transactions/add')">
-		Добавить операцию
-	</AppButton>
+	<FabContainer>
+		<AppButton
+			class="fab-add"
+			size="lg"
+			@click="router.push('/transactions/add')">
+			Добавить операцию
+		</AppButton>
+	</FabContainer>
 </template>
 
 <style scoped>
@@ -317,11 +320,6 @@ function formatDate(date: string): string {
 
 	.fab-add {
 		display: flex;
-		position: fixed;
-		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		left: var(--space-4);
-		right: var(--space-4);
-		z-index: 10;
 	}
 
 	.dashboard {

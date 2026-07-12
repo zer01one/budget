@@ -55,10 +55,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Позиционируется родительским FabContainer; здесь только вид и выравнивание */
 .scroll-top-btn {
-	position: fixed;
-	right: var(--space-5);
-	bottom: calc(var(--nav-height) + var(--space-4) + 32px + var(--space-3) + env(safe-area-inset-bottom, 0px));
+	align-self: flex-end;
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
@@ -70,7 +69,6 @@ onUnmounted(() => {
 	justify-content: center;
 	cursor: pointer;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-	z-index: 50;
 	transition: background var(--transition), transform 0.1s;
 }
 .scroll-top-btn:hover {
@@ -79,12 +77,6 @@ onUnmounted(() => {
 }
 .scroll-top-btn:active {
 	transform: scale(0.95);
-}
-
-@media (min-width: 900px) {
-	.scroll-top-btn {
-		bottom: var(--space-5);
-	}
 }
 
 .scroll-top-enter-active,

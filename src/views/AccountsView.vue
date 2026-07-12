@@ -5,6 +5,7 @@ import { useAccountsStore } from "@/stores/accounts.store";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -63,13 +64,15 @@ function formatAmount(n: number, currency: string) {
 			</div>
 		</div>
 	</div>
-	<ScrollToTopButton />
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/accounts/new')">
-		Добавить
-	</AppButton>
+	<FabContainer>
+		<ScrollToTopButton />
+		<AppButton
+			class="fab-add"
+			size="lg"
+			@click="router.push('/accounts/new')">
+			Добавить
+		</AppButton>
+	</FabContainer>
 </template>
 
 <style scoped>
@@ -84,11 +87,6 @@ function formatAmount(n: number, currency: string) {
 
 	.fab-add {
 		display: flex;
-		position: fixed;
-		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		left: var(--space-4);
-		right: var(--space-4);
-		z-index: 10;
 	}
 
 	.accounts-list {

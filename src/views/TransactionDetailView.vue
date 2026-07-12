@@ -12,6 +12,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 import { showConfirm } from "@/utils/confirm";
 
 const router = useRouter();
@@ -202,14 +203,15 @@ function formatDateLabel(date: string): string {
 			</div>
 		</div>
 
-	<AppButton
-		v-if="!isEditing && tx"
-		class="fab-delete"
-		variant="danger"
-		size="lg"
-		@click="deleteTx">
-		Удалить
-	</AppButton>
+	<FabContainer v-if="!isEditing && tx">
+		<AppButton
+			class="fab-delete"
+			variant="danger"
+			size="lg"
+			@click="deleteTx">
+			Удалить
+		</AppButton>
+	</FabContainer>
 
 		<!-- EDIT MODE -->
 		<div
@@ -544,11 +546,6 @@ function formatDateLabel(date: string): string {
 		display: flex;
 		align-items: center;
 		gap: var(--space-1);
-		position: fixed;
-		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		left: var(--space-4);
-		right: var(--space-4);
-		z-index: 10;
 	}
 }
 </style>

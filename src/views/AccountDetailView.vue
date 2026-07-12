@@ -11,6 +11,7 @@ import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -176,7 +177,9 @@ async function archiveAccount() {
 			</div>
 		</template>
 	</div>
-	<ScrollToTopButton />
+	<FabContainer>
+		<ScrollToTopButton />
+	</FabContainer>
 </template>
 
 <style scoped>
