@@ -262,18 +262,18 @@ describe("deleteCategory", () => {
 		expect(store.categories).toHaveLength(1);
 	});
 
-	it("DOES NOT archive system categories вЂ” guard is active", async () => {
+	it("archives system categories too (soft delete)", async () => {
 		const store = useCategoriesStore();
 		store.categories = [makeCat({ id: "sys", isSystem: true, isArchived: false })];
 		await store.deleteCategory("sys");
-		expect(store.categories[0].isArchived).toBe(false);
+		expect(store.categories[0].isArchived).toBe(true);
 	});
 
-	it("system category stays in expenseCategories after delete attempt", async () => {
+	it("system category disappears from expenseCategories after delete", async () => {
 		const store = useCategoriesStore();
 		store.categories = [makeCat({ id: "sys", isSystem: true, type: "expense", isArchived: false })];
 		await store.deleteCategory("sys");
-		expect(store.expenseCategories).toHaveLength(1);
+		expect(store.expenseCategories).toHaveLength(0);
 	});
 
 	it("archived category disappears from byType", async () => {

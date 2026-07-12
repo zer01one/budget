@@ -150,11 +150,20 @@ describe("CategoriesView – list rendering", () => {
 		expect(wrapper.find(".cat-list__empty").exists()).toBe(false);
 	});
 
-	it("shows system badge and no delete button for system categories", async () => {
+	it("shows delete button and no system badge for system categories", async () => {
 		useCategoriesStore().$patch({ categories: [makeCat({ isSystem: true })] });
 		const wrapper = await mountView();
-		expect(wrapper.find(".cat-row__system").exists()).toBe(true);
-		expect(wrapper.find(".cat-row__delete").exists()).toBe(false);
+		expect(wrapper.find(".cat-row__system").exists()).toBe(false);
+		expect(wrapper.find(".cat-row__delete").exists()).toBe(true);
+	});
+
+	it("delete button on a system category calls deleteCategory", async () => {
+		useCategoriesStore().$patch({ categories: [makeCat({ id: "sys-id", isSystem: true })] });
+		const deleteSpy = vi.spyOn(useCategoriesStore(), "deleteCategory").mockResolvedValue(undefined);
+		const wrapper = await mountView();
+		await wrapper.find(".cat-row__delete").trigger("click");
+		await flushPromises();
+		expect(deleteSpy).toHaveBeenCalledWith("sys-id");
 	});
 
 	it("shows delete button and no system badge for non-system categories", async () => {
@@ -280,11 +289,11 @@ describe("CategoriesView – openEdit", () => {
 		expect(wrapper.find(".modal-stub").attributes("data-title")).toBe("Редактировать");
 	});
 
-	it("clicking a system category does not open modal", async () => {
+	it("clicking a system category opens 'Редактировать' modal too", async () => {
 		useCategoriesStore().$patch({ categories: [makeCat({ isSystem: true })] });
 		const wrapper = await mountView();
 		await wrapper.find(".cat-row").trigger("click");
-		expect(wrapper.find(".modal-stub").exists()).toBe(false);
+		expect(wrapper.find(".modal-stub").attributes("data-title")).toBe("Редактировать");
 	});
 
 	it("form name is pre-filled with category name on edit", async () => {

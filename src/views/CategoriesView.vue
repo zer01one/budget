@@ -42,7 +42,6 @@ function openAdd() {
 }
 
 function openEdit(cat: Category) {
-	if (cat.isSystem) return;
 	editingCategory.value = cat;
 	form.value = { name: cat.name, color: cat.color, icon: cat.icon, type: cat.type };
 	errors.value = {};
@@ -84,7 +83,6 @@ async function save() {
 }
 
 async function deleteCategory(cat: Category) {
-	if (cat.isSystem) return;
 	if (!await showConfirm(`Удалить категорию «${cat.name}»?`)) return;
 	await categoriesStore.deleteCategory(cat.id);
 }
@@ -132,13 +130,7 @@ async function deleteCategory(cat: Category) {
 							<AppIcon :name="cat.icon" />
 						</div>
 						<div class="cat-row__name tp-label-md-medium">{{ cat.name }}</div>
-						<span
-							v-if="cat.isSystem"
-							class="cat-row__system tp-caption-md-regular"
-							>системная</span
-						>
 						<button
-							v-else
 							class="cat-row__delete"
 							@click.stop="deleteCategory(cat)">
 							✕
@@ -333,12 +325,6 @@ async function deleteCategory(cat: Category) {
 }
 .cat-row__name {
 	flex: 1;
-}
-.cat-row__system {
-	color: var(--text-muted);
-	padding: 2px var(--space-2);
-	background: var(--bg-elevated);
-	border-radius: var(--radius-xs);
 }
 .cat-row__delete {
 	width: 28px;
