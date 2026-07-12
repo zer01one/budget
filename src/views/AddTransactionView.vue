@@ -2,7 +2,7 @@
 import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
-import { PhCaretLeft } from "@phosphor-icons/vue";
+import { PhCaretLeft, PhSlidersHorizontal } from "@phosphor-icons/vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
@@ -228,6 +228,12 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 						@click="categoryId = cat.id">
 						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
 						<span class="cat-item__name">{{ cat.name }}</span>
+					</button>
+					<button
+						class="cat-manage"
+						@click="router.push('/categories')">
+						<span class="cat-item__icon"><PhSlidersHorizontal :size="20" /></span>
+						<span class="cat-item__name">Настроить</span>
 					</button>
 				</div>
 				<span
@@ -459,6 +465,27 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 .cat-item--active {
 	border-color: var(--cat-color, var(--accent-primary));
 	background: var(--accent-primary-soft);
+}
+.cat-manage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-1);
+	padding: var(--space-3) var(--space-2);
+	border-radius: var(--radius-md);
+	background: none;
+	border: 2px dashed var(--border);
+	cursor: pointer;
+	transition: border-color var(--transition);
+	min-height: 68px;
+}
+.cat-manage:hover {
+	border-color: var(--text-muted);
+}
+.cat-manage .cat-item__icon,
+.cat-manage .cat-item__name {
+	color: var(--text-muted);
 }
 .cat-item__icon {
 	font-size: 20px;

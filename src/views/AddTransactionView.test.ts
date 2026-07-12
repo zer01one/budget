@@ -130,7 +130,10 @@ afterEach(() => {
 async function mountView(query: Record<string, string> = {}) {
 	const router = createRouter({
 		history: createMemoryHistory(),
-		routes: [{ path: "/", component: AddTransactionView }]
+		routes: [
+			{ path: "/", component: AddTransactionView },
+			{ path: "/categories", component: { template: "<div/>" } }
+		]
 	});
 	router.push({ path: "/", query });
 	await router.isReady();
@@ -401,6 +404,42 @@ describe("AddTransactionView – category grid", () => {
 		useCategoriesStore().categories = [];
 		const { wrapper } = await mountView();
 		expect(wrapper.findAll(".cat-item")).toHaveLength(0);
+	});
+});
+
+// ─── manage categories tile ───────────────────────────────────────────────────
+
+describe("AddTransactionView – manage categories tile", () => {
+	it("cat-grid contains a Настроить tile", async () => {
+		const { wrapper } = await mountView();
+		const tile = wrapper.find(".cat-manage");
+		expect(tile.exists()).toBe(true);
+		expect(tile.text()).toBe("Настроить");
+	});
+
+	it("tile is rendered even when there are no categories", async () => {
+		useCategoriesStore().categories = [];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".cat-manage").exists()).toBe(true);
+	});
+
+	it("clicking the tile navigates to /categories", async () => {
+		const { wrapper, router } = await mountView();
+		const pushSpy = vi.spyOn(router, "push");
+		await wrapper.find(".cat-manage").trigger("click");
+		expect(pushSpy).toHaveBeenCalledWith("/categories");
+	});
+
+	it("clicking the tile does not select a category", async () => {
+		const { wrapper } = await mountView();
+		await wrapper.find(".cat-manage").trigger("click");
+		expect((wrapper.vm as any).$.setupState.categoryId).toBe("");
+	});
+
+	it("tile is shown for income type too", async () => {
+		const { wrapper } = await mountView();
+		await wrapper.findAll(".type-tab")[1].trigger("click");
+		expect(wrapper.find(".cat-manage").exists()).toBe(true);
 	});
 });
 
