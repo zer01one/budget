@@ -72,7 +72,7 @@ async function archiveAccount() {
 				<PhCaretLeft :size="18" />
 				Назад
 			</button>
-			<h2 class="account-detail__title tp-heading-md-bold">{{ account?.name ?? "Счёт" }}</h2>
+			<h2 class="account-detail__title tp-title-lg-semibold">{{ account?.name ?? "Счёт" }}</h2>
 		</div>
 
 		<div
@@ -204,6 +204,13 @@ async function archiveAccount() {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.account-detail__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .account-detail__not-found {
 	text-align: center;

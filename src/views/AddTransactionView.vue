@@ -127,7 +127,7 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 				<PhCaretLeft :size="18" />
 				Назад
 			</button>
-			<h2 class="add-tx__title tp-heading-md-bold">Новая операция</h2>
+			<h2 class="add-tx__title tp-title-lg-semibold">Новая операция</h2>
 		</div>
 
 		<!-- Type tabs -->
@@ -323,6 +323,13 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.add-tx__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .type-tabs {

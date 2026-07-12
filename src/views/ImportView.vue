@@ -135,7 +135,7 @@ const importCategoryOptions = computed(() => [
 				<PhCaretLeft :size="18" />
 				Назад
 			</button>
-			<h2 class="import-view__title tp-heading-md-bold">Импорт CSV</h2>
+			<h2 class="import-view__title tp-title-lg-semibold">Импорт CSV</h2>
 		</div>
 
 		<!-- Step indicator -->
@@ -338,6 +338,13 @@ const importCategoryOptions = computed(() => [
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.import-view__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .steps {

@@ -109,7 +109,7 @@ async function submit() {
 				<PhCaretLeft :size="18" />
 				Назад
 			</button>
-			<h2 class="tp-heading-md-bold">Новый счёт</h2>
+			<h2 class="add-account__title tp-title-lg-semibold">Новый счёт</h2>
 		</div>
 
 		<!-- Preview -->
@@ -203,6 +203,13 @@ async function submit() {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.add-account__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .preview-card {
