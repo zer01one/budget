@@ -431,7 +431,8 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 
 .row-2 {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	/* minmax(0, …) drops the auto min-content floor so both columns stay equal */
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: var(--space-3);
 }
 
