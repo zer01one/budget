@@ -43,6 +43,12 @@ const router = createRouter({
 			meta: { requiresVault: true, order: 2.6 }
 		},
 		{
+			path: "/transactions/:id/edit",
+			name: "transaction-edit",
+			component: () => import("@/views/EditTransactionView.vue"),
+			meta: { requiresVault: true, order: 2.7 }
+		},
+		{
 			path: "/accounts",
 			name: "accounts",
 			component: () => import("@/views/AccountsView.vue"),

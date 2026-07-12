@@ -38,6 +38,7 @@ describe("router", () => {
 			"transactions",
 			"add-transaction",
 			"transaction-detail",
+			"transaction-edit",
 			"accounts",
 			"add-account",
 			"account-detail",
@@ -66,6 +67,7 @@ describe("router", () => {
 		it.each([
 			["add-transaction", "transactions"],
 			["transaction-detail", "transactions"],
+			["transaction-edit", "transaction-detail"],
 			["add-account", "accounts"],
 			["account-detail", "accounts"],
 			["import", "profile"]

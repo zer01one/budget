@@ -1,15 +1,10 @@
-﻿<script setup lang="ts">
-import { ref, computed, watch } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
-import AppInput from "@/components/ui/AppInput.vue";
-import AppSelect from "@/components/ui/AppSelect.vue";
-import AppDatePicker from "@/components/ui/AppDatePicker.vue";
-import AppTimePicker from "@/components/ui/AppTimePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
-import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
 import FabContainer from "@/components/ui/FabContainer.vue";
@@ -25,85 +20,6 @@ const tx = computed(() => txStore.allCached.find((t) => t.id === route.params.id
 const category = computed(() => (tx.value?.categoryId ? categoriesStore.getById(tx.value.categoryId) : null));
 const fromAccount = computed(() => (tx.value ? accountsStore.getById(tx.value.accountId) : null));
 const toAccount = computed(() => (tx.value?.toAccountId ? accountsStore.getById(tx.value.toAccountId) : null));
-
-// Edit mode state
-const isEditing = ref(false);
-const isSubmitting = ref(false);
-const errors = ref<Record<string, string>>({});
-
-const editType = ref<TransactionType>("expense");
-const editAmount = ref("");
-const editDate = ref("");
-const editTime = ref("");
-const editAccountId = ref("");
-
-const editAccountOptions = computed(() => [
-	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
-]);
-const editToAccountOptions = computed(() => [
-	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts
-		.filter((a) => a.id !== editAccountId.value)
-		.map((a) => ({ value: a.id, label: a.name })),
-]);
-const editToAccountId = ref("");
-const editCategoryId = ref("");
-const editComment = ref("");
-
-const editCategories = computed(() => categoriesStore.byType(editType.value));
-
-function startEdit() {
-	if (!tx.value) return;
-	editType.value = tx.value.type;
-	editAmount.value = tx.value.amount.toString();
-	editDate.value = tx.value.date;
-	editTime.value = tx.value.time;
-	editAccountId.value = tx.value.accountId;
-	editToAccountId.value = tx.value.toAccountId ?? "";
-	editCategoryId.value = tx.value.categoryId ?? "";
-	editComment.value = tx.value.comment;
-	errors.value = {};
-	isEditing.value = true;
-}
-
-watch(
-	() => editType.value,
-	() => {
-		editCategoryId.value = "";
-	}
-);
-
-function validate(): boolean {
-	errors.value = {};
-	const parsed = parseFloat(String(editAmount.value).replace(",", "."));
-	if (isNaN(parsed) || parsed <= 0) errors.value.amount = "Введите положительную сумму";
-	if (!editAccountId.value) errors.value.account = "Выберите счёт";
-	if (editType.value === "transfer" && !editToAccountId.value) errors.value.toAccount = "Выберите счёт назначения";
-	if (editType.value !== "transfer" && !editCategoryId.value) errors.value.category = "Выберите категорию";
-	return Object.keys(errors.value).length === 0;
-}
-
-async function saveEdit() {
-	if (!tx.value || !validate() || isSubmitting.value) return;
-	isSubmitting.value = true;
-	try {
-		await txStore.updateTransaction(tx.value.id, {
-			type: editType.value,
-			amount: parseFloat(String(editAmount.value).replace(",", ".")),
-			currency: accountsStore.getById(editAccountId.value)?.currency ?? tx.value.currency,
-			date: editDate.value,
-			time: editTime.value,
-			accountId: editAccountId.value,
-			toAccountId: editType.value === "transfer" ? editToAccountId.value : null,
-			categoryId: editType.value !== "transfer" ? editCategoryId.value || null : null,
-			comment: editComment.value.trim()
-		});
-		isEditing.value = false;
-	} finally {
-		isSubmitting.value = false;
-	}
-}
 
 async function deleteTx() {
 	if (!tx.value) return;
@@ -122,15 +38,15 @@ function formatDateLabel(date: string): string {
 		<div class="detail-view__header">
 			<button
 				class="detail-view__back tp-body-lg-regular"
-				@click="isEditing ? (isEditing = false) : router.back()">
+				@click="router.back()">
 				<PhCaretLeft :size="18" />
-				{{ isEditing ? "Отмена" : "Назад" }}
+				Назад
 			</button>
-			<span class="detail-view__mode tp-body-md-regular">{{ isEditing ? "Редактирование" : "" }}</span>
+			<span class="detail-view__mode tp-body-md-regular" />
 			<button
-				v-if="!isEditing && tx"
+				v-if="tx"
 				class="detail-view__edit-btn tp-label-md-medium"
-				@click="startEdit">
+				@click="router.push(`/transactions/${tx.id}/edit`)">
 				Изменить
 			</button>
 		</div>
@@ -141,9 +57,8 @@ function formatDateLabel(date: string): string {
 			Операция не найдена
 		</div>
 
-		<!-- VIEW MODE -->
 		<div
-			v-else-if="!isEditing"
+			v-else
 			class="detail-view__content">
 			<div
 				class="detail-amount tp-display-md-bold"
@@ -203,127 +118,7 @@ function formatDateLabel(date: string): string {
 			</div>
 		</div>
 
-		<!-- EDIT MODE -->
-		<div
-			v-else
-			class="add-tx__form">
-			<!-- Type tabs -->
-			<div class="type-tabs">
-				<button
-					v-for="t in ['expense', 'income', 'transfer'] as TransactionType[]"
-					:key="t"
-					:class="['type-tab tp-label-md-medium', { 'type-tab--active': editType === t }]"
-					@click="editType = t">
-					{{ t === "expense" ? "Расход" : t === "income" ? "Доход" : "Перевод" }}
-				</button>
-			</div>
-
-			<!-- Amount -->
-			<div class="amount-field">
-				<input
-					v-model="editAmount"
-					type="number"
-					inputmode="decimal"
-					class="amount-field__input tp-display-lg-bold"
-					placeholder="0"
-					min="0"
-					step="any" />
-				<span class="amount-field__currency tp-heading-md-semibold">
-					{{ accountsStore.getById(editAccountId)?.currency ?? tx?.currency ?? "RUB" }}
-				</span>
-			</div>
-			<span
-				v-if="errors.amount"
-				class="field-error tp-caption-md-regular"
-				>{{ errors.amount }}</span
-			>
-
-			<!-- Account -->
-			<div class="field">
-				<label class="field__label tp-label-md-medium">Счёт</label>
-				<AppSelect
-					v-model="editAccountId"
-					:options="editAccountOptions" />
-				<span
-					v-if="errors.account"
-					class="field-error tp-caption-md-regular"
-					>{{ errors.account }}</span
-				>
-			</div>
-
-			<!-- To account (transfer) -->
-			<div
-				v-if="editType === 'transfer'"
-				class="field">
-				<label class="field__label tp-label-md-medium">Счёт назначения</label>
-				<AppSelect
-					v-model="editToAccountId"
-					:options="editToAccountOptions" />
-				<span
-					v-if="errors.toAccount"
-					class="field-error tp-caption-md-regular"
-					>{{ errors.toAccount }}</span
-				>
-			</div>
-
-			<!-- Category -->
-			<div
-				v-if="editType !== 'transfer'"
-				class="field">
-				<label class="field__label tp-label-md-medium">Категория</label>
-				<div class="cat-grid">
-					<button
-						v-for="cat in editCategories"
-						:key="cat.id"
-						:class="['cat-item', { 'cat-item--active': editCategoryId === cat.id }]"
-						:style="{ '--cat-color': cat.color }"
-						@click="editCategoryId = cat.id">
-						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
-						<span class="cat-item__name">{{ cat.name }}</span>
-					</button>
-				</div>
-				<span
-					v-if="errors.category"
-					class="field-error tp-caption-md-regular"
-					>{{ errors.category }}</span
-				>
-			</div>
-
-			<!-- Date + Time -->
-			<div class="row-2">
-				<div class="field">
-					<label class="field__label tp-label-md-medium">Дата</label>
-					<AppDatePicker v-model="editDate" />
-				</div>
-				<div class="field">
-					<label class="field__label tp-label-md-medium">Время</label>
-					<AppTimePicker v-model="editTime" />
-				</div>
-			</div>
-
-			<!-- Comment -->
-			<AppInput
-				v-model="editComment"
-				label="Комментарий"
-				placeholder="Необязательно" />
-
-			<AppButton
-				full-width
-				size="lg"
-				:loading="isSubmitting"
-				@click="saveEdit">
-				Сохранить изменения
-			</AppButton>
-
-			<AppButton
-				variant="ghost"
-				full-width
-				@click="isEditing = false"
-				>Отмена</AppButton
-			>
-		</div>
-
-		<FabContainer v-if="!isEditing && tx">
+		<FabContainer v-if="tx">
 			<AppButton
 				class="fab-delete"
 				variant="danger"
@@ -414,123 +209,6 @@ function formatDateLabel(date: string): string {
 	align-items: center;
 	justify-content: center;
 	font-size: 13px;
-}
-
-/* Edit form — same as AddTransactionView styles */
-.add-tx__form {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-4);
-	padding: 0 var(--space-5) var(--space-8);
-	overflow-y: auto;
-}
-
-.type-tabs {
-	display: flex;
-	gap: var(--space-2);
-}
-.type-tab {
-	flex: 1;
-	height: 36px;
-	border-radius: var(--radius-md);
-	background: var(--bg-elevated);
-	border: none;
-	color: var(--text-secondary);
-	cursor: pointer;
-	transition:
-		background var(--transition),
-		color var(--transition);
-}
-.type-tab--active {
-	background: var(--accent-primary);
-	color: #fff;
-}
-
-.amount-field {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--space-2);
-	padding: var(--space-4) 0;
-}
-.amount-field__input {
-	background: none;
-	border: none;
-	color: var(--text-primary);
-	text-align: right;
-	width: 200px;
-}
-.amount-field__input:focus {
-	outline: none;
-}
-.amount-field__currency {
-	color: var(--text-secondary);
-}
-
-.field {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-1);
-}
-.field__label {
-	color: var(--text-secondary);
-}
-.field__select {
-	height: 44px;
-	padding: 0 var(--space-3);
-	border-radius: var(--radius-md);
-	border: 1px solid var(--border);
-	background: var(--bg-input);
-	color: var(--text-primary);
-}
-.field__select:focus {
-	outline: none;
-	border-color: var(--border-focus);
-}
-
-.row-2 {
-	display: grid;
-	/* minmax(0, …) drops the auto min-content floor so both columns stay equal */
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-	gap: var(--space-3);
-}
-
-.cat-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-	gap: var(--space-2);
-}
-.cat-item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--space-1);
-	padding: var(--space-3) var(--space-2);
-	border-radius: var(--radius-md);
-	background: var(--bg-elevated);
-	border: 2px solid transparent;
-	cursor: pointer;
-	transition:
-		border-color var(--transition),
-		background var(--transition);
-	min-height: 68px;
-}
-.cat-item--active {
-	border-color: var(--cat-color, var(--accent-primary));
-	background: var(--accent-primary-soft);
-}
-.cat-item__icon {
-	font-size: 20px;
-}
-.cat-item__name {
-	font-size: 10px;
-	color: var(--text-secondary);
-	text-align: center;
-	line-height: 1.2;
-}
-
-.field-error {
-	color: var(--accent-danger);
 }
 
 .fab-delete {
