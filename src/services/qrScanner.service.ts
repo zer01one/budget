@@ -47,6 +47,12 @@ export async function scanReceiptQrFromImage(): Promise<string | null> {
 	return isScannerAvailable() ? scanImageNative() : scanImageDesktop();
 }
 
+// For images that arrive as a Blob directly (drag & drop, clipboard paste).
+export async function scanReceiptQrFromBlob(blob: Blob): Promise<string | null> {
+	const { decodeQrFromBlob } = await import("@/utils/qrImageDecoder");
+	return decodeQrFromBlob(blob);
+}
+
 async function scanImageNative(): Promise<string | null> {
 	const { FilePicker } = await import("@capawesome/capacitor-file-picker");
 	const { BarcodeScanner, BarcodeFormat } = await import("@capacitor-mlkit/barcode-scanning");
@@ -74,6 +80,5 @@ async function scanImageDesktop(): Promise<string | null> {
 		input.click();
 	});
 	if (!file) return null;
-	const { decodeQrFromBlob } = await import("@/utils/qrImageDecoder");
-	return decodeQrFromBlob(file);
+	return scanReceiptQrFromBlob(file);
 }

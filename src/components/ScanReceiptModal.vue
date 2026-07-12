@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import AppModal from "@/components/ui/AppModal.vue";
 import AppButton from "@/components/ui/AppButton.vue";
-import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage, scanReceiptQrFromBlob } from "@/services/qrScanner.service";
 import { parseFiscalReceiptQr, receiptFingerprint, type ParsedReceipt } from "@/utils/receiptQr";
 import { useTransactionsStore } from "@/stores/transactions.store";
 
@@ -55,6 +55,37 @@ function openDuplicate() {
 	router.push(`/transactions/${duplicateTxId.value}`);
 	emit("close");
 }
+
+const isDragOver = ref(false);
+
+function firstImage(files: FileList | File[] | null | undefined): File | null {
+	return Array.from(files ?? []).find((f) => f.type.startsWith("image/")) ?? null;
+}
+
+function scanBlob(file: File | null) {
+	if (!file) {
+		hasError.value = true;
+		return;
+	}
+	scanWith(() => scanReceiptQrFromBlob(file));
+}
+
+function onDrop(event: DragEvent) {
+	isDragOver.value = false;
+	scanBlob(firstImage(event.dataTransfer?.files));
+}
+
+function onPaste(event: ClipboardEvent) {
+	if (state.value !== "choose") return;
+	scanBlob(firstImage(event.clipboardData?.files));
+}
+
+onMounted(() => {
+	if (!isScannerAvailable()) window.addEventListener("paste", onPaste);
+});
+onBeforeUnmount(() => {
+	window.removeEventListener("paste", onPaste);
+});
 </script>
 
 <template>
@@ -104,6 +135,16 @@ function openDuplicate() {
 					@click="scanWith(scanReceiptQrFromImage)">
 					Выбрать изображение
 				</AppButton>
+				<div
+					v-if="!isScannerAvailable()"
+					class="scan-modal__dropzone"
+					:class="{ 'scan-modal__dropzone--active': isDragOver }"
+					@dragover.prevent="isDragOver = true"
+					@dragleave="isDragOver = false"
+					@drop.prevent="onDrop">
+					Перетащите изображение сюда<br />
+					или вставьте из буфера обмена (Ctrl+V)
+				</div>
 			</template>
 		</div>
 	</AppModal>
@@ -123,5 +164,20 @@ function openDuplicate() {
 .scan-modal__error {
 	text-align: center;
 	color: var(--accent-danger);
+}
+.scan-modal__dropzone {
+	text-align: center;
+	color: var(--text-secondary);
+	font-size: 0.875rem;
+	border: 1px dashed var(--border);
+	border-radius: var(--radius-md);
+	padding: var(--space-4);
+	transition:
+		border-color 0.15s,
+		background-color 0.15s;
+}
+.scan-modal__dropzone--active {
+	border-color: var(--accent-primary);
+	background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 </style>

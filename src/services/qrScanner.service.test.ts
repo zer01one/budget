@@ -54,7 +54,7 @@ vi.mock("@capacitor-mlkit/barcode-scanning", () => ({
 	}
 }));
 
-import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage } from "./qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage, scanReceiptQrFromBlob } from "./qrScanner.service";
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -228,6 +228,30 @@ describe("scanReceiptQrFromImage – desktop (non-native) platform", () => {
 		mockDecodeQrFromBlob.mockResolvedValue(null);
 		const result = await scanReceiptQrFromImage();
 		expect(result).toBeNull();
+	});
+});
+
+describe("scanReceiptQrFromBlob", () => {
+	const blob = new File(["img"], "pasted.png", { type: "image/png" });
+
+	it("decodes the blob via the JS decoder and returns the raw value", async () => {
+		mockDecodeQrFromBlob.mockResolvedValue("raw-qr-from-blob");
+		const result = await scanReceiptQrFromBlob(blob);
+		expect(mockDecodeQrFromBlob).toHaveBeenCalledWith(blob);
+		expect(result).toBe("raw-qr-from-blob");
+	});
+
+	it("returns null when the blob contains no QR code", async () => {
+		mockDecodeQrFromBlob.mockResolvedValue(null);
+		const result = await scanReceiptQrFromBlob(blob);
+		expect(result).toBeNull();
+	});
+
+	it("does not use the Capacitor picker or ML Kit", async () => {
+		mockDecodeQrFromBlob.mockResolvedValue("raw-qr-from-blob");
+		await scanReceiptQrFromBlob(blob);
+		expect(mockPickImages).not.toHaveBeenCalled();
+		expect(mockReadFromImage).not.toHaveBeenCalled();
 	});
 });
 
