@@ -11,7 +11,7 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { TransactionType } from "@/types";
-import { PhCaretLeft } from "@phosphor-icons/vue";
+import { PhCaretLeft, PhSlidersHorizontal } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -112,9 +112,9 @@ async function saveEdit() {
 				class="edit-tx__back tp-body-lg-regular"
 				@click="router.back()">
 				<PhCaretLeft :size="18" />
-				Отмена
+				Назад
 			</button>
-			<span class="edit-tx__title tp-body-md-regular">Редактирование</span>
+			<h2 class="edit-tx__title tp-title-lg-semibold">Редактирование</h2>
 		</div>
 
 		<div
@@ -200,6 +200,12 @@ async function saveEdit() {
 						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
 						<span class="cat-item__name">{{ cat.name }}</span>
 					</button>
+					<button
+						class="cat-manage"
+						@click="router.push('/categories')">
+						<span class="cat-item__icon"><PhSlidersHorizontal :size="20" /></span>
+						<span class="cat-item__name">Настроить</span>
+					</button>
 				</div>
 				<span
 					v-if="errors.category"
@@ -254,6 +260,7 @@ async function saveEdit() {
 .edit-tx__header {
 	display: flex;
 	align-items: center;
+	gap: var(--space-3);
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .edit-tx__back {
@@ -264,13 +271,13 @@ async function saveEdit() {
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
 }
 .edit-tx__title {
-	flex: 1;
-	text-align: center;
-	color: var(--text-secondary);
-	/* visually centered against the back button */
-	padding-right: 72px;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .edit-tx__not-found {
 	text-align: center;
@@ -369,8 +376,30 @@ async function saveEdit() {
 	border-color: var(--cat-color, var(--accent-primary));
 	background: var(--accent-primary-soft);
 }
+.cat-manage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-1);
+	padding: var(--space-3) var(--space-2);
+	border-radius: var(--radius-md);
+	background: none;
+	border: 2px dashed var(--border);
+	cursor: pointer;
+	transition: border-color var(--transition);
+	min-height: 68px;
+}
+.cat-manage:hover {
+	border-color: var(--text-muted);
+}
+.cat-manage .cat-item__icon,
+.cat-manage .cat-item__name {
+	color: var(--text-muted);
+}
 .cat-item__icon {
 	font-size: 20px;
+	color: var(--cat-color, var(--text-primary));
 }
 .cat-item__name {
 	font-size: 10px;

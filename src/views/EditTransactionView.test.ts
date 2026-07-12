@@ -100,7 +100,10 @@ let pinia: ReturnType<typeof createPinia>;
 async function mountView(txId = "tx-1") {
 	const router = createRouter({
 		history: createMemoryHistory(),
-		routes: [{ path: "/:id/edit", component: EditTransactionView }]
+		routes: [
+			{ path: "/:id/edit", component: EditTransactionView },
+			{ path: "/categories", component: { template: "<div/>" } }
+		]
 	});
 	router.push(`/${txId}/edit`);
 	await router.isReady();
@@ -148,18 +151,51 @@ describe("EditTransactionView – header", () => {
 		seedStores();
 	});
 
-	it("shows Редактирование title", async () => {
+	it("shows Редактирование title styled like other page headers", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".edit-tx__title").text()).toBe("Редактирование");
+		const title = wrapper.find("h2.edit-tx__title");
+		expect(title.exists()).toBe(true);
+		expect(title.text()).toBe("Редактирование");
+		expect(title.classes()).toContain("tp-title-lg-semibold");
 	});
 
-	it("back button shows Отмена and calls router.back", async () => {
+	it("back button shows Назад and calls router.back", async () => {
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back").mockImplementation(() => {});
 		const backBtn = wrapper.find(".edit-tx__back");
-		expect(backBtn.text()).toContain("Отмена");
+		expect(backBtn.text()).toContain("Назад");
 		await backBtn.trigger("click");
 		expect(backSpy).toHaveBeenCalledOnce();
+	});
+});
+
+// ── Manage categories tile ────────────────────────────────────────────────────
+
+describe("EditTransactionView – manage categories tile", () => {
+	beforeEach(() => {
+		pinia = createPinia();
+		setActivePinia(pinia);
+		seedStores();
+	});
+
+	it("cat-grid contains a Настроить tile", async () => {
+		const { wrapper } = await mountView();
+		const tile = wrapper.find(".cat-manage");
+		expect(tile.exists()).toBe(true);
+		expect(tile.text()).toBe("Настроить");
+	});
+
+	it("clicking the tile navigates to /categories", async () => {
+		const { wrapper, router } = await mountView();
+		const pushSpy = vi.spyOn(router, "push");
+		await wrapper.find(".cat-manage").trigger("click");
+		expect(pushSpy).toHaveBeenCalledWith("/categories");
+	});
+
+	it("clicking the tile does not change the selected category", async () => {
+		const { wrapper } = await mountView();
+		await wrapper.find(".cat-manage").trigger("click");
+		expect((wrapper.vm as any).$.setupState.editCategoryId).toBe("cat-1");
 	});
 });
 
