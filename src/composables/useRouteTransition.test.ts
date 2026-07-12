@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { RouteLocationNormalized } from "vue-router";
-import { resolveRouteTransition } from "./useRouteTransition";
+import { createMemoryHistory, createRouter, type RouteLocationNormalized } from "vue-router";
+import { resolveRouteTransition, useCurrentRouteTransition, useRouteTransition } from "./useRouteTransition";
 
 function makeRoute(order?: number): RouteLocationNormalized {
 	return { meta: order === undefined ? {} : { order } } as RouteLocationNormalized;
@@ -28,5 +28,25 @@ describe("resolveRouteTransition", () => {
 		expect(resolveRouteTransition(makeRoute(), makeRoute(1))).toBe("");
 		expect(resolveRouteTransition(makeRoute(1), makeRoute())).toBe("");
 		expect(resolveRouteTransition(makeRoute(), makeRoute())).toBe("");
+	});
+});
+
+describe("useCurrentRouteTransition", () => {
+	it("exposes the same name that navigation sets (shared ref for FAB etc.)", async () => {
+		const Stub = { template: "<div />" };
+		const router = createRouter({
+			history: createMemoryHistory(),
+			routes: [
+				{ path: "/a", component: Stub, meta: { order: 1 } },
+				{ path: "/b", component: Stub, meta: { order: 2 } }
+			]
+		});
+		const { transitionName } = useRouteTransition(router);
+		await router.push("/a");
+		await router.push("/b");
+		expect(transitionName.value).toBe("route-forward");
+		expect(useCurrentRouteTransition().value).toBe("route-forward");
+		await router.push("/a");
+		expect(useCurrentRouteTransition().value).toBe("route-back");
 	});
 });

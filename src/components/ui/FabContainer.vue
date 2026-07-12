@@ -1,7 +1,23 @@
+<script setup lang="ts">
+import { useCurrentRouteTransition } from "@/composables/useRouteTransition";
+
+// FAB едет вместе со страницей: направление берём из текущего route-перехода
+const routeTransition = useCurrentRouteTransition();
+</script>
+
 <template>
-	<div class="fab-container">
-		<slot />
-	</div>
+	<!-- В body, чтобы transform на корне страницы во время route-анимации
+	     не перехватывал position:fixed (иначе FAB прыгает по вертикали).
+	     Синхронность со страницей достигается собственным Transition ниже. -->
+	<Teleport to="body">
+		<Transition
+			appear
+			:name="routeTransition ? `fab-${routeTransition}` : 'fab-none'">
+			<div class="fab-container">
+				<slot />
+			</div>
+		</Transition>
+	</Teleport>
 </template>
 
 <style scoped>
@@ -30,6 +46,26 @@
 		right: var(--space-5);
 		bottom: var(--space-5);
 		align-items: flex-end;
+	}
+}
+
+/* Въезд вместе со страницей: длительность и изинг совпадают с
+ * route-forward/route-back в App.vue (250ms, cubic-bezier(0.33, 1, 0.68, 1)) */
+.fab-route-forward-enter-active,
+.fab-route-back-enter-active {
+	transition: transform 250ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.fab-route-forward-enter-from {
+	transform: translateX(100vw);
+}
+.fab-route-back-enter-from {
+	transform: translateX(-100vw);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fab-route-forward-enter-active,
+	.fab-route-back-enter-active {
+		transition: none;
 	}
 }
 </style>

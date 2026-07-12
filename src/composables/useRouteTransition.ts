@@ -15,10 +15,17 @@ export function resolveRouteTransition(to: RouteLocationNormalized, from: RouteL
 	return toOrder > fromOrder ? "route-forward" : "route-back";
 }
 
+// Shared module-level ref: App.vue drives it, teleported components that
+// should slide in sync with the page (FabContainer) read it
+const transitionName = ref<RouteTransitionName>("");
+
 export function useRouteTransition(router: Router) {
-	const transitionName = ref<RouteTransitionName>("");
 	router.afterEach((to, from) => {
 		transitionName.value = resolveRouteTransition(to, from);
 	});
 	return { transitionName };
+}
+
+export function useCurrentRouteTransition() {
+	return transitionName;
 }
