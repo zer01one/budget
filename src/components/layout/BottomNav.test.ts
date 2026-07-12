@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { createRouter, createMemoryHistory } from "vue-router";
 import BottomNav from "./BottomNav.vue";
 
@@ -157,5 +158,48 @@ describe("BottomNav – more sheet", () => {
 		await w.findAll(".bottom-nav__item")[4].trigger("click");
 		await w.find(".modal__close").trigger("click");
 		expect(w.find(".more-sheet__item").exists()).toBe(false);
+	});
+});
+
+describe("BottomNav – more sheet leave animation", () => {
+	// The real <Transition> must run here (transition: false disables the VTU
+	// stub): the regression was goMore() dropping AppModal via v-if instantly,
+	// so the leave animation never played when picking a section.
+	async function mountNavAnimated() {
+		const router = makeRouter("/dashboard");
+		await router.isReady();
+		const w = mount(BottomNav, {
+			global: { plugins: [router], stubs: { teleport: TELEPORT_STUB, transition: false } }
+		});
+		return { w, router };
+	}
+
+	// see flushLeave in AppModal.test.ts — jsdom leave finishes after two rAFs
+	async function flushLeave() {
+		await nextTick();
+		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+		await nextTick();
+	}
+
+	it("clicking a sheet item keeps the modal mounted while the leave transition runs", async () => {
+		const { w, router } = await mountNavAnimated();
+		const pushSpy = vi.spyOn(router, "push");
+		await w.findAll(".bottom-nav__item")[4].trigger("click");
+		await w.findAll(".more-sheet__item")[0].trigger("click");
+		expect(pushSpy).toHaveBeenCalledWith("/profile");
+		// the leave transition is still running — AppModal must not be unmounted yet
+		expect(w.find(".modal-overlay").exists()).toBe(true);
+		await flushLeave();
+		// after-leave emitted close → moreOpen=false unmounts the modal
+		expect(w.find(".modal-overlay").exists()).toBe(false);
+	});
+
+	it("sheet can be reopened after navigating from it", async () => {
+		const { w } = await mountNavAnimated();
+		await w.findAll(".bottom-nav__item")[4].trigger("click");
+		await w.findAll(".more-sheet__item")[0].trigger("click");
+		await flushLeave();
+		await w.findAll(".bottom-nav__item")[4].trigger("click");
+		expect(w.findAll(".more-sheet__item")).toHaveLength(3);
 	});
 });

@@ -30,6 +30,7 @@ const moreItems = [
 ];
 
 const moreOpen = ref(false);
+const moreModal = ref<InstanceType<typeof AppModal> | null>(null);
 
 function isActive(path: string): boolean {
 	return route.path === path || route.path.startsWith(path + "/");
@@ -38,7 +39,9 @@ function isActive(path: string): boolean {
 const isMoreActive = computed(() => moreItems.some((item) => isActive(item.to)));
 
 function goMore(path: string) {
-	moreOpen.value = false;
+	// moreOpen.value = false here would unmount AppModal before its leave
+	// animation plays; close() animates first, then @close flips moreOpen.
+	moreModal.value?.close();
 	router.push(path);
 }
 </script>
@@ -69,6 +72,7 @@ function goMore(path: string) {
 
 		<AppModal
 			v-if="moreOpen"
+			ref="moreModal"
 			title="Ещё"
 			size="sm"
 			@close="moreOpen = false">

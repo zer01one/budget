@@ -23,6 +23,10 @@ function close() {
 	visible.value = false;
 }
 
+// For parents that need to close programmatically (e.g. after picking an
+// item): dropping the v-if directly skips the leave animation — call this.
+defineExpose({ close });
+
 function onKeydown(e: KeyboardEvent) {
 	if (e.key === "Escape") close();
 }

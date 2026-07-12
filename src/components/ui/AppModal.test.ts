@@ -84,6 +84,23 @@ describe("AppModal – Escape key", () => {
 	});
 });
 
+describe("AppModal – exposed close()", () => {
+	it("close() plays the leave transition and emits close", async () => {
+		const w = mountModal({ title: "T" });
+		w.vm.close();
+		await flushLeave();
+		expect(w.emitted("close")).toBeTruthy();
+	});
+
+	it("close() respects closable=false", async () => {
+		const w = mountModal({ title: "T", closable: false });
+		w.vm.close();
+		await flushLeave();
+		expect(w.emitted("close")).toBeFalsy();
+		expect(w.find(".modal-overlay").exists()).toBe(true);
+	});
+});
+
 describe("AppModal – closable=false", () => {
 	it("close button does not close or emit", async () => {
 		const w = mountModal({ title: "T", closable: false });
