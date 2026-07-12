@@ -57,7 +57,9 @@ async function mountModal() {
 	});
 	router.push("/");
 	await router.isReady();
-	const wrapper = mount(ScanReceiptModal, { global: { plugins: [pinia, router] } });
+	// transition: false — the real <Transition> inside AppModal must run
+	// so that @after-leave fires and `close` is emitted
+	const wrapper = mount(ScanReceiptModal, { global: { plugins: [pinia, router], stubs: { transition: false } } });
 	return { wrapper, router };
 }
 
@@ -96,6 +98,10 @@ describe("ScanReceiptModal", () => {
 	it("emits close when the modal close button is clicked", async () => {
 		const { wrapper } = await mountModal();
 		(document.body.querySelector(".modal__close") as HTMLButtonElement).click();
+		// AppModal emits close from @after-leave; the leave transition is
+		// scheduled through requestAnimationFrame — flush two frames
+		await flushPromises();
+		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 		await flushPromises();
 		expect(wrapper.emitted("close")).toBeTruthy();
 		wrapper.unmount();

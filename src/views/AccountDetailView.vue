@@ -176,10 +176,11 @@ async function archiveAccount() {
 				</AppButton>
 			</div>
 		</template>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<ScrollToTopButton />
+		</FabContainer>
 	</div>
-	<FabContainer>
-		<ScrollToTopButton />
-	</FabContainer>
 </template>
 
 <style scoped>

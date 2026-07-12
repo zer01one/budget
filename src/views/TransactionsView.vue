@@ -247,54 +247,56 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			</button>
 		</div>
 
-		<!-- Filter panel -->
-		<div
-			v-if="showFilters"
-			class="filter-panel">
-			<div class="filter-row">
-				<!-- Type -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Тип</label>
-					<AppSelect
-						v-model="filterType"
-						:options="filterTypeOptions" />
-				</div>
-				<!-- Account -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Счёт</label>
-					<AppSelect
-						v-model="filterAccountId"
-						:options="filterAccountOptions" />
-				</div>
-			</div>
+		<!-- Filter panel (always mounted; expands/collapses smoothly via grid rows) -->
+		<div :class="['filter-collapse', { 'filter-collapse--open': showFilters }]">
+			<div class="filter-collapse__inner">
+				<div class="filter-panel">
+					<div class="filter-row">
+						<!-- Type -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Тип</label>
+							<AppSelect
+								v-model="filterType"
+								:options="filterTypeOptions" />
+						</div>
+						<!-- Account -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Счёт</label>
+							<AppSelect
+								v-model="filterAccountId"
+								:options="filterAccountOptions" />
+						</div>
+					</div>
 
-			<div class="filter-row">
-				<!-- Category -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Категория</label>
-					<AppSelect
-						v-model="filterCategoryId"
-						:options="filterCategoryOptions" />
-				</div>
-			</div>
+					<div class="filter-row">
+						<!-- Category -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Категория</label>
+							<AppSelect
+								v-model="filterCategoryId"
+								:options="filterCategoryOptions" />
+						</div>
+					</div>
 
-			<div class="filter-row">
-				<!-- Date from -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">С даты</label>
-					<AppDatePicker
-						v-model="filterFrom"
-						clearable
-						placeholder="С даты" />
-				</div>
-				<!-- Date to -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">По дату</label>
-					<AppDatePicker
-						v-model="filterTo"
-						:min-date="filterFrom"
-						clearable
-						placeholder="По дату" />
+					<div class="filter-row">
+						<!-- Date from -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">С даты</label>
+							<AppDatePicker
+								v-model="filterFrom"
+								clearable
+								placeholder="С даты" />
+						</div>
+						<!-- Date to -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">По дату</label>
+							<AppDatePicker
+								v-model="filterTo"
+								:min-date="filterFrom"
+								clearable
+								placeholder="По дату" />
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -384,16 +386,17 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				</AppButton>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<ScrollToTopButton :scroll-el="txGroupsRef" />
+			<AppButton
+				class="fab-add"
+				size="lg"
+				@click="router.push('/transactions/add')">
+				Добавить
+			</AppButton>
+		</FabContainer>
 	</div>
-	<FabContainer>
-		<ScrollToTopButton :scroll-el="txGroupsRef" />
-		<AppButton
-			class="fab-add"
-			size="lg"
-			@click="router.push('/transactions/add')">
-			Добавить
-		</AppButton>
-	</FabContainer>
 </template>
 
 <style scoped>
@@ -513,6 +516,43 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 }
 .filter-chip:hover {
 	background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+/* Smooth expand/collapse: grid row animates 0fr → 1fr, inner clips content. */
+.filter-collapse {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 260ms cubic-bezier(0.33, 1, 0.68, 1);
+	flex-shrink: 0;
+}
+.filter-collapse--open {
+	grid-template-rows: 1fr;
+}
+.filter-collapse__inner {
+	overflow: hidden;
+	min-height: 0;
+	/* keep collapsed controls out of the tab order */
+	visibility: hidden;
+	transition: visibility 0s 260ms;
+}
+.filter-collapse--open .filter-collapse__inner {
+	visibility: visible;
+	transition: visibility 0s;
+}
+.filter-collapse .filter-panel {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+.filter-collapse--open .filter-panel {
+	opacity: 1;
+	transition: opacity 200ms ease 80ms;
+}
+@media (prefers-reduced-motion: reduce) {
+	.filter-collapse,
+	.filter-collapse__inner,
+	.filter-collapse .filter-panel {
+		transition: none;
+	}
 }
 
 .filter-panel {

@@ -159,16 +159,16 @@ function formatDate(date: string): string {
 				</div>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<AppButton
+				class="fab-add"
+				size="lg"
+				@click="router.push('/transactions/add')">
+				Добавить операцию
+			</AppButton>
+		</FabContainer>
 	</div>
-
-	<FabContainer>
-		<AppButton
-			class="fab-add"
-			size="lg"
-			@click="router.push('/transactions/add')">
-			Добавить операцию
-		</AppButton>
-	</FabContainer>
 </template>
 
 <style scoped>

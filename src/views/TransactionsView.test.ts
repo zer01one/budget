@@ -198,9 +198,9 @@ describe("TransactionsView – render states", () => {
 		expect(wrapper.find(".tx-view__empty").exists()).toBe(false);
 	});
 
-	it("filter panel is hidden by default", async () => {
+	it("filter panel is collapsed by default", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".filter-panel").exists()).toBe(false);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(false);
 	});
 });
 
@@ -307,17 +307,17 @@ describe("TransactionsView – search", () => {
 // ── Filter panel toggle ───────────────────────────────────────────────────────
 
 describe("TransactionsView – filter panel toggle", () => {
-	it("clicking filter button shows filter panel", async () => {
+	it("clicking filter button expands filter panel", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		expect(wrapper.find(".filter-panel").exists()).toBe(true);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(true);
 	});
 
-	it("clicking filter button twice hides filter panel", async () => {
+	it("clicking filter button twice collapses filter panel", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		expect(wrapper.find(".filter-panel").exists()).toBe(false);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(false);
 	});
 
 	it("filter button gets --active class when a filter is set", async () => {

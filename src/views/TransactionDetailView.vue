@@ -203,16 +203,6 @@ function formatDateLabel(date: string): string {
 			</div>
 		</div>
 
-	<FabContainer v-if="!isEditing && tx">
-		<AppButton
-			class="fab-delete"
-			variant="danger"
-			size="lg"
-			@click="deleteTx">
-			Удалить
-		</AppButton>
-	</FabContainer>
-
 		<!-- EDIT MODE -->
 		<div
 			v-else
@@ -332,6 +322,16 @@ function formatDateLabel(date: string): string {
 				>Отмена</AppButton
 			>
 		</div>
+
+		<FabContainer v-if="!isEditing && tx">
+			<AppButton
+				class="fab-delete"
+				variant="danger"
+				size="lg"
+				@click="deleteTx">
+				Удалить
+			</AppButton>
+		</FabContainer>
 	</div>
 </template>
 

@@ -97,6 +97,13 @@ async function mountView() {
 	return wrapper;
 }
 
+// In jsdom transitions are zero-length, but Vue still swaps leave classes
+// through requestAnimationFrame — flush two frames to let the old list unmount.
+async function flushSlide() {
+	await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+	await flushPromises();
+}
+
 // ── List rendering ────────────────────────────────────────────────────────────
 
 describe("CategoriesView – list rendering", () => {
@@ -187,9 +194,25 @@ describe("CategoriesView – tabs", () => {
 		});
 		const wrapper = await mountView();
 		await wrapper.findAll(".tab")[1].trigger("click");
+		// The old list leaves via a slide transition scheduled through rAF
+		await flushSlide();
 		const names = wrapper.findAll(".cat-row__name").map((n) => n.text());
 		expect(names).toContain("Зарплата");
 		expect(names).not.toContain("Еда");
+	});
+
+	it("expense → income slides forward", async () => {
+		const wrapper = await mountView();
+		await wrapper.findAll(".tab")[1].trigger("click");
+		expect((wrapper.vm.$ as any).setupState.tabTransition).toBe("tab-forward");
+	});
+
+	it("income → expense slides back", async () => {
+		const wrapper = await mountView();
+		await wrapper.findAll(".tab")[1].trigger("click");
+		await flushSlide();
+		await wrapper.findAll(".tab")[0].trigger("click");
+		expect((wrapper.vm.$ as any).setupState.tabTransition).toBe("tab-back");
 	});
 });
 

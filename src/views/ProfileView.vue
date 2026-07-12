@@ -369,49 +369,50 @@ async function doExportJSON() {
 				</div>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<AppModal
+			v-if="showVaultModal"
+			title="Сменить хранилище"
+			size="sm"
+			:closable="vaultStep !== 'loading'"
+			@close="closeVaultModal">
+			<div class="vault-modal">
+				<template v-if="vaultStep === 'choose'">
+					<div class="vault-modal__actions">
+						<button
+							class="vault-option"
+							@click="moveVault">
+							<div class="vault-option__icon">📦</div>
+							<div class="vault-option__text">
+								<div class="vault-option__title tp-label-md-semibold">Перенести данные</div>
+								<div class="vault-option__desc tp-caption-md-regular">Скопировать все данные в новую папку</div>
+							</div>
+						</button>
+						<button
+							class="vault-option"
+							@click="switchVault">
+							<div class="vault-option__icon">📂</div>
+							<div class="vault-option__text">
+								<div class="vault-option__title tp-label-md-semibold">Открыть другое хранилище</div>
+								<div class="vault-option__desc tp-caption-md-regular">Переключиться на существующую папку</div>
+							</div>
+						</button>
+					</div>
+					<p
+						v-if="vaultError"
+						class="vault-modal__error">
+						{{ vaultError }}
+					</p>
+				</template>
+				<template v-else>
+					<div class="vault-modal__loading">
+						<div class="vault-modal__spinner" />
+						<p>{{ vaultLoadingMsg }}…</p>
+					</div>
+				</template>
+			</div>
+		</AppModal>
 	</div>
-
-	<AppModal
-		v-if="showVaultModal"
-		title="Сменить хранилище"
-		size="sm"
-		@close="closeVaultModal">
-		<div class="vault-modal">
-			<template v-if="vaultStep === 'choose'">
-				<div class="vault-modal__actions">
-					<button
-						class="vault-option"
-						@click="moveVault">
-						<div class="vault-option__icon">📦</div>
-						<div class="vault-option__text">
-							<div class="vault-option__title tp-label-md-semibold">Перенести данные</div>
-							<div class="vault-option__desc tp-caption-md-regular">Скопировать все данные в новую папку</div>
-						</div>
-					</button>
-					<button
-						class="vault-option"
-						@click="switchVault">
-						<div class="vault-option__icon">📂</div>
-						<div class="vault-option__text">
-							<div class="vault-option__title tp-label-md-semibold">Открыть другое хранилище</div>
-							<div class="vault-option__desc tp-caption-md-regular">Переключиться на существующую папку</div>
-						</div>
-					</button>
-				</div>
-				<p
-					v-if="vaultError"
-					class="vault-modal__error">
-					{{ vaultError }}
-				</p>
-			</template>
-			<template v-else>
-				<div class="vault-modal__loading">
-					<div class="vault-modal__spinner" />
-					<p>{{ vaultLoadingMsg }}…</p>
-				</div>
-			</template>
-		</div>
-	</AppModal>
 </template>
 
 <style scoped>

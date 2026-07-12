@@ -63,16 +63,17 @@ function formatAmount(n: number, currency: string) {
 				</div>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<ScrollToTopButton />
+			<AppButton
+				class="fab-add"
+				size="lg"
+				@click="router.push('/accounts/new')">
+				Добавить
+			</AppButton>
+		</FabContainer>
 	</div>
-	<FabContainer>
-		<ScrollToTopButton />
-		<AppButton
-			class="fab-add"
-			size="lg"
-			@click="router.push('/accounts/new')">
-			Добавить
-		</AppButton>
-	</FabContainer>
 </template>
 
 <style scoped>

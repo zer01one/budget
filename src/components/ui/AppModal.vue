@@ -1,15 +1,30 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 
-const props = defineProps<{
-	title?: string;
-	size?: "sm" | "md" | "lg";
-}>();
+const props = withDefaults(
+	defineProps<{
+		title?: string;
+		size?: "sm" | "md" | "lg";
+		/** false blocks all close paths (button, overlay, Escape), e.g. while saving */
+		closable?: boolean;
+	}>(),
+	{ closable: true }
+);
 
 const emit = defineEmits<{ close: [] }>();
 
+// The parent controls mounting via v-if, so the leave animation has to run
+// before we tell it to unmount us: close() hides the overlay, and `close`
+// is emitted from @after-leave once the transition finishes.
+const visible = ref(true);
+
+function close() {
+	if (!props.closable) return;
+	visible.value = false;
+}
+
 function onKeydown(e: KeyboardEvent) {
-	if (e.key === "Escape") emit("close");
+	if (e.key === "Escape") close();
 }
 onMounted(() => document.addEventListener("keydown", onKeydown));
 onUnmounted(() => document.removeEventListener("keydown", onKeydown));
@@ -17,32 +32,38 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 
 <template>
 	<Teleport to="body">
-		<div
-			class="modal-overlay"
-			@click.self="emit('close')">
+		<Transition
+			name="modal"
+			appear
+			@after-leave="emit('close')">
 			<div
-				:class="['modal', `modal--${props.size ?? 'md'}`]"
-				role="dialog">
+				v-if="visible"
+				class="modal-overlay"
+				@click.self="close">
 				<div
-					v-if="title"
-					class="modal__header">
-					<span class="modal__title tp-title-lg-semibold">{{ title }}</span>
-					<button
-						class="modal__close tp-body-md-regular"
-						@click="emit('close')">
-						✕
-					</button>
-				</div>
-				<div class="modal__body">
-					<slot />
-				</div>
-				<div
-					v-if="$slots.footer"
-					class="modal__footer">
-					<slot name="footer" />
+					:class="['modal', `modal--${props.size ?? 'md'}`]"
+					role="dialog">
+					<div
+						v-if="title"
+						class="modal__header">
+						<span class="modal__title tp-title-lg-semibold">{{ title }}</span>
+						<button
+							class="modal__close tp-body-md-regular"
+							@click="close">
+							✕
+						</button>
+					</div>
+					<div class="modal__body">
+						<slot />
+					</div>
+					<div
+						v-if="$slots.footer"
+						class="modal__footer">
+						<slot name="footer" />
+					</div>
 				</div>
 			</div>
-		</div>
+		</Transition>
 	</Teleport>
 </template>
 
@@ -83,6 +104,53 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 	}
 	.modal--sm {
 		max-width: 360px;
+	}
+}
+
+/* Enter/leave: the dimming animates via the overlay's background-color (not
+   opacity — the sheet must stay fully opaque while it slides on mobile).
+   Desktop gets a scale+fade on the sheet instead. Root and child durations
+   must match — Vue ends the transition on the overlay's transitionend. */
+.modal-enter-active,
+.modal-leave-active {
+	transition:
+		background-color 280ms ease,
+		backdrop-filter 280ms ease;
+}
+.modal-enter-active .modal {
+	transition: transform 280ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.modal-leave-active .modal {
+	transition: transform 280ms cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.modal-enter-from,
+.modal-leave-to {
+	background: rgba(0, 0, 0, 0);
+	backdrop-filter: blur(0);
+}
+.modal-enter-from .modal,
+.modal-leave-to .modal {
+	transform: translateY(100%);
+}
+@media (min-width: 600px) {
+	.modal-enter-active .modal,
+	.modal-leave-active .modal {
+		transition:
+			transform 280ms cubic-bezier(0.33, 1, 0.68, 1),
+			opacity 280ms ease;
+	}
+	.modal-enter-from .modal,
+	.modal-leave-to .modal {
+		transform: translateY(24px) scale(0.96);
+		opacity: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.modal-enter-active,
+	.modal-leave-active,
+	.modal-enter-active .modal,
+	.modal-leave-active .modal {
+		transition: none;
 	}
 }
 
