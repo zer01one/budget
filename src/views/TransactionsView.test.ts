@@ -505,6 +505,28 @@ describe("TransactionsView – filter chips", () => {
 		expect(wrapper.findAll(".filter-chip")).toHaveLength(1);
 		expect(wrapper.find(".filter-chip").text()).toContain("Наличные");
 	});
+
+	it("before-leave pins non-last chips in place and keeps the last chip in flow", async () => {
+		const { wrapper } = await mountView();
+		const onChipBeforeLeave = (wrapper.vm.$ as any).setupState.onChipBeforeLeave as (el: Element) => void;
+
+		// two siblings: the leaving chip must be pinned (absolute keeps its spot)
+		const row = document.createElement("div");
+		const first = document.createElement("button");
+		const second = document.createElement("button");
+		row.append(first, second);
+		onChipBeforeLeave(first);
+		expect(first.style.left).not.toBe("");
+		expect(first.style.top).not.toBe("");
+
+		// single child: must stay in flow so the row keeps height while collapsing
+		const soloRow = document.createElement("div");
+		const solo = document.createElement("button");
+		soloRow.append(solo);
+		onChipBeforeLeave(solo);
+		expect(solo.style.position).toBe("static");
+		expect(solo.style.left).toBe("");
+	});
 });
 
 // ── Grouping and date labels ──────────────────────────────────────────────────

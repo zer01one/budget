@@ -38,6 +38,20 @@ const filterCategoryId = ref(filtersSnapshot?.filterCategoryId ?? "");
 const filterFrom = ref(filtersSnapshot?.filterFrom ?? "");
 const filterTo = ref(filtersSnapshot?.filterTo ?? "");
 
+// Абсолютная позиция внутри flex-контейнера считается от начала строки, а не
+// от места чипа — перед leave фиксируем координаты, чтобы чип растворялся там,
+// где стоял. Последний чип оставляем в потоке: absolute обнулил бы высоту
+// строки мгновенно, и grid-схлопыванию (1fr→0fr) нечего было бы анимировать.
+function onChipBeforeLeave(el: Element) {
+	const chip = el as HTMLElement;
+	if (chip.parentElement && chip.parentElement.children.length > 1) {
+		chip.style.left = `${chip.offsetLeft}px`;
+		chip.style.top = `${chip.offsetTop}px`;
+	} else {
+		chip.style.position = "static";
+	}
+}
+
 onBeforeRouteLeave(() => {
 	setFiltersSnapshot({
 		search: search.value,
@@ -230,21 +244,28 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			</button>
 		</div>
 
-		<!-- Active filter chips -->
-		<div
-			v-if="activeFilterChips.length > 0"
-			class="filter-chips">
-			<button
-				v-for="chip in activeFilterChips"
-				:key="chip.key"
-				type="button"
-				class="filter-chip tp-caption-md-regular"
-				@click="removeFilterChip(chip.key)">
-				<span>{{ chip.label }}</span>
-				<PhX
-					:size="12"
-					weight="bold" />
-			</button>
+		<!-- Active filter chips (always mounted so leave animations can play;
+		     the row itself expands/collapses smoothly via grid rows) -->
+		<div :class="['chips-collapse', { 'chips-collapse--open': activeFilterChips.length > 0 }]">
+			<div class="chips-collapse__inner">
+				<TransitionGroup
+					tag="div"
+					name="chip"
+					class="filter-chips"
+					@before-leave="onChipBeforeLeave">
+					<button
+						v-for="chip in activeFilterChips"
+						:key="chip.key"
+						type="button"
+						class="filter-chip tp-caption-md-regular"
+						@click="removeFilterChip(chip.key)">
+						<span>{{ chip.label }}</span>
+						<PhX
+							:size="12"
+							weight="bold" />
+					</button>
+				</TransitionGroup>
+			</div>
 		</div>
 
 		<!-- Filter panel (always mounted; expands/collapses smoothly via grid rows) -->
@@ -489,13 +510,30 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	font-weight: 700;
 }
 
+/* Строка чипов схлопывается/раскрывается плавно (grid 0fr→1fr),
+ * чтобы список под ней не дёргался при удалении последнего чипа */
+.chips-collapse {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 200ms cubic-bezier(0.33, 1, 0.68, 1);
+	flex-shrink: 0;
+}
+.chips-collapse--open {
+	grid-template-rows: 1fr;
+}
+.chips-collapse__inner {
+	overflow: hidden;
+	min-height: 0;
+}
+
 .filter-chips {
 	padding: 0 var(--space-5) var(--space-3);
-	flex-shrink: 0;
 	display: flex;
 	gap: var(--space-2);
 	overflow-x: auto;
 	scrollbar-width: none;
+	/* anchor for absolutely-positioned leaving chips */
+	position: relative;
 }
 .filter-chips::-webkit-scrollbar {
 	display: none;
@@ -516,6 +554,34 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 }
 .filter-chip:hover {
 	background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+/* Chip add/remove: scale+fade; на время leave чип absolute, чтобы соседи
+ * плавно съезжались через chip-move. Обязательно ОДНО правило transition
+ * на move/enter/leave (как в доке Vue): уходящий чип может получить и
+ * chip-move — раздельные объявления перекрывали бы друг друга, и opacity
+ * схлопывался бы мгновенно. Селекторы .filter-chip.chip-* — иначе
+ * transition: background из .filter-chip перезатирает анимационные классы. */
+.filter-chip.chip-move,
+.filter-chip.chip-enter-active,
+.filter-chip.chip-leave-active {
+	transition: all 180ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.filter-chip.chip-leave-active {
+	position: absolute;
+}
+.filter-chip.chip-enter-from,
+.filter-chip.chip-leave-to {
+	opacity: 0;
+	transform: scale(0.8);
+}
+@media (prefers-reduced-motion: reduce) {
+	.chips-collapse,
+	.filter-chip.chip-move,
+	.filter-chip.chip-enter-active,
+	.filter-chip.chip-leave-active {
+		transition: none;
+	}
 }
 
 /* Smooth expand/collapse: grid row animates 0fr → 1fr, inner clips content. */
