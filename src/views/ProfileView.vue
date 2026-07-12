@@ -335,7 +335,9 @@ async function doExportJSON() {
 					v-if="notifEnabled"
 					class="setting-row">
 					<label>Время напоминания</label>
-					<AppTimePicker v-model="notifTime" />
+					<AppTimePicker
+						v-model="notifTime"
+						class="setting-row__time" />
 				</div>
 			</div>
 		</div>
@@ -554,6 +556,10 @@ async function doExportJSON() {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-lg);
+}
+
+.setting-row .setting-row__time {
+	width: fit-content;
 }
 .theme-toggle {
 	background: var(--bg-elevated);
