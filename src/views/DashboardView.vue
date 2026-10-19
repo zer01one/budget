@@ -8,7 +8,8 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
+import { PhArrowsLeftRight, PhCaretRight } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const accountsStore = useAccountsStore();
@@ -121,7 +122,8 @@ function formatDate(date: string): string {
 				<button
 					class="section-header__link tp-body-md-regular"
 					@click="router.push('/transactions')">
-					Все →
+					Все
+					<PhCaretRight :size="16" />
 				</button>
 			</div>
 
@@ -157,14 +159,16 @@ function formatDate(date: string): string {
 				</div>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<AppButton
+				class="fab-add"
+				size="lg"
+				@click="router.push('/transactions/add')">
+				Добавить операцию
+			</AppButton>
+		</FabContainer>
 	</div>
-
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/transactions/add')">
-		Добавить операцию
-	</AppButton>
 </template>
 
 <style scoped>
@@ -251,6 +255,9 @@ function formatDate(date: string): string {
 	justify-content: space-between;
 }
 .section-header__link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	color: var(--accent-primary);
 	background: none;
 	border: none;
@@ -313,11 +320,6 @@ function formatDate(date: string): string {
 
 	.fab-add {
 		display: flex;
-		position: fixed;
-		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		left: var(--space-4);
-		right: var(--space-4);
-		z-index: 10;
 	}
 
 	.dashboard {

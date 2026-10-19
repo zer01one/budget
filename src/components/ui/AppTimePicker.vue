@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onUnmounted } from "vue";
 import { PhClock, PhCaretDown } from "@phosphor-icons/vue";
 
 const props = defineProps<{
@@ -30,6 +30,7 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 // ── State ─────────────────────────────────────────────────
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLInputElement | null>(null);
 const popupRef = ref<HTMLElement | null>(null);
 const hourColRef = ref<HTMLElement | null>(null);
 const minColRef = ref<HTMLElement | null>(null);
@@ -60,8 +61,100 @@ function parseModel() {
 
 const displayValue = computed(() => props.modelValue?.slice(0, 5) ?? "");
 
+// ── Editable text input ───────────────────────────────────
+const inputText = ref(displayValue.value);
+
+watch(displayValue, (v) => { inputText.value = v; });
+
 function emitTime() {
 	emit("update:modelValue", `${pad2(tempHour.value)}:${pad2(tempMinute.value)}`);
+}
+
+/** "1430" → "14:30", "9" → "09", strips non-digits, max 4 digits */
+function formatTimeText(raw: string): string {
+	let digits = raw.replace(/\D/g, "");
+	if (digits.length >= 1 && Number(digits[0]) > 2) digits = "0" + digits;
+	digits = digits.slice(0, 4);
+	if (digits.length <= 2) return digits;
+	return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function applyTime(h: number, m: number) {
+	tempHour.value = h;
+	tempMinute.value = m;
+	emitTime();
+	if (isOpen.value) {
+		hourSnapping = true;
+		minSnapping = true;
+		hourColRef.value?.scrollTo({ top: hPos(h), behavior: "smooth" });
+		minColRef.value?.scrollTo({ top: mPos(m), behavior: "smooth" });
+		setTimeout(() => { hourSnapping = false; minSnapping = false; }, 400);
+	}
+}
+
+function onTextInput(e: Event) {
+	const el = e.target as HTMLInputElement;
+	let text = formatTimeText(el.value);
+	const digits = text.replace(/\D/g, "");
+	if (digits.length === 4) {
+		const h = Math.min(23, Number(digits.slice(0, 2)));
+		const m = Math.min(59, Number(digits.slice(2)));
+		text = `${pad2(h)}:${pad2(m)}`;
+		inputText.value = text;
+		el.value = text;
+		applyTime(h, m);
+	} else {
+		inputText.value = text;
+		el.value = text;
+	}
+}
+
+/** Commit a complete typed time, otherwise revert to the current model value */
+function commitOrRevert() {
+	const digits = inputText.value.replace(/\D/g, "");
+	if (digits.length === 4) {
+		const h = Math.min(23, Number(digits.slice(0, 2)));
+		const m = Math.min(59, Number(digits.slice(2)));
+		inputText.value = `${pad2(h)}:${pad2(m)}`;
+		applyTime(h, m);
+	} else {
+		inputText.value = displayValue.value;
+	}
+}
+
+function onTextFocus(e: FocusEvent) {
+	(e.target as HTMLInputElement).select();
+	open();
+}
+
+function onTextBlur() {
+	commitOrRevert();
+	close();
+}
+
+function onTextEnter() {
+	commitOrRevert();
+	close();
+}
+
+function onTextEscape() {
+	inputText.value = displayValue.value;
+	close();
+}
+
+// Clicks on the icon/arrow (not the input) toggle the popup without stealing focus
+function onTriggerMousedown(e: MouseEvent) {
+	if (e.target !== inputRef.value) e.preventDefault();
+}
+
+function onTriggerClick(e: MouseEvent) {
+	if (props.disabled || e.target === inputRef.value) return;
+	if (isOpen.value) {
+		close();
+	} else {
+		inputRef.value?.focus();
+		open();
+	}
 }
 
 // Canonical scroll positions (middle copy)
@@ -162,7 +255,7 @@ function onClickOutside(e: MouseEvent) {
 }
 
 function open() {
-	if (props.disabled) return;
+	if (props.disabled || isOpen.value) return;
 	parseModel();
 	updatePosition();
 	isOpen.value = true;
@@ -185,8 +278,6 @@ function close() {
 	window.removeEventListener("resize", close);
 }
 
-function toggle() { isOpen.value ? close() : open(); }
-
 onUnmounted(() => close());
 </script>
 
@@ -205,24 +296,33 @@ onUnmounted(() => close());
 			aria-hidden="true"
 			@change="emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
 
-		<button
-			type="button"
-			class="app-time__trigger tp-body-md-regular"
-			:disabled="disabled"
-			@click="toggle">
+		<div
+			class="app-time__trigger"
+			@mousedown="onTriggerMousedown"
+			@click="onTriggerClick">
 			<PhClock
 				class="app-time__icon"
 				:size="15" />
-			<span
-				class="app-time__value"
-				:class="{ 'app-time__value--empty': !modelValue }">
-				{{ displayValue || placeholder || "Выберите время" }}
-			</span>
+			<input
+				ref="inputRef"
+				type="text"
+				class="app-time__input tp-body-md-regular"
+				:value="inputText"
+				:disabled="disabled"
+				:placeholder="placeholder || 'ЧЧ:ММ'"
+				inputmode="numeric"
+				maxlength="5"
+				autocomplete="off"
+				@focus="onTextFocus"
+				@input="onTextInput"
+				@blur="onTextBlur"
+				@keydown.enter.prevent="onTextEnter"
+				@keydown.escape.prevent="onTextEscape" />
 			<PhCaretDown
 				class="app-time__arrow"
 				:size="14"
 				weight="bold" />
-		</button>
+		</div>
 
 		<Teleport to="body">
 			<Transition name="app-time-drop">
@@ -231,7 +331,7 @@ onUnmounted(() => close());
 					ref="popupRef"
 					class="app-time__popup"
 					:style="dropdownStyle"
-					@mousedown.stop>
+					@mousedown.stop.prevent>
 					<div class="tp__cols">
 						<!-- Center selection bar -->
 						<div class="tp__selector" />
@@ -314,7 +414,7 @@ onUnmounted(() => close());
 <style scoped>
 .app-time {
 	position: relative;
-	width: fit-content;
+	width: 100%;
 }
 
 .app-time__native {
@@ -346,7 +446,7 @@ onUnmounted(() => close());
 .app-time__trigger:hover {
 	border-color: var(--text-muted);
 }
-.app-time__trigger:focus-visible {
+.app-time__trigger:focus-within {
 	border-color: var(--border-focus);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
@@ -362,12 +462,24 @@ onUnmounted(() => close());
 	flex-shrink: 0;
 	color: var(--text-secondary);
 }
-.app-time__value {
+.app-time__input {
 	flex: 1;
-	text-align: left;
+	/* Kill the input's built-in ~20ch intrinsic width so it doesn't inflate
+	   min-content of grid/flex ancestors; flex: 1 still stretches it */
+	width: 5ch;
+	min-width: 0;
+	background: none;
+	border: none;
+	outline: none;
+	padding: 0;
+	color: var(--text-primary);
+	font: inherit;
 }
-.app-time__value--empty {
+.app-time__input::placeholder {
 	color: var(--text-muted);
+}
+.app-time__input:disabled {
+	cursor: not-allowed;
 }
 .app-time__arrow {
 	flex-shrink: 0;

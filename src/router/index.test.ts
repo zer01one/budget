@@ -38,6 +38,7 @@ describe("router", () => {
 			"transactions",
 			"add-transaction",
 			"transaction-detail",
+			"transaction-edit",
 			"accounts",
 			"add-account",
 			"account-detail",
@@ -54,6 +55,26 @@ describe("router", () => {
 		it("setup does not require vault", () => {
 			const route = router.getRoutes().find((r) => r.name === "setup");
 			expect(route?.meta?.requiresVault).toBe(false);
+		});
+
+		it("every named route has a numeric meta.order for slide direction", () => {
+			for (const route of router.getRoutes()) {
+				if (!route.name) continue;
+				expect(typeof route.meta.order, `route ${String(route.name)} must have meta.order`).toBe("number");
+			}
+		});
+
+		it.each([
+			["add-transaction", "transactions"],
+			["transaction-detail", "transactions"],
+			["transaction-edit", "transaction-detail"],
+			["add-account", "accounts"],
+			["account-detail", "accounts"],
+			["import", "profile"]
+		])("%s is deeper than %s (forward slide)", (child, parent) => {
+			const childOrder = router.getRoutes().find((r) => r.name === child)!.meta.order as number;
+			const parentOrder = router.getRoutes().find((r) => r.name === parent)!.meta.order as number;
+			expect(childOrder).toBeGreaterThan(parentOrder);
 		});
 	});
 

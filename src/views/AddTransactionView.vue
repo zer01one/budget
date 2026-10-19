@@ -2,6 +2,7 @@
 import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import AppButton from "@/components/ui/AppButton.vue";
+import { PhCaretLeft, PhSlidersHorizontal } from "@phosphor-icons/vue";
 import AppInput from "@/components/ui/AppInput.vue";
 import AppSelect from "@/components/ui/AppSelect.vue";
 import AppDatePicker from "@/components/ui/AppDatePicker.vue";
@@ -13,7 +14,6 @@ import { useGamificationStore } from "@/stores/gamification.store";
 import type { TransactionType } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
-import { isScannerAvailable } from "@/services/qrScanner.service";
 import { receiptComment, type ParsedReceipt } from "@/utils/receiptQr";
 
 const router = useRouter();
@@ -124,9 +124,10 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 			<button
 				class="add-tx__back tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
-			<h2 class="add-tx__title tp-heading-md-bold">Новая операция</h2>
+			<h2 class="add-tx__title tp-title-lg-semibold">Новая операция</h2>
 		</div>
 
 		<!-- Type tabs -->
@@ -146,7 +147,6 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 		<div class="add-tx__form">
 			<!-- Scan receipt -->
 			<button
-				v-if="isScannerAvailable()"
 				class="add-tx__scan-btn tp-label-md-medium"
 				@click="showScanModal = true">
 				<svg
@@ -229,6 +229,12 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 						<span class="cat-item__icon"><AppIcon :name="cat.icon" /></span>
 						<span class="cat-item__name">{{ cat.name }}</span>
 					</button>
+					<button
+						class="cat-manage"
+						@click="router.push('/categories')">
+						<span class="cat-item__icon"><PhSlidersHorizontal :size="20" /></span>
+						<span class="cat-item__name">Настроить</span>
+					</button>
 				</div>
 				<span
 					v-if="errors.category"
@@ -310,10 +316,20 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .add-tx__back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.add-tx__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .type-tabs {
@@ -428,7 +444,8 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 
 .row-2 {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	/* minmax(0, …) drops the auto min-content floor so both columns stay equal */
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: var(--space-3);
 }
 
@@ -455,6 +472,27 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 .cat-item--active {
 	border-color: var(--cat-color, var(--accent-primary));
 	background: var(--accent-primary-soft);
+}
+.cat-manage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-1);
+	padding: var(--space-3) var(--space-2);
+	border-radius: var(--radius-md);
+	background: none;
+	border: 2px dashed var(--border);
+	cursor: pointer;
+	transition: border-color var(--transition);
+	min-height: 68px;
+}
+.cat-manage:hover {
+	border-color: var(--text-muted);
+}
+.cat-manage .cat-item__icon,
+.cat-manage .cat-item__name {
+	color: var(--text-muted);
 }
 .cat-item__icon {
 	font-size: 20px;

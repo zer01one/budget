@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import TransactionDetailView from "@/views/TransactionDetailView.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -251,9 +252,9 @@ describe("TransactionDetailView – view mode transfer", () => {
 		categoriesStore.categories = [];
 	});
 
-	it("shows ↔ sign", async () => {
+	it("shows arrows icon", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".detail-amount").text()).toContain("↔");
+		expect(wrapper.find(".detail-amount").findComponent(PhArrowsLeftRight).exists()).toBe(true);
 	});
 
 	it("shows type label Перевод", async () => {
@@ -287,306 +288,28 @@ describe("TransactionDetailView – header", () => {
 		categoriesStore.categories = [makeCategory()];
 	});
 
-	it("back button shows Назад in view mode", async () => {
+	it("back button shows Назад", async () => {
 		const { wrapper } = await mountView();
 		expect(wrapper.find(".detail-view__back").text()).toContain("Назад");
 	});
 
-	it("Изменить visible in view mode", async () => {
+	it("Изменить button is visible", async () => {
 		const { wrapper } = await mountView();
 		expect(wrapper.find(".detail-view__edit-btn").exists()).toBe(true);
 	});
 
-	it("back button shows Отмена in edit mode", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect(wrapper.find(".detail-view__back").text()).toContain("Отмена");
-	});
-
-	it("Изменить hidden in edit mode", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect(wrapper.find(".detail-view__edit-btn").exists()).toBe(false);
-	});
-
-	it("Редактирование label in edit mode", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect(wrapper.find(".detail-view__mode").text()).toBe("Редактирование");
-	});
-
-	it("back button in view mode calls router.back", async () => {
+	it("back button calls router.back", async () => {
 		const { wrapper, router } = await mountView();
 		const backSpy = vi.spyOn(router, "back").mockImplementation(() => {});
 		await wrapper.find(".detail-view__back").trigger("click");
 		expect(backSpy).toHaveBeenCalledOnce();
 	});
-});
 
-// ── startEdit prefills form ───────────────────────────────────────────────────
-
-describe("TransactionDetailView – startEdit", () => {
-	beforeEach(() => {
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		const categoriesStore = useCategoriesStore();
-		txStore._cache.set("2026-06", [makeTx()]);
-		accountsStore.accounts = [makeAccount()];
-		categoriesStore.categories = [makeCategory()];
-	});
-
-	it("shows edit form after Изменить click", async () => {
-		const { wrapper } = await mountView();
+	it("Изменить navigates to the edit page", async () => {
+		const { wrapper, router } = await mountView();
+		const pushSpy = vi.spyOn(router, "push").mockResolvedValue(undefined);
 		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect(wrapper.find(".add-tx__form").exists()).toBe(true);
-	});
-
-	it("amount input prefilled", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect((wrapper.find("input[type='number']").element as HTMLInputElement).value).toBe("5000");
-	});
-
-	it("expense type tab active", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect(wrapper.find(".type-tab--active").text()).toBe("Расход");
-	});
-
-	it("date input prefilled", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect((wrapper.find("input[type='date']").element as HTMLInputElement).value).toBe("2026-06-15");
-	});
-
-	it("time input prefilled", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		expect((wrapper.find("input[type='time']").element as HTMLInputElement).value).toBe("14:30");
-	});
-
-	it("category preselected in grid", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		const active = wrapper.find(".cat-item--active");
-		expect(active.exists()).toBe(true);
-		expect(active.text()).toContain("Food");
-	});
-});
-
-// ── Type tab switching ────────────────────────────────────────────────────────
-
-describe("TransactionDetailView – type tab switching", () => {
-	beforeEach(() => {
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		const categoriesStore = useCategoriesStore();
-		txStore._cache.set("2026-06", [makeTx()]);
-		accountsStore.accounts = [makeAccount(), makeAccount({ id: "acc-2", name: "Bank" })];
-		categoriesStore.categories = [makeCategory(), makeCategory({ id: "cat-income", type: "income", name: "Salary" })];
-	});
-
-	async function openEdit() {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		return wrapper;
-	}
-
-	it("income tab activates on click", async () => {
-		const wrapper = await openEdit();
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Доход")!
-			.trigger("click");
-		expect(wrapper.find(".type-tab--active").text()).toBe("Доход");
-	});
-
-	it("income tab shows income categories", async () => {
-		const wrapper = await openEdit();
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Доход")!
-			.trigger("click");
-		expect(wrapper.find(".cat-grid").text()).toContain("Salary");
-	});
-
-	it("transfer tab hides category grid", async () => {
-		const wrapper = await openEdit();
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Перевод")!
-			.trigger("click");
-		expect(wrapper.find(".cat-grid").exists()).toBe(false);
-	});
-
-	it("transfer tab shows toAccount field", async () => {
-		const wrapper = await openEdit();
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Перевод")!
-			.trigger("click");
-		expect(wrapper.text()).toContain("Счёт назначения");
-	});
-
-	it("switching type clears selected category", async () => {
-		const wrapper = await openEdit();
-		expect(wrapper.find(".cat-item--active").exists()).toBe(true);
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Доход")!
-			.trigger("click");
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Расход")!
-			.trigger("click");
-		expect(wrapper.find(".cat-item--active").exists()).toBe(false);
-	});
-});
-
-// ── saveEdit validation ───────────────────────────────────────────────────────
-
-describe("TransactionDetailView – saveEdit validation", () => {
-	beforeEach(() => {
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		const categoriesStore = useCategoriesStore();
-		txStore._cache.set("2026-06", [makeTx()]);
-		accountsStore.accounts = [makeAccount()];
-		categoriesStore.categories = [makeCategory()];
-	});
-
-	async function openEdit() {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		return wrapper;
-	}
-
-	function saveBtn(wrapper: ReturnType<typeof mount>) {
-		return wrapper.findAll("button").find((b) => b.text().includes("Сохранить"))!;
-	}
-
-	it("shows amount error for empty amount", async () => {
-		const wrapper = await openEdit();
-		await wrapper.find("input[type='number']").setValue("");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Введите положительную сумму");
-	});
-
-	it("shows amount error for zero", async () => {
-		const wrapper = await openEdit();
-		await wrapper.find("input[type='number']").setValue("0");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Введите положительную сумму");
-	});
-
-	it("shows amount error for negative", async () => {
-		const wrapper = await openEdit();
-		await wrapper.find("input[type='number']").setValue("-100");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Введите положительную сумму");
-	});
-
-	it("shows account error when no account selected", async () => {
-		const wrapper = await openEdit();
-		await wrapper.find("select").setValue("");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Выберите счёт");
-	});
-
-	it("shows toAccount error for transfer without toAccount", async () => {
-		const wrapper = await openEdit();
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Перевод")!
-			.trigger("click");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Выберите счёт назначения");
-	});
-
-	it("shows category error for expense without category", async () => {
-		const wrapper = await openEdit();
-		// Switch type twice to clear pre-selected category
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Доход")!
-			.trigger("click");
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Расход")!
-			.trigger("click");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.text()).toContain("Выберите категорию");
-	});
-
-	it("stays in edit mode after validation failure", async () => {
-		const wrapper = await openEdit();
-		await wrapper.find("input[type='number']").setValue("");
-		await saveBtn(wrapper).trigger("click");
-		expect(wrapper.find(".add-tx__form").exists()).toBe(true);
-	});
-});
-
-// ── saveEdit success ──────────────────────────────────────────────────────────
-
-describe("TransactionDetailView – saveEdit success", () => {
-	beforeEach(() => {
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		const categoriesStore = useCategoriesStore();
-		txStore._cache.set("2026-06", [makeTx()]);
-		accountsStore.accounts = [makeAccount()];
-		categoriesStore.categories = [makeCategory()];
-	});
-
-	it("returns to view mode after save", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		const btn = wrapper.findAll("button").find((b) => b.text().includes("Сохранить"))!;
-		await btn.trigger("click");
-		await flushPromises();
-		expect(wrapper.find(".add-tx__form").exists()).toBe(false);
-		expect(wrapper.find(".detail-view__content").exists()).toBe(true);
-	});
-
-	it("updates amount in store", async () => {
-		const txStore = useTransactionsStore();
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		await wrapper.find("input[type='number']").setValue("9999");
-		const btn = wrapper.findAll("button").find((b) => b.text().includes("Сохранить"))!;
-		await btn.trigger("click");
-		await flushPromises();
-		expect(txStore.allCached.find((t) => t.id === "tx-1")?.amount).toBe(9999);
-	});
-
-	it("transfer save sets toAccountId and nullifies categoryId", async () => {
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		accountsStore.accounts = [makeAccount(), makeAccount({ id: "acc-2", name: "Bank" })];
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		await wrapper
-			.findAll(".type-tab")
-			.find((t) => t.text() === "Перевод")!
-			.trigger("click");
-		// toAccount select is the second select
-		const selects = wrapper.findAll("select");
-		await selects[1].setValue("acc-2");
-		const btn = wrapper.findAll("button").find((b) => b.text().includes("Сохранить"))!;
-		await btn.trigger("click");
-		await flushPromises();
-		const updated = txStore.allCached.find((t) => t.id === "tx-1");
-		expect(updated?.type).toBe("transfer");
-		expect(updated?.toAccountId).toBe("acc-2");
-		expect(updated?.categoryId).toBeNull();
+		expect(pushSpy).toHaveBeenCalledWith("/transactions/tx-1/edit");
 	});
 });
 
@@ -648,37 +371,5 @@ describe("TransactionDetailView – deleteTx", () => {
 			.find((b) => b.text().includes("Удалить"))!
 			.trigger("click");
 		expect(backSpy).not.toHaveBeenCalled();
-	});
-});
-
-// ── cancel edit ───────────────────────────────────────────────────────────────
-
-describe("TransactionDetailView – cancel edit", () => {
-	beforeEach(() => {
-		pinia = createPinia();
-		setActivePinia(pinia);
-		const txStore = useTransactionsStore();
-		const accountsStore = useAccountsStore();
-		const categoriesStore = useCategoriesStore();
-		txStore._cache.set("2026-06", [makeTx()]);
-		accountsStore.accounts = [makeAccount()];
-		categoriesStore.categories = [makeCategory()];
-	});
-
-	it("back button in edit mode returns to view mode", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		await wrapper.find(".detail-view__back").trigger("click");
-		expect(wrapper.find(".add-tx__form").exists()).toBe(false);
-		expect(wrapper.find(".detail-view__content").exists()).toBe(true);
-	});
-
-	it("Отмена button in form returns to view mode", async () => {
-		const { wrapper } = await mountView();
-		await wrapper.find(".detail-view__edit-btn").trigger("click");
-		const cancelBtn = wrapper.findAll("button").find((b) => b.text() === "Отмена")!;
-		await cancelBtn.trigger("click");
-		expect(wrapper.find(".add-tx__form").exists()).toBe(false);
-		expect(wrapper.find(".detail-view__content").exists()).toBe(true);
 	});
 });

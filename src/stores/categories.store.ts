@@ -66,8 +66,6 @@ export const useCategoriesStore = defineStore("categories", () => {
 	}
 
 	async function deleteCategory(id: string): Promise<void> {
-		const category = categories.value.find((c) => c.id === id);
-		if (category?.isSystem) return;
 		await updateCategory(id, { isArchived: true });
 	}
 

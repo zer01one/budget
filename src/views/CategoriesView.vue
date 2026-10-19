@@ -15,6 +15,15 @@ const categoriesStore = useCategoriesStore();
 const gamificationStore = useGamificationStore();
 
 const activeTab = ref<"expense" | "income">("expense");
+const TAB_ORDER: ReadonlyArray<"expense" | "income"> = ["expense", "income"];
+const tabTransition = ref<"tab-forward" | "tab-back">("tab-forward");
+
+function switchTab(tab: "expense" | "income") {
+	if (tab === activeTab.value) return;
+	tabTransition.value = TAB_ORDER.indexOf(tab) > TAB_ORDER.indexOf(activeTab.value) ? "tab-forward" : "tab-back";
+	activeTab.value = tab;
+}
+
 const showModal = ref(false);
 const editingCategory = ref<Category | null>(null);
 
@@ -33,7 +42,6 @@ function openAdd() {
 }
 
 function openEdit(cat: Category) {
-	if (cat.isSystem) return;
 	editingCategory.value = cat;
 	form.value = { name: cat.name, color: cat.color, icon: cat.icon, type: cat.type };
 	errors.value = {};
@@ -75,7 +83,6 @@ async function save() {
 }
 
 async function deleteCategory(cat: Category) {
-	if (cat.isSystem) return;
 	if (!await showConfirm(`Удалить категорию «${cat.name}»?`)) return;
 	await categoriesStore.deleteCategory(cat.id);
 }
@@ -96,47 +103,47 @@ async function deleteCategory(cat: Category) {
 		<div class="tabs">
 			<button
 				:class="['tab', 'tp-label-md-medium', { 'tab--active': activeTab === 'expense' }]"
-				@click="activeTab = 'expense'">
+				@click="switchTab('expense')">
 				Расходы
 			</button>
 			<button
 				:class="['tab', 'tp-label-md-medium', { 'tab--active': activeTab === 'income' }]"
-				@click="activeTab = 'income'">
+				@click="switchTab('income')">
 				Доходы
 			</button>
 		</div>
 
-		<!-- List -->
-		<div class="cat-list">
-			<div
-				v-for="cat in displayed"
-				:key="cat.id"
-				class="cat-row"
-				@click="openEdit(cat)">
+		<!-- List (keyed by tab so switching slides the whole list) -->
+		<div class="cat-list-wrap">
+			<Transition :name="tabTransition">
 				<div
-					class="cat-row__icon"
-					:style="{ background: cat.color + '22', color: cat.color }">
-					<AppIcon :name="cat.icon" />
-				</div>
-				<div class="cat-row__name tp-label-md-medium">{{ cat.name }}</div>
-				<span
-					v-if="cat.isSystem"
-					class="cat-row__system tp-caption-md-regular"
-					>системная</span
-				>
-				<button
-					v-else
-					class="cat-row__delete"
-					@click.stop="deleteCategory(cat)">
-					✕
-				</button>
-			</div>
+					:key="activeTab"
+					class="cat-list">
+					<div
+						v-for="cat in displayed"
+						:key="cat.id"
+						class="cat-row"
+						@click="openEdit(cat)">
+						<div
+							class="cat-row__icon"
+							:style="{ background: cat.color + '22', color: cat.color }">
+							<AppIcon :name="cat.icon" />
+						</div>
+						<div class="cat-row__name tp-label-md-medium">{{ cat.name }}</div>
+						<button
+							class="cat-row__delete"
+							@click.stop="deleteCategory(cat)">
+							✕
+						</button>
+					</div>
 
-			<div
-				v-if="displayed.length === 0"
-				class="cat-list__empty">
-				Нет категорий. Нажмите «+ Добавить».
-			</div>
+					<div
+						v-if="displayed.length === 0"
+						class="cat-list__empty">
+						Нет категорий. Нажмите «+ Добавить».
+					</div>
+				</div>
+			</Transition>
 		</div>
 
 		<!-- Modal -->
@@ -235,11 +242,56 @@ async function deleteCategory(cat: Category) {
 	color: #fff;
 }
 
+.cat-list-wrap {
+	position: relative;
+	overflow: hidden;
+}
 .cat-list {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-2);
 	padding: 0 var(--space-5) var(--space-8);
+}
+
+/* Tab switch: both lists slide horizontally like screens in a pager */
+.tab-forward-enter-active,
+.tab-forward-leave-active,
+.tab-back-enter-active,
+.tab-back-leave-active {
+	transition:
+		transform 260ms cubic-bezier(0.33, 1, 0.68, 1),
+		opacity 260ms ease;
+}
+.tab-forward-leave-active,
+.tab-back-leave-active {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+.tab-forward-enter-from {
+	transform: translateX(100%);
+	opacity: 0;
+}
+.tab-forward-leave-to {
+	transform: translateX(-100%);
+	opacity: 0;
+}
+.tab-back-enter-from {
+	transform: translateX(-100%);
+	opacity: 0;
+}
+.tab-back-leave-to {
+	transform: translateX(100%);
+	opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	.tab-forward-enter-active,
+	.tab-forward-leave-active,
+	.tab-back-enter-active,
+	.tab-back-leave-active {
+		transition: none;
+	}
 }
 .cat-list__empty {
 	text-align: center;
@@ -273,12 +325,6 @@ async function deleteCategory(cat: Category) {
 }
 .cat-row__name {
 	flex: 1;
-}
-.cat-row__system {
-	color: var(--text-muted);
-	padding: 2px var(--space-2);
-	background: var(--bg-elevated);
-	border-radius: var(--radius-xs);
 }
 .cat-row__delete {
 	width: 28px;

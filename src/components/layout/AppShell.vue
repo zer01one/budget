@@ -130,6 +130,7 @@ onMounted(async () => {
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
+	scrollbar-gutter: stable;
 }
 @media (max-width: 899px) {
 	.shell {

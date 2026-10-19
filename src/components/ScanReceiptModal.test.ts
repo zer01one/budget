@@ -9,10 +9,11 @@ import type { Transaction } from "@/types";
 vi.mock("@/services/qrScanner.service", () => ({
 	isScannerAvailable: vi.fn(),
 	scanReceiptQr: vi.fn(),
-	scanReceiptQrFromImage: vi.fn()
+	scanReceiptQrFromImage: vi.fn(),
+	scanReceiptQrFromBlob: vi.fn()
 }));
 
-import { scanReceiptQr, scanReceiptQrFromImage } from "@/services/qrScanner.service";
+import { isScannerAvailable, scanReceiptQr, scanReceiptQrFromImage, scanReceiptQrFromBlob } from "@/services/qrScanner.service";
 
 const VALID_QR = "t=20260707T1530&s=1234.56&fn=1111&i=2222&fp=3333&n=1";
 const RECEIPT_TAG = "receipt:1111:2222:3333";
@@ -56,7 +57,9 @@ async function mountModal() {
 	});
 	router.push("/");
 	await router.isReady();
-	const wrapper = mount(ScanReceiptModal, { global: { plugins: [pinia, router] } });
+	// transition: false — the real <Transition> inside AppModal must run
+	// so that @after-leave fires and `close` is emitted
+	const wrapper = mount(ScanReceiptModal, { global: { plugins: [pinia, router], stubs: { transition: false } } });
 	return { wrapper, router };
 }
 
@@ -64,6 +67,7 @@ describe("ScanReceiptModal", () => {
 	beforeEach(() => {
 		pinia = createPinia();
 		setActivePinia(pinia);
+		vi.mocked(isScannerAvailable).mockReturnValue(true);
 	});
 
 	it("initially shows camera and gallery option buttons", async () => {
@@ -73,9 +77,31 @@ describe("ScanReceiptModal", () => {
 		wrapper.unmount();
 	});
 
+	it("hides the camera button on desktop but keeps the image option", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
+		const { wrapper } = await mountModal();
+		expect(document.body.querySelector(".scan-modal__camera")).toBeNull();
+		expect(document.body.querySelector(".scan-modal__gallery")).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it("gallery scan works on desktop too", async () => {
+		vi.mocked(isScannerAvailable).mockReturnValue(false);
+		vi.mocked(scanReceiptQrFromImage).mockResolvedValue(VALID_QR);
+		const { wrapper } = await mountModal();
+		(document.body.querySelector(".scan-modal__gallery") as HTMLButtonElement).click();
+		await flushPromises();
+		expect(wrapper.emitted("apply")).toBeTruthy();
+		wrapper.unmount();
+	});
+
 	it("emits close when the modal close button is clicked", async () => {
 		const { wrapper } = await mountModal();
 		(document.body.querySelector(".modal__close") as HTMLButtonElement).click();
+		// AppModal emits close from @after-leave; the leave transition is
+		// scheduled through requestAnimationFrame — flush two frames
+		await flushPromises();
+		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 		await flushPromises();
 		expect(wrapper.emitted("close")).toBeTruthy();
 		wrapper.unmount();
@@ -185,6 +211,150 @@ describe("ScanReceiptModal", () => {
 		expect(pushSpy).toHaveBeenCalledWith("/transactions/tx-existing");
 		expect(wrapper.emitted("close")).toBeTruthy();
 		wrapper.unmount();
+	});
+
+	describe("drag & drop (desktop)", () => {
+		const imageFile = new File(["img"], "receipt.png", { type: "image/png" });
+		const textFile = new File(["txt"], "notes.txt", { type: "text/plain" });
+
+		function dispatchDrop(files: File[]) {
+			const dropzone = document.body.querySelector(".scan-modal__dropzone")!;
+			const event = new Event("drop", { bubbles: true, cancelable: true }) as Event & { dataTransfer: { files: File[] } };
+			event.dataTransfer = { files };
+			dropzone.dispatchEvent(event);
+		}
+
+		beforeEach(() => {
+			vi.mocked(isScannerAvailable).mockReturnValue(false);
+		});
+
+		it("shows the dropzone on desktop", async () => {
+			const { wrapper } = await mountModal();
+			expect(document.body.querySelector(".scan-modal__dropzone")).toBeTruthy();
+			wrapper.unmount();
+		});
+
+		it("does not show the dropzone on a native platform", async () => {
+			vi.mocked(isScannerAvailable).mockReturnValue(true);
+			const { wrapper } = await mountModal();
+			expect(document.body.querySelector(".scan-modal__dropzone")).toBeNull();
+			wrapper.unmount();
+		});
+
+		it("dropping an image decodes it and emits apply", async () => {
+			vi.mocked(scanReceiptQrFromBlob).mockResolvedValue(VALID_QR);
+			const { wrapper } = await mountModal();
+			dispatchDrop([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).toHaveBeenCalledWith(imageFile);
+			expect(wrapper.emitted("apply")).toBeTruthy();
+			wrapper.unmount();
+		});
+
+		it("picks the first image out of mixed dropped files", async () => {
+			vi.mocked(scanReceiptQrFromBlob).mockResolvedValue(VALID_QR);
+			const { wrapper } = await mountModal();
+			dispatchDrop([textFile, imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).toHaveBeenCalledWith(imageFile);
+			wrapper.unmount();
+		});
+
+		it("dropping a non-image file shows the error without scanning", async () => {
+			const { wrapper } = await mountModal();
+			dispatchDrop([textFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+			expect(document.body.textContent).toContain("Не удалось распознать");
+			expect(wrapper.emitted("apply")).toBeFalsy();
+			wrapper.unmount();
+		});
+
+		it("highlights the dropzone on dragover and clears it on dragleave", async () => {
+			const { wrapper } = await mountModal();
+			const dropzone = document.body.querySelector(".scan-modal__dropzone")!;
+			dropzone.dispatchEvent(new Event("dragover", { bubbles: true, cancelable: true }));
+			await flushPromises();
+			expect(dropzone.classList.contains("scan-modal__dropzone--active")).toBe(true);
+			dropzone.dispatchEvent(new Event("dragleave", { bubbles: true }));
+			await flushPromises();
+			expect(dropzone.classList.contains("scan-modal__dropzone--active")).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
+	describe("clipboard paste (desktop)", () => {
+		const imageFile = new File(["img"], "screenshot.png", { type: "image/png" });
+
+		function dispatchPaste(files: File[]) {
+			const event = new Event("paste") as Event & { clipboardData: { files: File[] } };
+			event.clipboardData = { files };
+			window.dispatchEvent(event);
+		}
+
+		beforeEach(() => {
+			vi.mocked(isScannerAvailable).mockReturnValue(false);
+		});
+
+		it("pasting an image decodes it and emits apply", async () => {
+			vi.mocked(scanReceiptQrFromBlob).mockResolvedValue(VALID_QR);
+			const { wrapper } = await mountModal();
+			dispatchPaste([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).toHaveBeenCalledWith(imageFile);
+			expect(wrapper.emitted("apply")).toBeTruthy();
+			wrapper.unmount();
+		});
+
+		it("pasting without an image shows the error without scanning", async () => {
+			const { wrapper } = await mountModal();
+			dispatchPaste([]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+			expect(document.body.textContent).toContain("Не удалось распознать");
+			wrapper.unmount();
+		});
+
+		it("paste is not handled on a native platform", async () => {
+			vi.mocked(isScannerAvailable).mockReturnValue(true);
+			const { wrapper } = await mountModal();
+			dispatchPaste([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it("paste is ignored while a scan is already in progress", async () => {
+			vi.mocked(scanReceiptQrFromImage).mockReturnValue(new Promise(() => {}));
+			const { wrapper } = await mountModal();
+			(document.body.querySelector(".scan-modal__gallery") as HTMLButtonElement).click();
+			await flushPromises();
+			dispatchPaste([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it("paste is ignored in the duplicate state", async () => {
+			useTransactionsStore()._cache.set("2026-07", [makeTx({ tags: [RECEIPT_TAG] })]);
+			vi.mocked(scanReceiptQrFromImage).mockResolvedValue(VALID_QR);
+			const { wrapper } = await mountModal();
+			(document.body.querySelector(".scan-modal__gallery") as HTMLButtonElement).click();
+			await flushPromises();
+			dispatchPaste([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it("the paste listener is removed on unmount", async () => {
+			vi.mocked(scanReceiptQrFromBlob).mockResolvedValue(VALID_QR);
+			const { wrapper } = await mountModal();
+			wrapper.unmount();
+			dispatchPaste([imageFile]);
+			await flushPromises();
+			expect(scanReceiptQrFromBlob).not.toHaveBeenCalled();
+		});
 	});
 
 	it("'Добавить всё равно' emits apply despite the duplicate", async () => {

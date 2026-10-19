@@ -14,6 +14,7 @@ import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import { getFiltersSnapshot, setFiltersSnapshot } from "@/composables/useTransactionFiltersSnapshot";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 
 const router = useRouter();
 const filtersSnapshot = getFiltersSnapshot();
@@ -36,6 +37,20 @@ const filterAccountId = ref(filtersSnapshot?.filterAccountId ?? "");
 const filterCategoryId = ref(filtersSnapshot?.filterCategoryId ?? "");
 const filterFrom = ref(filtersSnapshot?.filterFrom ?? "");
 const filterTo = ref(filtersSnapshot?.filterTo ?? "");
+
+// Абсолютная позиция внутри flex-контейнера считается от начала строки, а не
+// от места чипа — перед leave фиксируем координаты, чтобы чип растворялся там,
+// где стоял. Последний чип оставляем в потоке: absolute обнулил бы высоту
+// строки мгновенно, и grid-схлопыванию (1fr→0fr) нечего было бы анимировать.
+function onChipBeforeLeave(el: Element) {
+	const chip = el as HTMLElement;
+	if (chip.parentElement && chip.parentElement.children.length > 1) {
+		chip.style.left = `${chip.offsetLeft}px`;
+		chip.style.top = `${chip.offsetTop}px`;
+	} else {
+		chip.style.position = "static";
+	}
+}
 
 onBeforeRouteLeave(() => {
 	setFiltersSnapshot({
@@ -229,71 +244,80 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 			</button>
 		</div>
 
-		<!-- Active filter chips -->
-		<div
-			v-if="activeFilterChips.length > 0"
-			class="filter-chips">
-			<button
-				v-for="chip in activeFilterChips"
-				:key="chip.key"
-				type="button"
-				class="filter-chip tp-caption-md-regular"
-				@click="removeFilterChip(chip.key)">
-				<span>{{ chip.label }}</span>
-				<PhX
-					:size="12"
-					weight="bold" />
-			</button>
+		<!-- Active filter chips (always mounted so leave animations can play;
+		     the row itself expands/collapses smoothly via grid rows) -->
+		<div :class="['chips-collapse', { 'chips-collapse--open': activeFilterChips.length > 0 }]">
+			<div class="chips-collapse__inner">
+				<TransitionGroup
+					tag="div"
+					name="chip"
+					class="filter-chips"
+					@before-leave="onChipBeforeLeave">
+					<button
+						v-for="chip in activeFilterChips"
+						:key="chip.key"
+						type="button"
+						class="filter-chip tp-caption-md-regular"
+						@click="removeFilterChip(chip.key)">
+						<span>{{ chip.label }}</span>
+						<PhX
+							:size="12"
+							weight="bold" />
+					</button>
+				</TransitionGroup>
+			</div>
 		</div>
 
-		<!-- Filter panel -->
-		<div
-			v-if="showFilters"
-			class="filter-panel">
-			<div class="filter-row">
-				<!-- Type -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Тип</label>
-					<AppSelect
-						v-model="filterType"
-						:options="filterTypeOptions" />
-				</div>
-				<!-- Account -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Счёт</label>
-					<AppSelect
-						v-model="filterAccountId"
-						:options="filterAccountOptions" />
-				</div>
-			</div>
+		<!-- Filter panel (always mounted; expands/collapses smoothly via grid rows) -->
+		<div :class="['filter-collapse', { 'filter-collapse--open': showFilters }]">
+			<div class="filter-collapse__inner">
+				<div class="filter-panel">
+					<div class="filter-row">
+						<!-- Type -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Тип</label>
+							<AppSelect
+								v-model="filterType"
+								:options="filterTypeOptions" />
+						</div>
+						<!-- Account -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Счёт</label>
+							<AppSelect
+								v-model="filterAccountId"
+								:options="filterAccountOptions" />
+						</div>
+					</div>
 
-			<div class="filter-row">
-				<!-- Category -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">Категория</label>
-					<AppSelect
-						v-model="filterCategoryId"
-						:options="filterCategoryOptions" />
-				</div>
-			</div>
+					<div class="filter-row">
+						<!-- Category -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">Категория</label>
+							<AppSelect
+								v-model="filterCategoryId"
+								:options="filterCategoryOptions" />
+						</div>
+					</div>
 
-			<div class="filter-row">
-				<!-- Date from -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">С даты</label>
-					<AppDatePicker
-						v-model="filterFrom"
-						clearable
-						placeholder="С даты" />
-				</div>
-				<!-- Date to -->
-				<div class="filter-field">
-					<label class="filter-field__label tp-label-sm-medium">По дату</label>
-					<AppDatePicker
-						v-model="filterTo"
-						:min-date="filterFrom"
-						clearable
-						placeholder="По дату" />
+					<div class="filter-row">
+						<!-- Date from -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">С даты</label>
+							<AppDatePicker
+								v-model="filterFrom"
+								clearable
+								placeholder="С даты" />
+						</div>
+						<!-- Date to -->
+						<div class="filter-field">
+							<label class="filter-field__label tp-label-sm-medium">По дату</label>
+							<AppDatePicker
+								v-model="filterTo"
+								:min-date="filterFrom"
+								clearable
+								placeholder="По дату" />
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -383,14 +407,17 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 				</AppButton>
 			</div>
 		</div>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<ScrollToTopButton :scroll-el="txGroupsRef" />
+			<AppButton
+				class="fab-add"
+				size="lg"
+				@click="router.push('/transactions/add')">
+				Добавить
+			</AppButton>
+		</FabContainer>
 	</div>
-	<ScrollToTopButton :scroll-el="txGroupsRef" />
-	<AppButton
-		class="fab-add"
-		size="lg"
-		@click="router.push('/transactions/add')">
-		Добавить
-	</AppButton>
 </template>
 
 <style scoped>
@@ -410,11 +437,6 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 
 	.fab-add {
 		display: flex;
-		position: fixed;
-		bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
-		left: var(--space-4);
-		right: var(--space-4);
-		z-index: 10;
 	}
 }
 
@@ -488,13 +510,30 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 	font-weight: 700;
 }
 
+/* Строка чипов схлопывается/раскрывается плавно (grid 0fr→1fr),
+ * чтобы список под ней не дёргался при удалении последнего чипа */
+.chips-collapse {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 200ms cubic-bezier(0.33, 1, 0.68, 1);
+	flex-shrink: 0;
+}
+.chips-collapse--open {
+	grid-template-rows: 1fr;
+}
+.chips-collapse__inner {
+	overflow: hidden;
+	min-height: 0;
+}
+
 .filter-chips {
 	padding: 0 var(--space-5) var(--space-3);
-	flex-shrink: 0;
 	display: flex;
 	gap: var(--space-2);
 	overflow-x: auto;
 	scrollbar-width: none;
+	/* anchor for absolutely-positioned leaving chips */
+	position: relative;
 }
 .filter-chips::-webkit-scrollbar {
 	display: none;
@@ -515,6 +554,71 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 }
 .filter-chip:hover {
 	background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+/* Chip add/remove: scale+fade; на время leave чип absolute, чтобы соседи
+ * плавно съезжались через chip-move. Обязательно ОДНО правило transition
+ * на move/enter/leave (как в доке Vue): уходящий чип может получить и
+ * chip-move — раздельные объявления перекрывали бы друг друга, и opacity
+ * схлопывался бы мгновенно. Селекторы .filter-chip.chip-* — иначе
+ * transition: background из .filter-chip перезатирает анимационные классы. */
+.filter-chip.chip-move,
+.filter-chip.chip-enter-active,
+.filter-chip.chip-leave-active {
+	transition: all 180ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.filter-chip.chip-leave-active {
+	position: absolute;
+}
+.filter-chip.chip-enter-from,
+.filter-chip.chip-leave-to {
+	opacity: 0;
+	transform: scale(0.8);
+}
+@media (prefers-reduced-motion: reduce) {
+	.chips-collapse,
+	.filter-chip.chip-move,
+	.filter-chip.chip-enter-active,
+	.filter-chip.chip-leave-active {
+		transition: none;
+	}
+}
+
+/* Smooth expand/collapse: grid row animates 0fr → 1fr, inner clips content. */
+.filter-collapse {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 260ms cubic-bezier(0.33, 1, 0.68, 1);
+	flex-shrink: 0;
+}
+.filter-collapse--open {
+	grid-template-rows: 1fr;
+}
+.filter-collapse__inner {
+	overflow: hidden;
+	min-height: 0;
+	/* keep collapsed controls out of the tab order */
+	visibility: hidden;
+	transition: visibility 0s 260ms;
+}
+.filter-collapse--open .filter-collapse__inner {
+	visibility: visible;
+	transition: visibility 0s;
+}
+.filter-collapse .filter-panel {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+.filter-collapse--open .filter-panel {
+	opacity: 1;
+	transition: opacity 200ms ease 80ms;
+}
+@media (prefers-reduced-motion: reduce) {
+	.filter-collapse,
+	.filter-collapse__inner,
+	.filter-collapse .filter-panel {
+		transition: none;
+	}
 }
 
 .filter-panel {

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vite
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import TransactionsView from "@/views/TransactionsView.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import { useAccountsStore } from "@/stores/accounts.store";
@@ -196,9 +198,9 @@ describe("TransactionsView – render states", () => {
 		expect(wrapper.find(".tx-view__empty").exists()).toBe(false);
 	});
 
-	it("filter panel is hidden by default", async () => {
+	it("filter panel is collapsed by default", async () => {
 		const { wrapper } = await mountView();
-		expect(wrapper.find(".filter-panel").exists()).toBe(false);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(false);
 	});
 });
 
@@ -305,17 +307,17 @@ describe("TransactionsView – search", () => {
 // ── Filter panel toggle ───────────────────────────────────────────────────────
 
 describe("TransactionsView – filter panel toggle", () => {
-	it("clicking filter button shows filter panel", async () => {
+	it("clicking filter button expands filter panel", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		expect(wrapper.find(".filter-panel").exists()).toBe(true);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(true);
 	});
 
-	it("clicking filter button twice hides filter panel", async () => {
+	it("clicking filter button twice collapses filter panel", async () => {
 		const { wrapper } = await mountView();
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
-		expect(wrapper.find(".filter-panel").exists()).toBe(false);
+		expect(wrapper.find(".filter-collapse--open").exists()).toBe(false);
 	});
 
 	it("filter button gets --active class when a filter is set", async () => {
@@ -418,8 +420,8 @@ describe("TransactionsView – filters", () => {
 		const { wrapper } = await mountView();
 		await populateCache([makeTx({ id: "a", date: "2026-01-10" }), makeTx({ id: "b", date: "2026-01-20" })]);
 		await openFilters(wrapper);
-		const [dateFrom] = wrapper.findAll('input[type="date"]');
-		await dateFrom.setValue("2026-01-15");
+		const [dateFrom] = wrapper.findAllComponents(AppDatePicker);
+		dateFrom.vm.$emit("update:modelValue", "2026-01-15");
 		await flushPromises();
 		expect(wrapper.findAll(".tx-row")).toHaveLength(1);
 	});
@@ -428,8 +430,8 @@ describe("TransactionsView – filters", () => {
 		const { wrapper } = await mountView();
 		await populateCache([makeTx({ id: "a", date: "2026-01-10" }), makeTx({ id: "b", date: "2026-01-20" })]);
 		await openFilters(wrapper);
-		const [, dateTo] = wrapper.findAll('input[type="date"]');
-		await dateTo.setValue("2026-01-15");
+		const [, dateTo] = wrapper.findAllComponents(AppDatePicker);
+		dateTo.vm.$emit("update:modelValue", "2026-01-15");
 		await flushPromises();
 		expect(wrapper.findAll(".tx-row")).toHaveLength(1);
 	});
@@ -502,6 +504,28 @@ describe("TransactionsView – filter chips", () => {
 		expect(wrapper.findAll(".tx-row")).toHaveLength(2);
 		expect(wrapper.findAll(".filter-chip")).toHaveLength(1);
 		expect(wrapper.find(".filter-chip").text()).toContain("Наличные");
+	});
+
+	it("before-leave pins non-last chips in place and keeps the last chip in flow", async () => {
+		const { wrapper } = await mountView();
+		const onChipBeforeLeave = (wrapper.vm.$ as any).setupState.onChipBeforeLeave as (el: Element) => void;
+
+		// two siblings: the leaving chip must be pinned (absolute keeps its spot)
+		const row = document.createElement("div");
+		const first = document.createElement("button");
+		const second = document.createElement("button");
+		row.append(first, second);
+		onChipBeforeLeave(first);
+		expect(first.style.left).not.toBe("");
+		expect(first.style.top).not.toBe("");
+
+		// single child: must stay in flow so the row keeps height while collapsing
+		const soloRow = document.createElement("div");
+		const solo = document.createElement("button");
+		soloRow.append(solo);
+		onChipBeforeLeave(solo);
+		expect(solo.style.position).toBe("static");
+		expect(solo.style.left).toBe("");
 	});
 });
 
@@ -687,10 +711,12 @@ describe("TransactionsView – transaction row rendering", () => {
 		expect(wrapper.find(".tx-row__amount").text()).toMatch(/^-/);
 	});
 
-	it("transfer amount starts with '↔'", async () => {
+	it("transfer amount shows arrows icon", async () => {
 		const { wrapper } = await mountView();
 		await populateCache([makeTx({ type: "transfer", amount: 500 })]);
-		expect(wrapper.find(".tx-row__amount").text()).toMatch(/^↔/);
+		const amount = wrapper.find(".tx-row__amount");
+		expect(amount.findComponent(PhArrowsLeftRight).exists()).toBe(true);
+		expect(amount.text()).toContain("500");
 	});
 
 	it("does not render deleted transactions", async () => {

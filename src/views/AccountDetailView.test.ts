@@ -3,6 +3,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { PhArrowsLeftRight } from "@phosphor-icons/vue";
 import AccountDetailView from "./AccountDetailView.vue";
 import { useAccountsStore } from "@/stores/accounts.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -324,11 +325,13 @@ describe("AccountDetailView – transactions list", () => {
 		expect(wrapper.find(".tx-row__amount").text()).toMatch(/^-/);
 	});
 
-	it("transfer tx has ↔ prefix in amount", async () => {
+	it("transfer tx shows arrows icon in amount", async () => {
 		const { wrapper } = await mountView();
 		useTransactionsStore()._cache.set("2026-06", [makeTx({ type: "transfer", amount: 100 })]);
 		await nextTick();
-		expect(wrapper.find(".tx-row__amount").text()).toMatch(/^↔/);
+		const amount = wrapper.find(".tx-row__amount");
+		expect(amount.findComponent(PhArrowsLeftRight).exists()).toBe(true);
+		expect(amount.text()).toContain("100");
 	});
 
 	it("shows tx date in meta", async () => {

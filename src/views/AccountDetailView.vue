@@ -7,10 +7,11 @@ import { useTransactionsStore } from "@/stores/transactions.store";
 import { useCategoriesStore } from "@/stores/categories.store";
 import type { Transaction } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
-import { PhArrowsLeftRight } from "@phosphor-icons/vue";
+import { PhArrowsLeftRight, PhCaretLeft } from "@phosphor-icons/vue";
 import { showConfirm } from "@/utils/confirm";
 import { useScrollRestore } from "@/composables/useScrollRestore";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton.vue";
+import FabContainer from "@/components/ui/FabContainer.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -56,7 +57,7 @@ function getCategory(id: string | null) {
 
 async function archiveAccount() {
 	if (!account.value) return;
-	if (!await showConfirm("Архивировать счёт? Транзакции сохранятся.")) return;
+	if (!(await showConfirm("Архивировать счёт? Транзакции сохранятся."))) return;
 	await accountsStore.deleteAccount(account.value.id);
 	router.back();
 }
@@ -68,9 +69,10 @@ async function archiveAccount() {
 			<button
 				class="back-btn tp-body-lg-regular"
 				@click="router.back()">
-				← Назад
+				<PhCaretLeft :size="18" />
+				Назад
 			</button>
-			<h2 class="account-detail__title tp-heading-md-bold">{{ account?.name ?? "Счёт" }}</h2>
+			<h2 class="account-detail__title tp-title-lg-semibold">{{ account?.name ?? "Счёт" }}</h2>
 		</div>
 
 		<div
@@ -152,9 +154,11 @@ async function archiveAccount() {
 							<div class="tx-row__meta tp-caption-md-regular">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
 						</div>
 						<div class="tx-row__right">
-							<div class="tp-body-md-semibold" :class="['tx-row__amount', `text-${tx.type}`]">
+							<div
+								class="tp-body-md-semibold"
+								:class="['tx-row__amount', `text-${tx.type}`]">
 								<template v-if="tx.type === 'transfer'">
-									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString("ru-RU") }}
 								</template>
 								<template v-else>{{ formatAmount(tx) }}</template>
 							</div>
@@ -174,8 +178,11 @@ async function archiveAccount() {
 				</AppButton>
 			</div>
 		</template>
+		<!-- Inside the root div: <Transition> in App.vue needs a single element root -->
+		<FabContainer>
+			<ScrollToTopButton />
+		</FabContainer>
 	</div>
-	<ScrollToTopButton />
 </template>
 
 <style scoped>
@@ -192,10 +199,20 @@ async function archiveAccount() {
 	padding: var(--space-5) var(--space-5) var(--space-3);
 }
 .back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
 	background: none;
 	border: none;
 	color: var(--accent-primary);
 	cursor: pointer;
+	flex-shrink: 0;
+}
+.account-detail__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .account-detail__not-found {
 	text-align: center;

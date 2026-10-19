@@ -44,8 +44,16 @@ export async function scanReceiptQr(): Promise<string | null> {
 }
 
 export async function scanReceiptQrFromImage(): Promise<string | null> {
-	if (!isScannerAvailable()) return null;
+	return isScannerAvailable() ? scanImageNative() : scanImageDesktop();
+}
 
+// For images that arrive as a Blob directly (drag & drop, clipboard paste).
+export async function scanReceiptQrFromBlob(blob: Blob): Promise<string | null> {
+	const { decodeQrFromBlob } = await import("@/utils/qrImageDecoder");
+	return decodeQrFromBlob(blob);
+}
+
+async function scanImageNative(): Promise<string | null> {
 	const { FilePicker } = await import("@capawesome/capacitor-file-picker");
 	const { BarcodeScanner, BarcodeFormat } = await import("@capacitor-mlkit/barcode-scanning");
 
@@ -58,4 +66,19 @@ export async function scanReceiptQrFromImage(): Promise<string | null> {
 	} catch {
 		return null;
 	}
+}
+
+// A plain <input type="file"> works in the Tauri WebView without any fs/dialog
+// permissions, and decoding happens in JS — no native plugins on desktop.
+async function scanImageDesktop(): Promise<string | null> {
+	const file = await new Promise<File | null>((resolve) => {
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept = "image/*";
+		input.onchange = () => resolve(input.files?.[0] ?? null);
+		input.oncancel = () => resolve(null);
+		input.click();
+	});
+	if (!file) return null;
+	return scanReceiptQrFromBlob(file);
 }

@@ -117,6 +117,7 @@ function clear(e: MouseEvent) {
 		:min-date="minDate"
 		:max-date="maxDate"
 		:disabled="disabled"
+		:teleport="true"
 		:ui="{ menu: 'dp-budget-menu' }"
 		class="app-date-picker">
 		<template #trigger>

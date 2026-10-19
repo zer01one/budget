@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const { mockIsNativePlatform, mockRequestPermissions, mockSchedule, mockCancel } = vi.hoisted(() => ({
 	mockIsNativePlatform: vi.fn(() => false),
@@ -103,13 +103,11 @@ describe("notifications – native platform", () => {
 		expect(mockSchedule).toHaveBeenCalledOnce();
 	});
 
-	it("scheduleDailyReminder() parses time string correctly", async () => {
+	it("scheduleDailyReminder() parses time string into on.hour/on.minute", async () => {
 		await scheduleDailyReminder("14:30");
 		const callArgs = mockSchedule.mock.calls[0]![0];
 		const notification = callArgs.notifications[0];
-		const scheduled: Date = notification.schedule.at;
-		expect(scheduled.getHours()).toBe(14);
-		expect(scheduled.getMinutes()).toBe(30);
+		expect(notification.schedule.on).toEqual({ hour: 14, minute: 30 });
 	});
 
 	it("scheduleDailyReminder() uses id=1 for the notification", async () => {
@@ -118,11 +116,21 @@ describe("notifications – native platform", () => {
 		expect(notification.id).toBe(1);
 	});
 
-	it("scheduleDailyReminder() schedules as repeating daily", async () => {
+	// Android: `at` + `repeats: true` повторяет с интервалом (at - now), а не раз в день —
+	// поэтому расписание должно использовать только cron-режим `on`.
+	it("scheduleDailyReminder() uses cron-like `on` schedule, never `at`/`repeats`/`every`", async () => {
 		await scheduleDailyReminder("09:00");
-		const notification = mockSchedule.mock.calls[0]![0].notifications[0];
-		expect(notification.schedule.repeats).toBe(true);
-		expect(notification.schedule.every).toBe("day");
+		const schedule = mockSchedule.mock.calls[0]![0].notifications[0].schedule;
+		expect(schedule.at).toBeUndefined();
+		expect(schedule.repeats).toBeUndefined();
+		expect(schedule.every).toBeUndefined();
+		expect(schedule.on).toEqual({ hour: 9, minute: 0 });
+	});
+
+	it("scheduleDailyReminder() sets allowWhileIdle so reminder fires in Doze mode", async () => {
+		await scheduleDailyReminder("09:00");
+		const schedule = mockSchedule.mock.calls[0]![0].notifications[0].schedule;
+		expect(schedule.allowWhileIdle).toBe(true);
 	});
 
 	it("cancelDailyReminder() cancels notification id=1", async () => {
@@ -178,29 +186,5 @@ describe("notifications – native platform", () => {
 		await notifyBudgetWarning(makeBudget({ id: "budget-test-0002" }), "Food", 90);
 		const id2 = mockSchedule.mock.calls[0]![0].notifications[0].id;
 		expect(id1).not.toBe(id2);
-	});
-});
-
-describe("scheduleDailyReminder – next-day rollover", () => {
-	beforeEach(() => {
-		mockIsNativePlatform.mockReturnValue(true);
-		vi.clearAllMocks();
-		vi.useFakeTimers();
-	});
-	afterEach(() => vi.useRealTimers());
-
-	it("schedules next day when time has already passed today", async () => {
-		// Set current time to 15:00 on 2026-06-15
-		vi.setSystemTime(new Date(2026, 5, 15, 15, 0, 0));
-		await scheduleDailyReminder("09:00"); // 09:00 is in the past
-		const scheduled: Date = mockSchedule.mock.calls[0]![0].notifications[0].schedule.at;
-		expect(scheduled.getDate()).toBe(16); // next day
-	});
-
-	it("schedules today when time is in the future", async () => {
-		vi.setSystemTime(new Date(2026, 5, 15, 7, 0, 0)); // 07:00
-		await scheduleDailyReminder("09:00"); // 09:00 is in the future
-		const scheduled: Date = mockSchedule.mock.calls[0]![0].notifications[0].schedule.at;
-		expect(scheduled.getDate()).toBe(15); // same day
 	});
 });

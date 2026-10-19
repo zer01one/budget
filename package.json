@@ -2,6 +2,7 @@
 	"name": "budget",
 	"private": true,
 	"version": "0.0.0",
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
@@ -40,6 +41,7 @@
 		"@tauri-apps/plugin-updater": "^2.10.1",
 		"@vuepic/vue-datepicker": "^14.0.0",
 		"echarts": "^6.1.0",
+		"jsqr": "^1.4.0",
 		"pinia": "^3.0.4",
 		"prettier": "^3.8.4",
 		"vue": "^3.5.34",

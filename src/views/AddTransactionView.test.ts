@@ -3,6 +3,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import AddTransactionView from "./AddTransactionView.vue";
+import AppDatePicker from "@/components/ui/AppDatePicker.vue";
 import ScanReceiptModal from "@/components/ScanReceiptModal.vue";
 import { isScannerAvailable } from "@/services/qrScanner.service";
 import { useTransactionsStore } from "@/stores/transactions.store";
@@ -129,7 +130,10 @@ afterEach(() => {
 async function mountView(query: Record<string, string> = {}) {
 	const router = createRouter({
 		history: createMemoryHistory(),
-		routes: [{ path: "/", component: AddTransactionView }]
+		routes: [
+			{ path: "/", component: AddTransactionView },
+			{ path: "/categories", component: { template: "<div/>" } }
+		]
 	});
 	router.push({ path: "/", query });
 	await router.isReady();
@@ -400,6 +404,42 @@ describe("AddTransactionView – category grid", () => {
 		useCategoriesStore().categories = [];
 		const { wrapper } = await mountView();
 		expect(wrapper.findAll(".cat-item")).toHaveLength(0);
+	});
+});
+
+// ─── manage categories tile ───────────────────────────────────────────────────
+
+describe("AddTransactionView – manage categories tile", () => {
+	it("cat-grid contains a Настроить tile", async () => {
+		const { wrapper } = await mountView();
+		const tile = wrapper.find(".cat-manage");
+		expect(tile.exists()).toBe(true);
+		expect(tile.text()).toBe("Настроить");
+	});
+
+	it("tile is rendered even when there are no categories", async () => {
+		useCategoriesStore().categories = [];
+		const { wrapper } = await mountView();
+		expect(wrapper.find(".cat-manage").exists()).toBe(true);
+	});
+
+	it("clicking the tile navigates to /categories", async () => {
+		const { wrapper, router } = await mountView();
+		const pushSpy = vi.spyOn(router, "push");
+		await wrapper.find(".cat-manage").trigger("click");
+		expect(pushSpy).toHaveBeenCalledWith("/categories");
+	});
+
+	it("clicking the tile does not select a category", async () => {
+		const { wrapper } = await mountView();
+		await wrapper.find(".cat-manage").trigger("click");
+		expect((wrapper.vm as any).$.setupState.categoryId).toBe("");
+	});
+
+	it("tile is shown for income type too", async () => {
+		const { wrapper } = await mountView();
+		await wrapper.findAll(".type-tab")[1].trigger("click");
+		expect(wrapper.find(".cat-manage").exists()).toBe(true);
 	});
 });
 
@@ -815,9 +855,8 @@ describe("AddTransactionView – double submit prevention", () => {
 describe("AddTransactionView – date and time defaults", () => {
 	it("date field is initialized to today in en-CA format", async () => {
 		const { wrapper } = await mountView();
-		const dateInput = wrapper.find("input[type='date']");
 		const today = new Date().toLocaleDateString("en-CA");
-		expect((dateInput.element as HTMLInputElement).value).toBe(today);
+		expect(wrapper.findComponent(AppDatePicker).props("modelValue")).toBe(today);
 	});
 
 	it("time field is initialized to current time (HH:MM format)", async () => {
@@ -844,14 +883,8 @@ describe("AddTransactionView – receipt scan modal", () => {
 	const RECEIPT_TAG = "receipt:1111:2222:3333";
 	const RECEIPT_COMMENT = "Чек от 07.07.2026 15:30";
 
-	it("does not render the scan button when the scanner is unavailable", async () => {
+	it("renders the scan button on every platform, including desktop", async () => {
 		vi.mocked(isScannerAvailable).mockReturnValue(false);
-		const { wrapper } = await mountView();
-		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(false);
-	});
-
-	it("renders the scan button when the scanner is available", async () => {
-		vi.mocked(isScannerAvailable).mockReturnValue(true);
 		const { wrapper } = await mountView();
 		expect(wrapper.find(".add-tx__scan-btn").exists()).toBe(true);
 	});

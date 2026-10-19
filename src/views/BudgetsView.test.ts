@@ -120,6 +120,8 @@ let pinia: ReturnType<typeof createPinia>;
 beforeEach(() => {
 	pinia = createPinia();
 	setActivePinia(pinia);
+	// Дедупликация алертов персистентна (localStorage) — чистим между тестами
+	localStorage.clear();
 });
 
 const TELEPORT_STUB = { template: "<div><slot/></div>" };
@@ -576,6 +578,26 @@ describe("BudgetsView – budget notifications watch", () => {
 		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
 		await flushPromises();
 		expect(mockNotify).not.toHaveBeenCalled();
+	});
+
+	it("deduplicates across remounts: alert persisted in localStorage", async () => {
+		useCategoriesStore().categories = [makeCategory()];
+		const wrapper = await mountView();
+		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 40_000 })]);
+		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
+		await flushPromises();
+		expect(mockNotify).toHaveBeenCalledTimes(1);
+
+		// Симуляция перезапуска приложения: новый инстанс компонента и pinia
+		wrapper.unmount();
+		pinia = createPinia();
+		setActivePinia(pinia);
+		useCategoriesStore().categories = [makeCategory()];
+		await mountView();
+		useTransactionsStore()._cache.set(CURRENT_MONTH, [makeTx({ amount: 40_000 })]);
+		useBudgetsStore().budgets = [makeBudget({ limitAmount: 50_000, notifyEnabled: true })];
+		await flushPromises();
+		expect(mockNotify).toHaveBeenCalledTimes(1);
 	});
 
 	it("deduplicates: same budget key notified only once per component instance", async () => {

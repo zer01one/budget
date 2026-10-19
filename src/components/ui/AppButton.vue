@@ -14,7 +14,7 @@ defineProps<{
 			'app-btn',
 			`app-btn--${variant ?? 'primary'}`,
 			`app-btn--${size ?? 'md'}`,
-			size === 'sm' ? 'tp-label-sm-medium' : size === 'lg' ? 'tp-title-lg-medium' : 'tp-label-md-medium',
+			size === 'sm' ? 'tp-label-sm-medium' : 'tp-label-md-medium',
 			{ 'app-btn--full': fullWidth, 'app-btn--loading': loading }
 		]"
 		:disabled="disabled || loading">

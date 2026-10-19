@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import AppModal from "./AppModal.vue";
 
 // Stub Teleport to render content inline
@@ -9,8 +10,19 @@ function mountModal(props = {}, slots = {}) {
 	return mount(AppModal, {
 		props,
 		slots,
-		global: { stubs: { Teleport: TeleportStub } }
+		// transition: false — the real <Transition> must run so that
+		// @after-leave fires and `close` is emitted
+		global: { stubs: { Teleport: TeleportStub, transition: false } }
 	});
+}
+
+// Closing plays a leave transition; `close` is emitted from @after-leave.
+// In jsdom transitions have zero duration, but Vue still schedules the
+// leave-to swap through requestAnimationFrame — flush two frames.
+async function flushLeave() {
+	await nextTick();
+	await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+	await nextTick();
 }
 
 describe("AppModal – title", () => {
@@ -26,9 +38,10 @@ describe("AppModal – title", () => {
 });
 
 describe("AppModal – close button", () => {
-	it("close button emits close", async () => {
+	it("close button emits close after leave transition", async () => {
 		const w = mountModal({ title: "Test" });
 		await w.find(".modal__close").trigger("click");
+		await flushLeave();
 		expect(w.emitted("close")).toBeTruthy();
 	});
 
@@ -42,6 +55,7 @@ describe("AppModal – overlay click", () => {
 	it("clicking overlay emits close", async () => {
 		const w = mountModal({ title: "T" });
 		await w.find(".modal-overlay").trigger("click");
+		await flushLeave();
 		expect(w.emitted("close")).toBeTruthy();
 	});
 });
@@ -49,13 +63,15 @@ describe("AppModal – overlay click", () => {
 describe("AppModal – Escape key", () => {
 	it("Escape key emits close", async () => {
 		const w = mountModal({ title: "T" });
-		await document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+		document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+		await flushLeave();
 		expect(w.emitted("close")).toBeTruthy();
 	});
 
 	it("non-Escape key does not emit close", async () => {
 		const w = mountModal({ title: "T" });
-		await document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+		document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+		await flushLeave();
 		expect(w.emitted("close")).toBeFalsy();
 	});
 
@@ -65,6 +81,49 @@ describe("AppModal – Escape key", () => {
 		const before = w.emitted("close")?.length ?? 0;
 		document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
 		expect(w.emitted("close")?.length ?? 0).toBe(before);
+	});
+});
+
+describe("AppModal – exposed close()", () => {
+	it("close() plays the leave transition and emits close", async () => {
+		const w = mountModal({ title: "T" });
+		w.vm.close();
+		await flushLeave();
+		expect(w.emitted("close")).toBeTruthy();
+	});
+
+	it("close() respects closable=false", async () => {
+		const w = mountModal({ title: "T", closable: false });
+		w.vm.close();
+		await flushLeave();
+		expect(w.emitted("close")).toBeFalsy();
+		expect(w.find(".modal-overlay").exists()).toBe(true);
+	});
+});
+
+describe("AppModal – closable=false", () => {
+	it("close button does not close or emit", async () => {
+		const w = mountModal({ title: "T", closable: false });
+		await w.find(".modal__close").trigger("click");
+		await flushLeave();
+		expect(w.emitted("close")).toBeFalsy();
+		expect(w.find(".modal-overlay").exists()).toBe(true);
+	});
+
+	it("overlay click does not close or emit", async () => {
+		const w = mountModal({ title: "T", closable: false });
+		await w.find(".modal-overlay").trigger("click");
+		await flushLeave();
+		expect(w.emitted("close")).toBeFalsy();
+		expect(w.find(".modal-overlay").exists()).toBe(true);
+	});
+
+	it("Escape does not close or emit", async () => {
+		const w = mountModal({ title: "T", closable: false });
+		document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+		await flushLeave();
+		expect(w.emitted("close")).toBeFalsy();
+		expect(w.find(".modal-overlay").exists()).toBe(true);
 	});
 });
 

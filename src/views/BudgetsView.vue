@@ -9,6 +9,7 @@ import { useCategoriesStore } from "@/stores/categories.store";
 import { useTransactionsStore } from "@/stores/transactions.store";
 import { useGamificationStore } from "@/stores/gamification.store";
 import { notifyBudgetWarning } from "@/services/notifications.service";
+import { wasBudgetAlertSent, markBudgetAlertSent } from "@/services/budgetAlerts.service";
 import type { BudgetEntry } from "@/types";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { showConfirm } from "@/utils/confirm";
@@ -138,24 +139,16 @@ async function deleteBudget(id: string) {
 	await budgetsStore.deleteBudget(id);
 }
 
-// Track which budget IDs already notified this session to avoid spam
-const notifiedBudgets = new Set<string>();
-
+// Дедупликация алертов персистентна (localStorage) — не спамим при каждом запуске
 function checkBudgetNotifications() {
 	for (const budget of monthBudgets.value) {
 		if (!budget.notifyEnabled) continue;
 		const pct = getProgress(budget);
-		const key80 = budget.id + ":80";
-		const key100 = budget.id + ":100";
-		if (pct >= 100 && !notifiedBudgets.has(key100)) {
-			notifiedBudgets.add(key100);
-			const catName = categoriesStore.getById(budget.categoryId)?.name ?? "—";
-			notifyBudgetWarning(budget, catName, pct);
-		} else if (pct >= 80 && !notifiedBudgets.has(key80)) {
-			notifiedBudgets.add(key80);
-			const catName = categoriesStore.getById(budget.categoryId)?.name ?? "—";
-			notifyBudgetWarning(budget, catName, pct);
-		}
+		const threshold = pct >= 100 ? 100 : pct >= 80 ? 80 : null;
+		if (threshold === null || wasBudgetAlertSent(budget, threshold)) continue;
+		markBudgetAlertSent(budget, threshold);
+		const catName = categoriesStore.getById(budget.categoryId)?.name ?? "—";
+		notifyBudgetWarning(budget, catName, pct);
 	}
 }
 
