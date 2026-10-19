@@ -1,4 +1,5 @@
 {
+    "endOfLine": "auto",
     "arrowParens": "always",
     "bracketSameLine": true,
     "objectWrap": "preserve",

@@ -69,7 +69,9 @@ onUnmounted(() => {
 	justify-content: center;
 	cursor: pointer;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-	transition: background var(--transition), transform 0.1s;
+	transition:
+		background var(--transition),
+		transform 0.1s;
 }
 .scroll-top-btn:hover {
 	background: var(--accent-primary-hover, var(--accent-primary));
@@ -81,7 +83,9 @@ onUnmounted(() => {
 
 .scroll-top-enter-active,
 .scroll-top-leave-active {
-	transition: opacity 0.2s, transform 0.2s;
+	transition:
+		opacity 0.2s,
+		transform 0.2s;
 }
 .scroll-top-enter-from,
 .scroll-top-leave-to {

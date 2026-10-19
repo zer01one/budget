@@ -1,19 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-const { mockIsNativePlatform, mockIsAvailable, mockInstall, mockAddListener, mockScan, mockReadFromImage, mockPickImages } = vi.hoisted(
-	() => ({
-		mockIsNativePlatform: vi.fn(() => false),
-		mockIsAvailable: vi.fn(async () => ({ available: true })),
-		mockInstall: vi.fn(async () => {}),
-		mockAddListener: vi.fn(async (_event: string, cb: (e: { state: number }) => void) => {
-			(mockAddListener as any).lastCb = cb;
-			return { remove: vi.fn() };
-		}),
-		mockScan: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-data" }] })),
-		mockReadFromImage: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-from-image" }] })),
-		mockPickImages: vi.fn(async () => ({ files: [{ path: "/gallery/receipt.jpg" }] }))
-	})
-);
+const { mockIsNativePlatform, mockIsAvailable, mockInstall, mockAddListener, mockScan, mockReadFromImage, mockPickImages } = vi.hoisted(() => ({
+	mockIsNativePlatform: vi.fn(() => false),
+	mockIsAvailable: vi.fn(async () => ({ available: true })),
+	mockInstall: vi.fn(async () => {}),
+	mockAddListener: vi.fn(async (_event: string, cb: (e: { state: number }) => void) => {
+		(mockAddListener as any).lastCb = cb;
+		return { remove: vi.fn() };
+	}),
+	mockScan: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-data" }] })),
+	mockReadFromImage: vi.fn(async () => ({ barcodes: [{ rawValue: "raw-qr-from-image" }] })),
+	mockPickImages: vi.fn(async () => ({ files: [{ path: "/gallery/receipt.jpg" }] }))
+}));
 
 vi.mock("@capacitor/core", () => ({
 	Capacitor: { isNativePlatform: mockIsNativePlatform }

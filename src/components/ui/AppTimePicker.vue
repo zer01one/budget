@@ -18,7 +18,7 @@ const PAD = 2;
 const HOUR_COPIES = 5;
 const MIN_COPIES = 5;
 const HOUR_CYCLE = 24 * ITEM_H; // 864px
-const MIN_CYCLE = 60 * ITEM_H;  // 2160px
+const MIN_CYCLE = 60 * ITEM_H; // 2160px
 const CANONICAL_H = 2;
 const CANONICAL_M = 2;
 
@@ -45,7 +45,9 @@ let minTimer: ReturnType<typeof setTimeout> | null = null;
 let hourSnapping = false;
 let minSnapping = false;
 
-function pad2(n: number) { return String(n).padStart(2, "0"); }
+function pad2(n: number) {
+	return String(n).padStart(2, "0");
+}
 
 function parseModel() {
 	if (props.modelValue && /^\d{1,2}:\d{2}/.test(props.modelValue)) {
@@ -64,7 +66,9 @@ const displayValue = computed(() => props.modelValue?.slice(0, 5) ?? "");
 // ── Editable text input ───────────────────────────────────
 const inputText = ref(displayValue.value);
 
-watch(displayValue, (v) => { inputText.value = v; });
+watch(displayValue, (v) => {
+	inputText.value = v;
+});
 
 function emitTime() {
 	emit("update:modelValue", `${pad2(tempHour.value)}:${pad2(tempMinute.value)}`);
@@ -88,7 +92,10 @@ function applyTime(h: number, m: number) {
 		minSnapping = true;
 		hourColRef.value?.scrollTo({ top: hPos(h), behavior: "smooth" });
 		minColRef.value?.scrollTo({ top: mPos(m), behavior: "smooth" });
-		setTimeout(() => { hourSnapping = false; minSnapping = false; }, 400);
+		setTimeout(() => {
+			hourSnapping = false;
+			minSnapping = false;
+		}, 400);
 	}
 }
 
@@ -158,8 +165,12 @@ function onTriggerClick(e: MouseEvent) {
 }
 
 // Canonical scroll positions (middle copy)
-function hPos(h: number) { return CANONICAL_H * HOUR_CYCLE + h * ITEM_H; }
-function mPos(m: number) { return CANONICAL_M * MIN_CYCLE + m * ITEM_H; }
+function hPos(h: number) {
+	return CANONICAL_H * HOUR_CYCLE + h * ITEM_H;
+}
+function mPos(m: number) {
+	return CANONICAL_M * MIN_CYCLE + m * ITEM_H;
+}
 
 // ── Scroll handlers — debounce + JS snap (replaces CSS scroll-snap) ──
 function onHourScroll(e: Event) {
@@ -205,7 +216,9 @@ function onHourColClick(e: MouseEvent) {
 	emitTime();
 	hourSnapping = true;
 	hourColRef.value.scrollTo({ top: hPos(h), behavior: "smooth" });
-	setTimeout(() => { hourSnapping = false; }, 400);
+	setTimeout(() => {
+		hourSnapping = false;
+	}, 400);
 }
 
 function onMinColClick(e: MouseEvent) {
@@ -216,7 +229,9 @@ function onMinColClick(e: MouseEvent) {
 	emitTime();
 	minSnapping = true;
 	minColRef.value.scrollTo({ top: mPos(m), behavior: "smooth" });
-	setTimeout(() => { minSnapping = false; }, 400);
+	setTimeout(() => {
+		minSnapping = false;
+	}, 400);
 }
 
 function selectNow() {
@@ -232,14 +247,12 @@ function updatePosition() {
 	if (!containerRef.value) return;
 	const rect = containerRef.value.getBoundingClientRect();
 	const w = 200;
-	const left = rect.left + w > window.innerWidth
-		? Math.max(4, window.innerWidth - w - 4)
-		: rect.left;
+	const left = rect.left + w > window.innerWidth ? Math.max(4, window.innerWidth - w - 4) : rect.left;
 	const popH = 225;
 	const showAbove = rect.bottom + popH + 8 > window.innerHeight && rect.top > popH + 8;
 	dropdownStyle.value = {
 		top: showAbove ? `${rect.top - popH - 4}px` : `${rect.bottom + 4}px`,
-		left: `${left}px`,
+		left: `${left}px`
 	};
 }
 
@@ -606,7 +619,9 @@ onUnmounted(() => close());
 /* Animation */
 .app-time-drop-enter-active,
 .app-time-drop-leave-active {
-	transition: opacity 0.15s, transform 0.15s;
+	transition:
+		opacity 0.15s,
+		transform 0.15s;
 }
 .app-time-drop-enter-from,
 .app-time-drop-leave-to {

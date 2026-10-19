@@ -29,7 +29,6 @@ vi.mock("@/services/filesystem", () => ({
 	})
 }));
 
-
 const mockShowConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 vi.mock("@/utils/confirm", () => ({ showConfirm: mockShowConfirm }));
 // ── Globals ───────────────────────────────────────────────────────────────────

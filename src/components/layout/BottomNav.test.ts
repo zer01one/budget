@@ -11,16 +11,7 @@ const TELEPORT_STUB = { template: "<div><slot/></div>" };
 function makeRouter(initialPath = "/dashboard") {
 	const router = createRouter({
 		history: createMemoryHistory(),
-		routes: [
-			"/dashboard",
-			"/transactions",
-			"/accounts",
-			"/charts",
-			"/profile",
-			"/categories",
-			"/budgets",
-			"/transactions/add"
-		].map((p) => ({
+		routes: ["/dashboard", "/transactions", "/accounts", "/charts", "/profile", "/categories", "/budgets", "/transactions/add"].map((p) => ({
 			path: p,
 			component: { template: "<div/>" }
 		}))

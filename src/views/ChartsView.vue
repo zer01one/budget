@@ -295,7 +295,9 @@ const summary = computed(() => {
 				class="summary-pill"
 				:class="summary.net >= 0 ? 'summary-pill--income' : 'summary-pill--expense'">
 				<span class="summary-pill__label">Итог</span>
-				<span class="summary-pill__value tp-body-md-semibold">{{ summary.net >= 0 ? "+" : "" }}{{ summary.net.toLocaleString("ru-RU") }}</span>
+				<span class="summary-pill__value tp-body-md-semibold"
+					>{{ summary.net >= 0 ? "+" : "" }}{{ summary.net.toLocaleString("ru-RU") }}</span
+				>
 			</div>
 		</div>
 

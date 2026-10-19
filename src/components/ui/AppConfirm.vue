@@ -126,7 +126,9 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 }
 .confirm-enter-active .confirm-dialog,
 .confirm-leave-active .confirm-dialog {
-	transition: transform 0.18s ease, opacity 0.18s ease;
+	transition:
+		transform 0.18s ease,
+		opacity 0.18s ease;
 }
 .confirm-enter-from,
 .confirm-leave-to {

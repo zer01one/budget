@@ -112,17 +112,11 @@ const EMPTY_COL = "— не использовать —";
 const colOptions = computed(() => [EMPTY_COL, ...headers.value]);
 
 const headerOptions = computed(() => headers.value.map((h) => ({ value: h, label: h })));
-const colMappingOptions = computed(() =>
-	colOptions.value.map((o) => ({ value: o === EMPTY_COL ? "" : o, label: o }))
-);
-const importAccountOptions = computed(() =>
-	accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
-);
+const colMappingOptions = computed(() => colOptions.value.map((o) => ({ value: o === EMPTY_COL ? "" : o, label: o })));
+const importAccountOptions = computed(() => accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })));
 const importCategoryOptions = computed(() => [
 	{ value: "", label: "— без категории —" },
-	...categoriesStore.categories
-		.filter((c) => !c.isArchived)
-		.map((c) => ({ value: c.id, label: c.name })),
+	...categoriesStore.categories.filter((c) => !c.isArchived).map((c) => ({ value: c.id, label: c.name }))
 ]);
 </script>
 

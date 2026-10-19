@@ -23,7 +23,7 @@ const toAccount = computed(() => (tx.value?.toAccountId ? accountsStore.getById(
 
 async function deleteTx() {
 	if (!tx.value) return;
-	if (!await showConfirm("Удалить операцию?")) return;
+	if (!(await showConfirm("Удалить операцию?"))) return;
 	await txStore.deleteTransaction(tx.value.id);
 	router.back();
 }

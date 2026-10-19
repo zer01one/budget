@@ -2,16 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppModal from "@/components/ui/AppModal.vue";
-import {
-	PhHouseLine,
-	PhArrowsDownUp,
-	PhWallet,
-	PhChartBar,
-	PhDotsThreeCircle,
-	PhUserCircle,
-	PhTag,
-	PhPiggyBank
-} from "@phosphor-icons/vue";
+import { PhHouseLine, PhArrowsDownUp, PhWallet, PhChartBar, PhDotsThreeCircle, PhUserCircle, PhTag, PhPiggyBank } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();

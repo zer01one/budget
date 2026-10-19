@@ -18,7 +18,7 @@ afterEach(() => {
 function mountPicker(modelValue = "12:00", extra: Record<string, unknown> = {}) {
 	wrapper = mount(AppTimePicker, {
 		props: { modelValue, ...extra },
-		attachTo: document.body,
+		attachTo: document.body
 	});
 	return wrapper;
 }
