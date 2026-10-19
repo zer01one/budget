@@ -11,3 +11,7 @@ dist
 !*.html
 !*.json
 !*.vue
+
+## Build output and local tool settings
+android/app/src/main/assets/
+.claude/

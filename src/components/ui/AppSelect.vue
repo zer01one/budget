@@ -23,9 +23,7 @@ const containerRef = ref<HTMLElement | null>(null);
 const dropdownListRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref({ top: "0px", left: "0px", width: "0px" });
 
-const selectedLabel = computed(
-	() => props.options.find((o) => o.value === props.modelValue)?.label ?? ""
-);
+const selectedLabel = computed(() => props.options.find((o) => o.value === props.modelValue)?.label ?? "");
 
 function updatePosition() {
 	if (!containerRef.value) return;
@@ -35,7 +33,7 @@ function updatePosition() {
 	dropdownStyle.value = {
 		top: showAbove ? `${rect.top - maxH - 4}px` : `${rect.bottom + 4}px`,
 		left: `${rect.left}px`,
-		width: `${rect.width}px`,
+		width: `${rect.width}px`
 	};
 }
 
@@ -174,7 +172,7 @@ onUnmounted(() => close());
 						class="app-select__option tp-body-md-regular"
 						:class="{
 							'app-select__option--selected': opt.value === modelValue,
-							'app-select__option--focused': i === focusedIndex,
+							'app-select__option--focused': i === focusedIndex
 						}"
 						@mousedown.prevent="select(opt.value)"
 						@mouseenter="focusedIndex = i">
@@ -221,7 +219,9 @@ onUnmounted(() => close());
 	color: var(--text-primary);
 	cursor: pointer;
 	text-align: left;
-	transition: border-color var(--transition), background var(--transition);
+	transition:
+		border-color var(--transition),
+		background var(--transition);
 	outline: none;
 }
 .app-select__trigger:hover {
@@ -298,7 +298,9 @@ onUnmounted(() => close());
 /* Enter/leave animation */
 .app-select-drop-enter-active,
 .app-select-drop-leave-active {
-	transition: opacity 0.15s, transform 0.15s;
+	transition:
+		opacity 0.15s,
+		transform 0.15s;
 }
 .app-select-drop-enter-from,
 .app-select-drop-leave-to {

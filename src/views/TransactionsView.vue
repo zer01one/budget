@@ -387,7 +387,7 @@ const hasMore = computed(() => loadedMonthsCount.value < allMonths.value.length)
 						</div>
 						<div :class="['tx-row__amount tp-body-md-semibold', `text-${tx.type}`]">
 							<template v-if="tx.type === 'transfer'">
-								<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+								<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString("ru-RU") }}
 							</template>
 							<template v-else>{{ formatAmount(tx) }}</template>
 						</div>

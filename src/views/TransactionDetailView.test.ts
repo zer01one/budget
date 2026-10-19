@@ -327,7 +327,6 @@ describe("TransactionDetailView – deleteTx", () => {
 		categoriesStore.categories = [makeCategory()];
 	});
 
-
 	it("marks tx as deleted when confirmed", async () => {
 		const txStore = useTransactionsStore();
 		const { wrapper, router } = await mountView();

@@ -6,16 +6,16 @@ import { PhCalendarBlank, PhCaretDown, PhX } from "@phosphor-icons/vue";
 
 const props = defineProps<{
 	// single mode
-	modelValue?: string;     // YYYY-MM-DD or ""
+	modelValue?: string; // YYYY-MM-DD or ""
 	clearable?: boolean;
 	placeholder?: string;
 	// range mode
 	range?: boolean;
-	dateFrom?: string;       // YYYY-MM-DD
-	dateTo?: string;         // YYYY-MM-DD
+	dateFrom?: string; // YYYY-MM-DD
+	dateTo?: string; // YYYY-MM-DD
 	// common
 	disabled?: boolean;
-	minDate?: string;        // YYYY-MM-DD — disables days before this
+	minDate?: string; // YYYY-MM-DD — disables days before this
 }>();
 
 const emit = defineEmits<{
@@ -26,13 +26,13 @@ const emit = defineEmits<{
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const MONTH_SHORT   = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
-const MONTH_GENITIVE = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MONTH_SHORT = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const MONTH_GENITIVE = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
-const minDate  = computed(() => (props.minDate ? new Date(props.minDate + "T12:00:00") : undefined));
-const maxDate  = new Date();
-const today    = new Date().toLocaleDateString("en-CA");
-const ydDate   = new Date();
+const minDate = computed(() => (props.minDate ? new Date(props.minDate + "T12:00:00") : undefined));
+const maxDate = new Date();
+const today = new Date().toLocaleDateString("en-CA");
+const ydDate = new Date();
 ydDate.setDate(ydDate.getDate() - 1);
 const yesterday = ydDate.toLocaleDateString("en-CA");
 
@@ -51,11 +51,11 @@ const pickerValue = computed({
 			const arr = val as Date[] | null;
 			if (!arr?.[0] || !arr?.[1]) return;
 			emit("update:dateFrom", arr[0].toLocaleDateString("en-CA"));
-			emit("update:dateTo",   arr[1].toLocaleDateString("en-CA"));
+			emit("update:dateTo", arr[1].toLocaleDateString("en-CA"));
 		} else {
 			emit("update:modelValue", (val as Date | null)?.toLocaleDateString("en-CA") ?? "");
 		}
-	},
+	}
 });
 
 // ── Display text ─────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ const displayValue = computed(() => {
 
 function buildLabel(from: string, to: string): string {
 	if (from === to) {
-		if (from === today)     return "Сегодня";
+		if (from === today) return "Сегодня";
 		if (from === yesterday) return "Вчера";
 	}
 	const [fy, fm, fd] = from.split("-").map(Number);
@@ -84,19 +84,11 @@ function buildLabel(from: string, to: string): string {
 	return `${fd} ${MONTH_GENITIVE[fm - 1]}${fy2} – ${td} ${MONTH_GENITIVE[tm - 1]}${ty2}`;
 }
 
-const periodLabel = computed(() =>
-	props.dateFrom && props.dateTo ? buildLabel(props.dateFrom, props.dateTo) : "Выберите период"
-);
+const periodLabel = computed(() => (props.dateFrom && props.dateTo ? buildLabel(props.dateFrom, props.dateTo) : "Выберите период"));
 
-const triggerLabel = computed(() =>
-	props.range
-		? periodLabel.value
-		: (displayValue.value || props.placeholder || "Выберите дату")
-);
+const triggerLabel = computed(() => (props.range ? periodLabel.value : displayValue.value || props.placeholder || "Выберите дату"));
 
-const hasValue = computed(() =>
-	props.range ? !!(props.dateFrom && props.dateTo) : !!props.modelValue
-);
+const hasValue = computed(() => (props.range ? !!(props.dateFrom && props.dateTo) : !!props.modelValue));
 
 // ── Clear (single mode only) ─────────────────────────────────────────────────
 
@@ -210,7 +202,9 @@ function clear(e: MouseEvent) {
 	justify-content: center;
 	cursor: pointer;
 	padding: 0;
-	transition: background var(--transition), color var(--transition);
+	transition:
+		background var(--transition),
+		color var(--transition);
 }
 .app-date__clear:hover {
 	background: var(--bg-card);

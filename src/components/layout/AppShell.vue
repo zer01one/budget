@@ -90,7 +90,11 @@ onMounted(async () => {
 				v-if="txStore.lastConflict"
 				class="conflict-banner tp-body-md-regular">
 				<span>⚠ Конфликт синхронизации в {{ txStore.lastConflict.file }} — принята более новая версия</span>
-				<button class="tp-body-lg-regular" @click="txStore.clearConflict()">✕</button>
+				<button
+					class="tp-body-lg-regular"
+					@click="txStore.clearConflict()">
+					✕
+				</button>
 			</div>
 
 			<div class="shell__content">

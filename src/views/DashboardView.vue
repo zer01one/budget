@@ -150,10 +150,10 @@ function formatDate(date: string): string {
 						<div class="tx-row__name tp-label-md-medium">{{ getCategory(tx.categoryId)?.name ?? "Перевод" }}</div>
 						<div class="tx-row__meta tp-caption-md-regular">{{ tx.comment || formatDate(tx.date) }}</div>
 					</div>
-					<div class="tp-title-md-semibold" :class="['tx-row__amount', `text-${tx.type}`]">
-						<template v-if="tx.type === 'transfer'">
-							<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
-						</template>
+					<div
+						class="tp-title-md-semibold"
+						:class="['tx-row__amount', `text-${tx.type}`]">
+						<template v-if="tx.type === 'transfer'"> <PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString("ru-RU") }} </template>
 						<template v-else>{{ formatAmount(tx) }}</template>
 					</div>
 				</div>

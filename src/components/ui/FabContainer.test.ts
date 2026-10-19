@@ -15,7 +15,7 @@ afterEach(() => {
 describe("FabContainer", () => {
 	it("teleports the fab block to body and renders slot content", () => {
 		wrapper = mount(FabContainer, {
-			slots: { default: '<button class="inner-btn">X</button>' },
+			slots: { default: '<button class="inner-btn">X</button>' }
 		});
 		const fab = document.body.querySelector(".fab-container");
 		expect(fab).toBeTruthy();
@@ -24,7 +24,7 @@ describe("FabContainer", () => {
 
 	it("removes the fab block from body on unmount", () => {
 		wrapper = mount(FabContainer, {
-			slots: { default: '<button class="inner-btn">X</button>' },
+			slots: { default: '<button class="inner-btn">X</button>' }
 		});
 		wrapper.unmount();
 		wrapper = undefined;
@@ -33,7 +33,7 @@ describe("FabContainer", () => {
 
 	it("keeps children DOM order (первый слот-элемент — верхний в колонке)", () => {
 		wrapper = mount(FabContainer, {
-			slots: { default: '<i id="top"></i><i id="bottom"></i>' },
+			slots: { default: '<i id="top"></i><i id="bottom"></i>' }
 		});
 		const kids = document.body.querySelector(".fab-container")!.children;
 		expect(kids[0].id).toBe("top");

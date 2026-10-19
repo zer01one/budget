@@ -487,10 +487,7 @@ describe("TransactionsView – filter chips", () => {
 	it("clicking a chip clears only that filter, leaving others active", async () => {
 		const { wrapper } = await mountView();
 		useAccountsStore().accounts = [makeAccount()];
-		await populateCache([
-			makeTx({ id: "a", type: "income", accountId: "acc-1" }),
-			makeTx({ id: "b", type: "expense", accountId: "acc-1" })
-		]);
+		await populateCache([makeTx({ id: "a", type: "income", accountId: "acc-1" }), makeTx({ id: "b", type: "expense", accountId: "acc-1" })]);
 		await wrapper.find(".tx-view__filter-btn").trigger("click");
 		const [typeSelect, accountSelect] = wrapper.findAll("select");
 		await typeSelect.setValue("income");

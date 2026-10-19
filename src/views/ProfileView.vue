@@ -320,9 +320,7 @@ async function doExportJSON() {
 				<div class="setting-row">
 					<div>
 						<div>Ежедневное напоминание</div>
-						<div class="text-muted tp-caption-md-regular">
-							Напомнить записать расходы
-						</div>
+						<div class="text-muted tp-caption-md-regular">Напомнить записать расходы</div>
 					</div>
 					<button
 						:class="['toggle', { 'toggle--on': notifEnabled }]"

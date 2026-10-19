@@ -30,13 +30,11 @@ const amount = ref("");
 
 const accountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
 ]);
 const toAccountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts
-		.filter((a) => a.id !== accountId.value)
-		.map((a) => ({ value: a.id, label: a.name })),
+	...accountsStore.activeAccounts.filter((a) => a.id !== accountId.value).map((a) => ({ value: a.id, label: a.name }))
 ]);
 const date = ref(new Date().toLocaleDateString("en-CA"));
 const time = ref(new Date().toTimeString().slice(0, 5));
@@ -157,9 +155,24 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 					stroke="currentColor"
 					stroke-width="2"
 					stroke-linecap="round">
-					<rect x="3" y="3" width="7" height="7" rx="1" />
-					<rect x="14" y="3" width="7" height="7" rx="1" />
-					<rect x="3" y="14" width="7" height="7" rx="1" />
+					<rect
+						x="3"
+						y="3"
+						width="7"
+						height="7"
+						rx="1" />
+					<rect
+						x="14"
+						y="3"
+						width="7"
+						height="7"
+						rx="1" />
+					<rect
+						x="3"
+						y="14"
+						width="7"
+						height="7"
+						rx="1" />
 					<path d="M14 14h3v3h-3z" />
 					<path d="M21 14v3" />
 					<path d="M14 21h3" />
@@ -174,8 +187,8 @@ function onScanApply(parsed: ParsedReceipt, fingerprint: string) {
 					@input="onAmountInput"
 					type="text"
 					inputmode="decimal"
-					placeholder="0" 
-					class="amount-field__input tp-display-lg-bold"/>
+					placeholder="0"
+					class="amount-field__input tp-display-lg-bold" />
 				<span class="amount-field__currency tp-heading-md-semibold">
 					{{ accountsStore.getById(accountId)?.currency ?? "RUB" }}
 				</span>

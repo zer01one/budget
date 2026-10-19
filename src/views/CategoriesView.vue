@@ -83,7 +83,7 @@ async function save() {
 }
 
 async function deleteCategory(cat: Category) {
-	if (!await showConfirm(`Удалить категорию «${cat.name}»?`)) return;
+	if (!(await showConfirm(`Удалить категорию «${cat.name}»?`))) return;
 	await categoriesStore.deleteCategory(cat.id);
 }
 </script>

@@ -135,7 +135,7 @@ async function save() {
 }
 
 async function deleteBudget(id: string) {
-	if (!await showConfirm("Удалить бюджет?")) return;
+	if (!(await showConfirm("Удалить бюджет?"))) return;
 	await budgetsStore.deleteBudget(id);
 }
 
@@ -156,9 +156,7 @@ watch(monthBudgets, checkBudgetNotifications);
 
 const CURRENCIES = ["RUB", "USD"];
 const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
-const categoryOptions = computed(() =>
-	availableCategories.value.map((cat) => ({ value: cat.id, label: cat.name }))
-);
+const categoryOptions = computed(() => availableCategories.value.map((cat) => ({ value: cat.id, label: cat.name })));
 
 const totalBudgeted = computed(() => monthBudgets.value.reduce((s, b) => s + b.limitAmount, 0));
 const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpent(b), 0));
@@ -257,7 +255,9 @@ const totalSpent = computed(() => monthBudgets.value.reduce((s, b) => s + getSpe
 							:style="{ color: progressColor(getProgress(budget)) }">
 							{{ getSpent(budget).toLocaleString("ru-RU") }}
 						</span>
-						<span class="budget-card__limit tp-caption-md-regular">/ {{ budget.limitAmount.toLocaleString("ru-RU") }} {{ budget.currency }}</span>
+						<span class="budget-card__limit tp-caption-md-regular"
+							>/ {{ budget.limitAmount.toLocaleString("ru-RU") }} {{ budget.currency }}</span
+						>
 					</div>
 				</div>
 

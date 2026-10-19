@@ -35,13 +35,11 @@ const editComment = ref("");
 
 const editAccountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name })),
+	...accountsStore.activeAccounts.map((a) => ({ value: a.id, label: a.name }))
 ]);
 const editToAccountOptions = computed(() => [
 	{ value: "", label: "— выберите счёт —" },
-	...accountsStore.activeAccounts
-		.filter((a) => a.id !== editAccountId.value)
-		.map((a) => ({ value: a.id, label: a.name })),
+	...accountsStore.activeAccounts.filter((a) => a.id !== editAccountId.value).map((a) => ({ value: a.id, label: a.name }))
 ]);
 
 const editCategories = computed(() => categoriesStore.byType(editType.value));

@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 import { useSettingsStore } from "@/stores/settings.store";
-import {
-	PhHouseLine,
-	PhArrowsDownUp,
-	PhWallet,
-	PhTag,
-	PhChartBar,
-	PhPiggyBank,
-	PhUserCircle,
-	PhCaretLeft,
-	PhCaretRight
-} from "@phosphor-icons/vue";
+import { PhHouseLine, PhArrowsDownUp, PhWallet, PhTag, PhChartBar, PhPiggyBank, PhUserCircle, PhCaretLeft, PhCaretRight } from "@phosphor-icons/vue";
 
 const router = useRouter();
 const route = useRoute();
