@@ -19,7 +19,9 @@ export default defineConfig([
 	{
 		files: ["**/*.{ts,mts,cts,vue}"],
 		rules: {
-			"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }]
+			"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+			// TypeScript already reports undefined identifiers; no-undef misfires on DOM types like AddEventListenerOptions
+			"no-undef": "off"
 		}
 	},
 
@@ -37,7 +39,9 @@ export default defineConfig([
 		language: "css/css",
 		extends: ["css/recommended"],
 		rules: {
-			"css/no-invalid-properties": ["error", { allowUnknownVariables: true }]
+			"css/no-invalid-properties": ["error", { allowUnknownVariables: true }],
+			// :has() is supported by all target webviews (WebView2, Android System WebView — Chromium 105+)
+			"css/use-baseline": ["error", { allowSelectors: ["has"] }]
 		}
 	}
 ]);

@@ -30,6 +30,9 @@ jobs:
       - name: Format check
         run: npm run front:format:check
 
+      - name: Lint
+        run: npm run eslint
+
       - name: Typecheck
         run: npm run typecheck
 
