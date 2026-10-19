@@ -57,7 +57,7 @@
 		"@pinia/testing": "^1.0.3",
 		"@tauri-apps/api": "^2.11.0",
 		"@tauri-apps/cli": "^2.11.2",
-		"@types/node": "^24.12.3",
+		"@types/node": "^26.6.5",
 		"@vitejs/plugin-vue": "^6.0.6",
 		"@vitest/coverage-v8": "^5.0.5",
 		"@vue/test-utils": "^2.4.11",
