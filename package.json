@@ -26,7 +26,7 @@
 	},
 	"dependencies": {
 		"@capacitor-mlkit/barcode-scanning": "^8.1.0",
-		"@capacitor/android": "^8.4.0",
+		"@capacitor/android": "^8.4.3",
 		"@capacitor/app": "^8.1.0",
 		"@capacitor/core": "^8.4.0",
 		"@capacitor/filesystem": "^8.1.2",
@@ -70,7 +70,7 @@
 		"typescript": "~6.0.2",
 		"typescript-eslint": "^8.61.1",
 		"vite": "^8.0.12",
-		"vitest": "^4.1.9",
+		"vitest": "^5.0.5",
 		"vue-eslint-parser": "^10.4.1",
 		"vue-tsc": "^3.2.8"
 	}
