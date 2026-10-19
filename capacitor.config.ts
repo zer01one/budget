@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-	appId: "com.budget.app",
+	appId: "io.github.zer01one.budget",
 	appName: "Budget",
 	webDir: "dist",
 	// During development, point to local Vite server

@@ -1,4 +1,4 @@
-package com.budget.app
+package io.github.zer01one.budget
 
 import android.content.Intent
 import android.net.Uri

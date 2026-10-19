@@ -2,7 +2,7 @@
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "Budget",
 	"version": "0.1.0",
-	"identifier": "com.budget.app",
+	"identifier": "io.github.zer01one.budget",
 	"build": {
 		"frontendDist": "../dist",
 		"devUrl": "http://localhost:5173",
@@ -23,7 +23,7 @@
 			}
 		],
 		"security": {
-			"csp": null
+			"csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
 		}
 	},
 	"plugins": {
