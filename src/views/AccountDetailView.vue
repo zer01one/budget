@@ -57,7 +57,7 @@ function getCategory(id: string | null) {
 
 async function archiveAccount() {
 	if (!account.value) return;
-	if (!await showConfirm("Архивировать счёт? Транзакции сохранятся.")) return;
+	if (!(await showConfirm("Архивировать счёт? Транзакции сохранятся."))) return;
 	await accountsStore.deleteAccount(account.value.id);
 	router.back();
 }
@@ -154,9 +154,11 @@ async function archiveAccount() {
 							<div class="tx-row__meta tp-caption-md-regular">{{ tx.date }} {{ tx.comment ? "· " + tx.comment : "" }}</div>
 						</div>
 						<div class="tx-row__right">
-							<div class="tp-body-md-semibold" :class="['tx-row__amount', `text-${tx.type}`]">
+							<div
+								class="tp-body-md-semibold"
+								:class="['tx-row__amount', `text-${tx.type}`]">
 								<template v-if="tx.type === 'transfer'">
-									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString('ru-RU') }}
+									<PhArrowsLeftRight :size="14" />{{ tx.amount.toLocaleString("ru-RU") }}
 								</template>
 								<template v-else>{{ formatAmount(tx) }}</template>
 							</div>

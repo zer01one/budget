@@ -2,9 +2,9 @@
 name = "app"
 version = "0.1.0"
 description = "Budget — offline-first personal finance tracker"
-authors = ["you"]
-license = ""
-repository = ""
+authors = ["Aleksandr Stoliarov"]
+license = "MIT"
+repository = "https://github.com/zer01one/budget"
 edition = "2021"
 rust-version = "1.77.2"
 
