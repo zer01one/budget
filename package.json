@@ -54,7 +54,7 @@
 		"@capacitor/cli": "^8.5.3",
 		"@eslint/css": "^2.0.1",
 		"@eslint/js": "^10.0.1",
-		"@pinia/testing": "^1.0.3",
+		"@pinia/testing": "^2.0.2",
 		"@tauri-apps/api": "^2.11.0",
 		"@tauri-apps/cli": "^2.12.3",
 		"@types/node": "^26.6.5",
