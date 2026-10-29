@@ -51,7 +51,7 @@
 		"vue-virtual-scroller": "^3.0.5"
 	},
 	"devDependencies": {
-		"@capacitor/cli": "^8.5.3",
+		"@capacitor/cli": "^8.6.0",
 		"@eslint/css": "^2.0.1",
 		"@eslint/js": "^10.0.1",
 		"@pinia/testing": "^1.0.3",
